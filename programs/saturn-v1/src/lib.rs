@@ -1,6 +1,7 @@
+#![allow(unused_imports)]
 use anchor_lang::prelude::*;
 use anchor_spl::{
-    token::{self, Token, TokenAccount, Transfer},
+    token::{self, Token, TokenAccount, Transfer},    
 };
 
 use pyth_solana_receiver_sdk::price_update::{PriceUpdateV2};
@@ -8,12 +9,12 @@ use pyth_solana_receiver_sdk::price_update::{PriceUpdateV2};
 pub mod account;
 pub mod constants;
 pub mod error;
-// pub mod utils;
+pub mod utils;
 
 use account::*;
 use constants::*;
 use error::*;
-// use utils::*;
+use utils::*;
 
 declare_id!("5mWSmPkAEesVq134hxA1gqFiwDXLArUacKXfmbmXwBBt");
 
@@ -21,11 +22,11 @@ declare_id!("5mWSmPkAEesVq134hxA1gqFiwDXLArUacKXfmbmXwBBt");
 pub mod saturn_v1 {
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+    pub fn initialize(_ctx: Context<Initialize>) -> Result<()> {
         Ok(())
     }
 
-    pub fn ApplyBond(ctx: Context<ApplyBond>) -> Result<()> {
+    pub fn apply_bond(_ctx: Context<ApplyBond>) -> Result<()> {
         Ok(())
     }
 }
