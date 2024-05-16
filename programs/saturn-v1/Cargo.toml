@@ -17,7 +17,7 @@ default = []
 
 [dependencies]
 anchor-lang = "0.29.0"
-pyth-solana-receiver-sdk ="0.1.0"
+pyth-solana-receiver-sdk = "0.1.0"
 anchor-spl = "0.29.0"
 blake3 = "1.5.1"
 bytemuck = "1.15.0"
