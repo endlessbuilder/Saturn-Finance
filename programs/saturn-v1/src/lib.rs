@@ -1,4 +1,15 @@
+#![allow(unused_imports)]
+#![allow(unused_variables)]
 use anchor_lang::prelude::*;
+
+mod account;
+mod error;
+mod instructions;
+mod constants;
+mod utils;
+
+use account::*;
+use instructions::*;
 
 declare_id!("5mWSmPkAEesVq134hxA1gqFiwDXLArUacKXfmbmXwBBt");
 
@@ -7,9 +18,15 @@ pub mod saturn_v1 {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        Ok(())
+        instructions::initialize::handle(ctx)
+    }
+
+    pub fn apply_bond(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
+        instructions::apply_bond::handle(ctx, args)        
+    }
+
+    pub fn finish_bond(ctx: Context<FinishBond>) -> Result<()> {
+        instructions::finish_bond::handle(ctx)        
     }
 }
 
-#[derive(Accounts)]
-pub struct Initialize {}
