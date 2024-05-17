@@ -3,6 +3,7 @@
 use anchor_lang::prelude::*;
 
 mod account;
+mod error;
 mod instructions;
 mod constants;
 mod utils;
@@ -20,8 +21,8 @@ pub mod saturn_v1 {
         instructions::initialize::handle(ctx)
     }
 
-    pub fn apply_bond(ctx: Context<ApplyBond>) -> Result<()> {
-        instructions::apply_bond::handle(ctx)        
+    pub fn apply_bond(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
+        instructions::apply_bond::handle(ctx, args)        
     }
 
     pub fn finish_bond(ctx: Context<FinishBond>) -> Result<()> {
