@@ -41,7 +41,8 @@ pub struct FinishBond<'info> {
 }
 
 pub fn handle(ctx: Context<FinishBond>) -> Result<()> {
-    let mut escrow = ctx.accounts.escrow.load_init()?;
+    let mut _escrow = ctx.accounts.escrow.load_init()?;
+
     msg!("apply_bond");
     let src_account_info = &mut &ctx.accounts.creater_token_account;
     let dest_account_info = &mut &ctx.accounts.dest_token_account;

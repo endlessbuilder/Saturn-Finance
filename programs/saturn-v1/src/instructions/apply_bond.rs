@@ -53,7 +53,7 @@ pub struct ApplyBond<'info> {
 
 pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
     let mut escrow = ctx.accounts.escrow.load_init()?;
-    let mut treasury = &mut ctx.accounts.treasury;
+    let treasury = &mut ctx.accounts.treasury;
     msg!("apply_bond");
     let src_account_info = &mut &ctx.accounts.creater_token_account;
     let dest_account_info = &mut &ctx.accounts.dest_token_account;
@@ -66,9 +66,9 @@ pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
     if mint_pubkey.as_str() == SOL_MINT {
         feed_id = get_feed_id_from_hex(SOL_PRICE_ID)?;
     } else if mint_pubkey.as_str() == USDC_MINT {
-        feed_id = get_feed_id_from_hex(SOL_PRICE_ID)?;
+        feed_id = get_feed_id_from_hex(USDC_PRICE_ID)?;
     } else if mint_pubkey.as_str() == BONK_MINT {
-        feed_id = get_feed_id_from_hex(SOL_PRICE_ID)?;
+        feed_id = get_feed_id_from_hex(BONK_PRICE_ID)?;
     } else {
         return Err(BondError::TokenMintError.into());
     }
@@ -97,6 +97,10 @@ pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
     } else {
         deduction = 70;
     }
+    let bond_price = backing_price + diff * deduction / 100;
+
+    let num_token_to_mint = (bond_price - backing_price) * total_price as u64 / backing_price / bond_price; // should multiply the decimal of the staking token
+    msg!("token_to_mint{}", num_token_to_mint);
 
     escrow.creator = ctx.accounts.admin.key();
     escrow.token_mint = ctx.accounts.token_mint_address.key();
