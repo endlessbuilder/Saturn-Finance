@@ -23,5 +23,9 @@ pub mod saturn_v1 {
     pub fn apply_bond(ctx: Context<ApplyBond>) -> Result<()> {
         instructions::apply_bond::handle(ctx)        
     }
+
+    pub fn finish_bond(ctx: Context<FinishBond>) -> Result<()> {
+        instructions::finish_bond::handle(ctx)        
+    }
 }
 
