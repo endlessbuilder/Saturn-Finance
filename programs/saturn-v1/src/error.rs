@@ -13,5 +13,7 @@ pub enum BondError {
     #[msg("Get Deduction Error")]
     DeductionError,
     #[msg("Treasury Fund Error")]
-    TreasuryFundError
+    TreasuryFundError,
+    #[msg("Collateral Not in List Error")]
+    CollateralError
 }
