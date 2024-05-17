@@ -7,6 +7,7 @@ use crate::{
     account::{Escrow, Treasury},
     constants::*,
     error::*,
+    utils::*
 };
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -49,6 +50,7 @@ pub struct ApplyBond<'info> {
 
     /// CHECK: This is not dangerous because we don't read or write from this account
     pub token_mint_address: AccountInfo<'info>,
+    pub system_program: Program<'info, System>,
 }
 
 pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
@@ -65,6 +67,12 @@ pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
     //     get_feed_id_from_hex("0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43")?;
     if mint_pubkey.as_str() == SOL_MINT {
         feed_id = get_feed_id_from_hex(SOL_PRICE_ID)?;
+        sol_transfer_user(
+            src_account_info.to_account_info(),
+            dest_account_info.to_account_info(),
+            ctx.accounts.system_program.to_account_info(),
+            args.token_amount,
+        )?;
     } else if mint_pubkey.as_str() == USDC_MINT {
         feed_id = get_feed_id_from_hex(USDC_PRICE_ID)?;
     } else if mint_pubkey.as_str() == BONK_MINT {
@@ -100,10 +108,13 @@ pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
     let bond_price = backing_price + diff * deduction / 100;
 
     let num_token_to_mint = (bond_price - backing_price) * total_price as u64 / backing_price / bond_price; // should multiply the decimal of the staking token
+    let num_token_to_redeem = backing_price * total_price as u64 / backing_price / bond_price; // should multiply the decimal of the staking token
+
     msg!("token_to_mint{}", num_token_to_mint);
 
     escrow.creator = ctx.accounts.admin.key();
     escrow.token_mint = ctx.accounts.token_mint_address.key();
     escrow.token_amount = args.token_amount;
+    escrow.num_token_to_redeem = num_token_to_redeem;
     Ok(())
 }

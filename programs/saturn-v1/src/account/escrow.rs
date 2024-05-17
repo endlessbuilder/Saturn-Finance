@@ -8,4 +8,5 @@ pub struct Escrow {
     pub token_amount: u64,                  //8
     pub start_timestamp: i64,               //8
     pub end_timestamp: i64,                 //8    
+    pub num_token_to_redeem: u64            //8
 }
