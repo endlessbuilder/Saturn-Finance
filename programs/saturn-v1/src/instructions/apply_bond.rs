@@ -79,6 +79,8 @@ pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
         price.exponent
     );
 
+    let total_price = price.price * args.token_amount as i64;
+
     escrow.creator = ctx.accounts.admin.key();
     escrow.token_mint = ctx.accounts.token_mint_address.key();
     escrow.token_amount = args.token_amount;
