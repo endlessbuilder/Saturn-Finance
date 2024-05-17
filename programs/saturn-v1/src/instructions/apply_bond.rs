@@ -1,13 +1,18 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer};
-use solana_program::pubkey::Pubkey;
 use pyth_solana_receiver_sdk::price_update::{get_feed_id_from_hex, PriceUpdateV2};
+use solana_program::pubkey::Pubkey;
 
-use crate::{constants::*, error::*, account::{Escrow, Treasury}};
+use crate::{
+    account::{Escrow, Treasury},
+    constants::*,
+    error::*,
+};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct ApplyBondArgs {
-    pub token_amount: u64    
+    pub token_amount: u64,
+    pub spot_price: u64,
 }
 
 #[derive(Accounts)]
@@ -48,6 +53,7 @@ pub struct ApplyBond<'info> {
 
 pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
     let mut escrow = ctx.accounts.escrow.load_init()?;
+    let mut treasury = &mut ctx.accounts.treasury;
     msg!("apply_bond");
     let src_account_info = &mut &ctx.accounts.creater_token_account;
     let dest_account_info = &mut &ctx.accounts.dest_token_account;
@@ -56,22 +62,19 @@ pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
     let price_update = &mut ctx.accounts.price_update;
     let maximum_age: u64 = 30;
     let feed_id: [u8; 32];
-    //     get_feed_id_from_hex("0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43")?;    
+    //     get_feed_id_from_hex("0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43")?;
     if mint_pubkey.as_str() == SOL_MINT {
         feed_id = get_feed_id_from_hex(SOL_PRICE_ID)?;
-    }
-    else if mint_pubkey.as_str() == USDC_MINT {
+    } else if mint_pubkey.as_str() == USDC_MINT {
         feed_id = get_feed_id_from_hex(SOL_PRICE_ID)?;
-    }
-    else if mint_pubkey.as_str() == BONK_MINT {
+    } else if mint_pubkey.as_str() == BONK_MINT {
         feed_id = get_feed_id_from_hex(SOL_PRICE_ID)?;
-    }
-    else {
+    } else {
         return Err(BondError::TokenMintError.into());
-    }        
-            
+    }
+
     let price = price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &feed_id)?;
-    
+
     msg!(
         "The price is ({} ± {}) * 10^{}",
         price.price,
@@ -80,6 +83,20 @@ pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
     );
 
     let total_price = price.price * args.token_amount as i64;
+    let backing_price = treasury.treasury_value / treasury.token_minted;
+    let spot_price = args.spot_price;
+
+    let diff = (spot_price - backing_price) * 100 / backing_price;
+    let deduction;
+    if diff < 25 {
+        deduction = 20;
+    } else if diff < 50 {
+        deduction = 35;
+    } else if diff < 100 {
+        deduction = 50;
+    } else {
+        deduction = 70;
+    }
 
     escrow.creator = ctx.accounts.admin.key();
     escrow.token_mint = ctx.accounts.token_mint_address.key();
