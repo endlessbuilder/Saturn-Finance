@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, Token, TokenAccount, Transfer};
+use anchor_spl::token::{self, mint_to, Token, TokenAccount, Transfer};
 use pyth_solana_receiver_sdk::price_update::{get_feed_id_from_hex, PriceUpdateV2};
 use solana_program::pubkey::Pubkey;
 
@@ -7,7 +7,7 @@ use crate::{
     account::{Escrow, Treasury},
     constants::*,
     error::*,
-    utils::*
+    utils::*,
 };
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
@@ -59,6 +59,7 @@ pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
     msg!("apply_bond");
     let src_account_info = &mut &ctx.accounts.creater_token_account;
     let dest_account_info = &mut &ctx.accounts.dest_token_account;
+    let token_program = &mut &ctx.accounts.token_program;
     let mint_pubkey = &mut &ctx.accounts.token_mint_address.key().to_string();
 
     let price_update = &mut ctx.accounts.price_update;
@@ -75,8 +76,26 @@ pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
         )?;
     } else if mint_pubkey.as_str() == USDC_MINT {
         feed_id = get_feed_id_from_hex(USDC_PRICE_ID)?;
+        let cpi_accounts = Transfer {
+            from: src_account_info.to_account_info().clone(),
+            to: dest_account_info.to_account_info().clone(),
+            authority: ctx.accounts.admin.to_account_info().clone(),
+        };
+        token::transfer(
+            CpiContext::new(token_program.clone().to_account_info(), cpi_accounts),
+            args.token_amount,
+        )?;
     } else if mint_pubkey.as_str() == BONK_MINT {
         feed_id = get_feed_id_from_hex(BONK_PRICE_ID)?;
+        let cpi_accounts = Transfer {
+            from: src_account_info.to_account_info().clone(),
+            to: dest_account_info.to_account_info().clone(),
+            authority: ctx.accounts.admin.to_account_info().clone(),
+        };
+        token::transfer(
+            CpiContext::new(token_program.clone().to_account_info(), cpi_accounts),
+            args.token_amount,
+        )?;
     } else {
         return Err(BondError::TokenMintError.into());
     }
@@ -107,12 +126,13 @@ pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
     }
     let bond_price = backing_price + diff * deduction / 100;
 
-    let num_token_to_mint = (bond_price - backing_price) * total_price as u64 / backing_price / bond_price; // should multiply the decimal of the staking token
+    let num_token_to_mint =
+        (bond_price - backing_price) * total_price as u64 / backing_price / bond_price; // should multiply the decimal of the staking token
     let num_token_to_redeem = backing_price * total_price as u64 / backing_price / bond_price; // should multiply the decimal of the staking token
 
     msg!("token_to_mint{}", num_token_to_mint);
 
-    escrow.creator = ctx.accounts.admin.key(); 
+    escrow.creator = ctx.accounts.admin.key();
     escrow.token_mint = ctx.accounts.token_mint_address.key();
     escrow.token_amount = args.token_amount;
     escrow.num_token_to_redeem = num_token_to_redeem;
