@@ -1,5 +1,5 @@
 use anchor_lang::prelude::*;
-use anchor_spl::token::{self, mint_to, Token, TokenAccount, Transfer};
+use anchor_spl::token::{self, mint_to, MintTo, Token, TokenAccount, Transfer};
 use pyth_solana_receiver_sdk::price_update::{get_feed_id_from_hex, PriceUpdateV2};
 use solana_program::pubkey::Pubkey;
 
@@ -50,6 +50,8 @@ pub struct ApplyBond<'info> {
 
     /// CHECK: This is not dangerous because we don't read or write from this account
     pub token_mint_address: AccountInfo<'info>,
+    pub stf_token_mint: AccountInfo<'info>,
+    pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
@@ -60,9 +62,13 @@ pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
     let src_account_info = &mut &ctx.accounts.creater_token_account;
     let dest_account_info = &mut &ctx.accounts.dest_token_account;
     let token_program = &mut &ctx.accounts.token_program;
+    let stf_token_mint = &mut &ctx.accounts.stf_token_mint;
     let mint_pubkey = &mut &ctx.accounts.token_mint_address.key().to_string();
 
     let price_update = &mut ctx.accounts.price_update;
+
+    assert!(stf_token_mint.key().to_string().as_str() == STF_MINT, "STF_TOKEN_MINT ERROR");
+
     let maximum_age: u64 = 30;
     let feed_id: [u8; 32];
     //     get_feed_id_from_hex("0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43")?;
@@ -130,11 +136,25 @@ pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
         (bond_price - backing_price) * total_price as u64 / backing_price / bond_price; // should multiply the decimal of the staking token
     let num_token_to_redeem = backing_price * total_price as u64 / backing_price / bond_price; // should multiply the decimal of the staking token
 
-    msg!("token_to_mint{}", num_token_to_mint);
+    let cpi_accounts = MintTo {
+        mint: stf_token_mint.to_account_info().clone(),
+        to: dest_account_info.to_account_info().clone(),
+        authority: ctx.accounts.admin.to_account_info().clone(),
+    };
+    token::mint_to(
+        CpiContext::new(token_program.clone().to_account_info(), cpi_accounts),
+        args.token_amount,
+    )?;
+    
+    treasury.token_minted += num_token_to_mint;
+    treasury.sstf += num_token_to_mint / treasury.token_staked;
 
+    let timestamp = Clock::get()?.unix_timestamp;
     escrow.creator = ctx.accounts.admin.key();
     escrow.token_mint = ctx.accounts.token_mint_address.key();
     escrow.token_amount = args.token_amount;
     escrow.num_token_to_redeem = num_token_to_redeem;
+    escrow.start_timestamp = timestamp;
+    escrow.end_timestamp = timestamp + 60 * 60 * 24 * 14; // 14days
     Ok(())
 }
