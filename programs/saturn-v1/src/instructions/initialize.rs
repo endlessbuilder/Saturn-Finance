@@ -26,5 +26,9 @@ pub struct Initialize<'info> {
 pub fn handle(ctx: Context<Initialize>) -> Result<()> {
     let treasury = &mut ctx.accounts.treasury;
     treasury.treasury = ctx.accounts.admin.key();
+    treasury.sstf = 0;
+    treasury.token_minted = 100;
+    treasury.treasury_value = 1000;
+    treasury.token_staked = 100;    
     Ok(())
 }

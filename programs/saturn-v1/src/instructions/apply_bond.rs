@@ -50,6 +50,7 @@ pub struct ApplyBond<'info> {
 
     /// CHECK: This is not dangerous because we don't read or write from this account
     pub token_mint_address: AccountInfo<'info>,
+    /// CHECK: This is not dangerous because we don't read or write from this account
     pub stf_token_mint: AccountInfo<'info>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
