@@ -112,7 +112,7 @@ pub fn handle(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
 
     msg!("token_to_mint{}", num_token_to_mint);
 
-    escrow.creator = ctx.accounts.admin.key();
+    escrow.creator = ctx.accounts.admin.key(); 
     escrow.token_mint = ctx.accounts.token_mint_address.key();
     escrow.token_amount = args.token_amount;
     escrow.num_token_to_redeem = num_token_to_redeem;
