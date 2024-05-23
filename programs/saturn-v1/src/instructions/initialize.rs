@@ -16,7 +16,7 @@ pub struct Initialize<'info> {
         seeds = [TREASURY_SEED.as_ref()],
         bump,
         payer = admin,
-        space = 40
+        space = 72
     )]
     pub treasury: Account<'info, Treasury>,
 
@@ -29,6 +29,6 @@ pub fn handle(ctx: Context<Initialize>) -> Result<()> {
     treasury.sstf = 0;
     treasury.token_minted = 100;
     treasury.treasury_value = 1000;
-    treasury.token_staked = 100;    
+    treasury.token_staked = 100;        
     Ok(())
 }
