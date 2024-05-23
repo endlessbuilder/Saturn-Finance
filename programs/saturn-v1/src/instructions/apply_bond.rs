@@ -134,9 +134,9 @@ pub fn handle(
         price.exponent
     );
 
-    let total_price = price.price * token_amount as i64;
-    let backing_price = treasury.treasury_value / treasury.token_minted;
-    let spot_price = spot_price;
+    let total_price = price.price * token_amount as i64; // 10 ** token_decimal 
+    let backing_price = treasury.treasury_value / treasury.token_minted; // this is per lamport stf
+    let spot_price = spot_price;    
 
     let diff = (spot_price - backing_price) * 100 / backing_price;
     let deduction;
