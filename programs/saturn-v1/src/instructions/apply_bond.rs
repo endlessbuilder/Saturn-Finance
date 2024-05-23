@@ -157,6 +157,8 @@ pub fn handle(
 
     treasury.token_minted += num_token_to_mint;
     treasury.sstf += num_token_to_mint / treasury.token_staked;
+    //
+    treasury.treasury_value += total_price;
 
     let cpi_accounts = MintTo {
         mint: stf_token_mint.to_account_info().clone(),
@@ -172,7 +174,7 @@ pub fn handle(
             cpi_accounts,
             signer,
         ),
-        token_amount,
+        num_token_to_mint,
     )?;
 
     let timestamp = Clock::get()?.unix_timestamp;

@@ -18,11 +18,28 @@ export const RPC_URL = "https://api.devnet.solana.com";
 export const TREASURY_SEED = "global-treasury-2";
 export const EMPTY_USER = "11111111111111111111111111111111";
 
-export const PROGRAM_ID = "GSQceBxFJCJBd4Wo5enf9GB4Qr1nXcXjfATbMR8EUqmK";
-export const STF_TOKEN = "GN67qmXe4sv63MxnP2StqJTYNr778MSAWAuiLodXJDbs";
+export const PROGRAM_ID = "HqWuLVZLBZ5MbDNvLqieWiERNNmpTBG7q5t99CtmGYQa";
+export const STF_TOKEN = "3HWcdN9fxD3ytB7L2FG5c3WJXQin3QFUNZoESCQriLD7";
 export const ESCROW_SIZE = 112;
 export const DECIMALS = 100;
 export const DAY = 3600 * 24 * 1000
+
+
+// Set the initial program and provider
+let program: Program = null;
+let provider: anchor.Provider = null;
+
+// Address of the deployed program.
+let programId = new anchor.web3.PublicKey(PROGRAM_ID);
+
+anchor.setProvider(anchor.AnchorProvider.local(web3.clusterApiUrl("devnet")));
+provider = anchor.getProvider();
+
+let solConnection = anchor.getProvider().connection;
+
+// Generate the program client from IDL.
+program = new anchor.Program(SaturnIDL as anchor.Idl, programId);
+console.log('ProgramId: ', program.programId.toBase58());
 
 
 const main = async () => {
@@ -181,7 +198,7 @@ export const createBondTx = async (
     let escrow;
     let i;
 
-    for (i = 8; i > 0; i--) {
+    for (i = 11; i > 0; i--) {
         escrow = await PublicKey.createWithSeed(
             userAddress,
             escrow_mint.toBase58().slice(0, i),
@@ -238,7 +255,7 @@ export const createBondTx = async (
             spot_price: new anchor.BN(15),      // replace with the spot price
         }
 
-        const ix2 = await program.instruction.applyBond(new anchor.BN(100 * 10 ** 2), new anchor.BN(15), bump, 
+        const ix2 = await program.instruction.applyBond(new anchor.BN(tokenAmount), new anchor.BN(spot_price), bump, 
             {//Dpw1EAVrSB1ibxiDQyTAW6Zip3J4Btk2x4SgApQCeFbX
                 accounts: {
                     admin: userAddress,
@@ -548,21 +565,5 @@ export const createAssociatedTokenAccountInstruction = (
         data: Buffer.from([]),
     });
 }
-
-// Set the initial program and provider
-let program: Program = null;
-let provider: anchor.Provider = null;
-
-// Address of the deployed program.
-let programId = new anchor.web3.PublicKey(PROGRAM_ID);
-
-anchor.setProvider(anchor.AnchorProvider.local(web3.clusterApiUrl("devnet")));
-provider = anchor.getProvider();
-
-let solConnection = anchor.getProvider().connection;
-
-// Generate the program client from IDL.
-program = new anchor.Program(SaturnIDL as anchor.Idl, programId);
-console.log('ProgramId: ', program.programId.toBase58());
 
 main();
