@@ -5,7 +5,7 @@ seeds = false
 skip-lint = false
 
 [programs.devnet]
-saturn_v1 = "5mWSmPkAEesVq134hxA1gqFiwDXLArUacKXfmbmXwBBt"
+saturn_v1 = "GSQceBxFJCJBd4Wo5enf9GB4Qr1nXcXjfATbMR8EUqmK"
 
 [registry]
 url = "https://api.apr.dev"

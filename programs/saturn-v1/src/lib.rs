@@ -11,7 +11,7 @@ mod utils;
 use account::*;
 use instructions::*;
 
-declare_id!("5mWSmPkAEesVq134hxA1gqFiwDXLArUacKXfmbmXwBBt");
+declare_id!("BfgBHPt6wALzb5JK3x95RfuJHZAA658pqRswutqWMLzv");
 
 #[program]
 pub mod saturn_v1 {
