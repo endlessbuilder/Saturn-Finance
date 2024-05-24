@@ -5,10 +5,12 @@ use crate::{
     error::*,
     utils::*
 };
-
+use anchor_spl::token::{self, Token, TokenAccount, Transfer};
+use solana_program::pubkey::Pubkey;
+use std::mem;
 
 #[derive(Accounts)]
-#[instruction(args: ApplyBondArgs)]
+
 pub struct StakeSTF<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
@@ -31,15 +33,15 @@ pub struct StakeSTF<'info> {
     pub treasury: Account<'info, Treasury>,
     #[account(
         mut,
-        constraint = creater_token_account.mint == *token_mint_address.to_account_info().key,
-        constraint = creater_token_account.owner == *user.key,
+        constraint = user_account_token.mint == *stf_token_mint.to_account_info().key,
+        constraint = user_account_token.owner == *user.key,
     )]
     pub user_account_token: Account<'info, TokenAccount>,
 
     #[account(
         mut,
-        constraint = dest_token_account.mint == *token_mint_address.to_account_info().key,
-        constraint = dest_token_account.owner == *treasury.to_account_info().key,
+        constraint = treasury_token_account.mint == *stf_token_mint.to_account_info().key,
+        constraint = treasury_token_account.owner == *treasury.to_account_info().key,
     )]
     pub treasury_token_account: Account<'info, TokenAccount>,
     /// CHECK: This is not dangerous because we don't read or write from this account
@@ -53,7 +55,7 @@ pub fn handle(ctx: Context<StakeSTF>, amount_to_stake: u64) -> Result<()> {
     let source_token_account = &mut &ctx.accounts.user_account_token;
     let dest_stf_account = &mut &ctx.accounts.treasury_token_account;
     let stf_token_mint = &mut &ctx.accounts.stf_token_mint;
-    let user = &mut ctx.account.user;
+    let user = &mut ctx.accounts.user;
     let personal_account = &mut ctx.accounts.user_program_account;
 
     assert!(
@@ -63,12 +65,12 @@ pub fn handle(ctx: Context<StakeSTF>, amount_to_stake: u64) -> Result<()> {
 
 
     // Transfer Tokens To Treasury 
-    let cpi_accounts = SplTransfer {
+    let cpi_accounts = Transfer {
         from: source_token_account.to_account_info().clone(),
         to: dest_stf_account.to_account_info().clone(),
         authority: user.to_account_info().clone(),
     };
-    let cpi_program = token_program.to_account_info();
+    let cpi_program = ctx.accounts.token_program.to_account_info();
     
     token::transfer(
         CpiContext::new(cpi_program, cpi_accounts),
