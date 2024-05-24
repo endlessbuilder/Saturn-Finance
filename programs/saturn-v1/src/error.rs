@@ -16,6 +16,12 @@ pub enum BondError {
     TreasuryFundError,
     #[msg("Collateral Not in List Error")]
     CollateralError,
+    #[msg("Bond Not finished")]
+    BondNotFinished,
+    #[msg("Not the Creator")]
+    CreatorError,
+    #[msg("Already Redeemed")]
+    AlreadyRedeem,
     #[msg("Not enough staked Saturn To Unstake")]
     UnstakingError
 }
