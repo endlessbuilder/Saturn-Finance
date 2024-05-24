@@ -15,5 +15,11 @@ pub enum BondError {
     #[msg("Treasury Fund Error")]
     TreasuryFundError,
     #[msg("Collateral Not in List Error")]
-    CollateralError
+    CollateralError,
+    #[msg("Bond Not finished")]
+    BondNotFinished,
+    #[msg("Not the Creator")]
+    CreatorError,
+    #[msg("Already Redeemed")]
+    AlreadyRedeem
 }
