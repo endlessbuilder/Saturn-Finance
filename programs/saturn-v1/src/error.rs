@@ -15,5 +15,7 @@ pub enum BondError {
     #[msg("Treasury Fund Error")]
     TreasuryFundError,
     #[msg("Collateral Not in List Error")]
-    CollateralError
+    CollateralError,
+    #[msg("Not enough staked Saturn To Unstake")]
+    UnstakingError
 }
