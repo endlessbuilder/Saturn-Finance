@@ -21,5 +21,8 @@ pub enum BondError {
     #[msg("Not the Creator")]
     CreatorError,
     #[msg("Already Redeemed")]
-    AlreadyRedeem
+    AlreadyRedeem,
+    #[msg("Not enough staked Saturn To Unstake")]
+    UnstakingError
 }
+
