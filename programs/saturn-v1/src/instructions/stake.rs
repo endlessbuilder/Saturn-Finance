@@ -79,7 +79,7 @@ pub fn handle(ctx: Context<StakeSTF>, amount_to_stake: u64) -> Result<()> {
     // Add STF
     let amount_to_transfer = amount_to_stake / treasury.staking_index;
     personal_account.total_staked_index  += amount_to_transfer;
-
+    treasury.token_staked += amount_to_transfer;
 
 
 

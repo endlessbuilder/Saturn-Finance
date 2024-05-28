@@ -70,7 +70,8 @@ pub fn handle(ctx: Context<UnStakeSTF>, amount_to_unstake: u64) -> Result<()> {
     );
     // Add STF
     let amount_to_transfer = amount_to_unstake * treasury.staking_index;
-    personal_account.total_staked_index  = amount_to_unstake;
+    personal_account.total_staked_index  -= amount_to_unstake;
+    treasury.token_staked -= amount_to_unstake;
 
     let accounts = TransferChecked {
         from: treasury_token_account.to_account_info(),
@@ -91,7 +92,7 @@ pub fn handle(ctx: Context<UnStakeSTF>, amount_to_unstake: u64) -> Result<()> {
         signer_seeds
     );
 
-    transfer_checked(ctx, amount_to_transfer, 9);
+    let _ = transfer_checked(ctx, amount_to_transfer, 9);
 
 
 

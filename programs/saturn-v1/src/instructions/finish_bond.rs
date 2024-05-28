@@ -37,7 +37,7 @@ pub struct FinishBond<'info> {
     pub token_program: Program<'info, Token>,
 }
 
-pub fn handle(ctx: Context<FinishBond>, global_bump: u8) -> Result<()> {
+pub fn handle(ctx: Context<FinishBond>) -> Result<()> {
     let timestamp = Clock::get()?.unix_timestamp;
     let escrow = &mut ctx.accounts.escrow.load_mut()?;
     let treasury = &mut ctx.accounts.treasury;
@@ -56,7 +56,7 @@ pub fn handle(ctx: Context<FinishBond>, global_bump: u8) -> Result<()> {
     }
 
     //Mint Token to Redeem to the creator
-    let seeds = &[TREASURY_SEED.as_bytes(), &[global_bump]];
+    let seeds = &[TREASURY_SEED.as_bytes(), &[ctx.bumps.treasury]];
     let signer = &[&seeds[..]];
     
     let cpi_accounts = MintTo {

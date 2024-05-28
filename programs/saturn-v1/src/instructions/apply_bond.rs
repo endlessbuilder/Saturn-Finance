@@ -69,7 +69,6 @@ pub fn handle(
     ctx: Context<ApplyBond>,
     token_amount: u64,
     spot_price: u64,
-    global_bump: u8,
 ) -> Result<()> {
     let mut escrow = ctx.accounts.escrow.load_init()?;
     let treasury = &mut ctx.accounts.treasury;
@@ -156,16 +155,16 @@ pub fn handle(
     let num_token_to_redeem = backing_price * total_price as u64 / backing_price / bond_price; // should multiply the decimal of the staking token
 
     treasury.token_minted += num_token_to_mint;
-    treasury.sstf += num_token_to_mint / treasury.token_staked;
+    treasury.staking_index += num_token_to_mint / treasury.token_staked;
     //
-    treasury.treasury_value += total_price;
+    treasury.treasury_value += total_price as u64;
 
     let cpi_accounts = MintTo {
         mint: stf_token_mint.to_account_info().clone(),
         to: dest_stf_account.to_account_info().clone(),
         authority: ctx.accounts.treasury.to_account_info().clone(),
     };
-    let seeds = &[TREASURY_SEED.as_bytes(), &[global_bump]];
+    let seeds = &[TREASURY_SEED.as_bytes(), &[ctx.bumps.treasury]];
     let signer = &[&seeds[..]];
     
     token::mint_to(

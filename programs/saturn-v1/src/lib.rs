@@ -23,7 +23,7 @@ pub mod saturn_v1 {
 
     // Create Bond and Pay 
     pub fn apply_bond(ctx: Context<ApplyBond>, args: ApplyBondArgs) -> Result<()> {
-        instructions::apply_bond::handle(ctx, args)        
+        instructions::apply_bond::handle(ctx, args.token_amount, args.spot_price)        
     }
 
     // Redeem Bond after period is over.
