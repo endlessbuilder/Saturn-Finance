@@ -19,6 +19,8 @@ import {
 import fetch from "node-fetch";
 import { IDL, SaturnV1 } from "../target/types/saturn_v_1";
 
+const TREASURY_SEED = "global-treasury-2";
+
 // Configure the client to use the local cluster.
 anchor.setProvider(anchor.AnchorProvider.env());
 
@@ -31,6 +33,14 @@ const jupiterProgramId = new PublicKey(
 const connection = program.provider.connection;
 const provider = program.provider;
 
+const findProgramAuthority = (): PublicKey => {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from(TREASURY_SEED)],
+    programId
+  )[0];
+};
+const programAuthority = findProgramAuthority();
+
 describe("saturn-v1", () => {
 
   it("jupiter swap to sol!", async () => {
@@ -42,7 +52,7 @@ describe("saturn-v1", () => {
     console.log({ quote });
 
     // Convert the Quote into a Swap instruction
-    const result = await getSwapIx(program.provider.publicKey, programWSOLAccount, quote);
+    const result = await getSwapIx(programAuthority, programWSOLAccount, quote);
 
     if ("error" in result) {
       console.log({ result });
@@ -65,151 +75,143 @@ describe("saturn-v1", () => {
 });
 
     
-  const findProgramAuthority = (): PublicKey => {
-    return PublicKey.findProgramAddressSync(
-      [Buffer.from("authority")],
-      programId
-    )[0];
-  };
-  const programAuthority = findProgramAuthority();
+const findProgramWSOLAccount = (): PublicKey => {
+  return PublicKey.findProgramAddressSync([Buffer.from("wsol")], programId)[0];
+};
+const programWSOLAccount = findProgramWSOLAccount();
 
-  const findProgramWSOLAccount = (): PublicKey => {
-    return PublicKey.findProgramAddressSync([Buffer.from("wsol")], programId)[0];
-  };
-  const programWSOLAccount = findProgramWSOLAccount();
+const findAssociatedTokenAddress = ({
+  walletAddress,
+  tokenMintAddress,
+}: {
+  walletAddress: PublicKey;
+  tokenMintAddress: PublicKey;
+}): PublicKey => {
+  return PublicKey.findProgramAddressSync(
+    [
+      walletAddress.toBuffer(),
+      TOKEN_PROGRAM_ID.toBuffer(),
+      tokenMintAddress.toBuffer(),
+    ],
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  )[0];
+};
 
-  const findAssociatedTokenAddress = ({
-    walletAddress,
-    tokenMintAddress,
-  }: {
-    walletAddress: PublicKey;
-    tokenMintAddress: PublicKey;
-  }): PublicKey => {
-    return PublicKey.findProgramAddressSync(
-      [
-        walletAddress.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        tokenMintAddress.toBuffer(),
-      ],
-      ASSOCIATED_TOKEN_PROGRAM_ID
-    )[0];
-  };
-
-  const getAdressLookupTableAccounts = async (
-    keys: string[]
-  ): Promise<AddressLookupTableAccount[]> => {
-    const addressLookupTableAccountInfos =
-      await connection.getMultipleAccountsInfo(
-        keys.map((key) => new PublicKey(key))
-      );
-
-    return addressLookupTableAccountInfos.reduce((acc, accountInfo, index) => {
-      const addressLookupTableAddress = keys[index];
-      if (accountInfo) {
-        const addressLookupTableAccount = new AddressLookupTableAccount({
-          key: new PublicKey(addressLookupTableAddress),
-          state: AddressLookupTableAccount.deserialize(accountInfo.data),
-        });
-        acc.push(addressLookupTableAccount);
-      }
-
-      return acc;
-    }, new Array<AddressLookupTableAccount>());
-  };
-
-  const instructionDataToTransactionInstruction = (
-    instructionPayload: any
-  ) => {
-    if (instructionPayload === null) {
-      return null;
-    }
-
-    return new TransactionInstruction({
-      programId: new PublicKey(instructionPayload.programId),
-      keys: instructionPayload.accounts.map((key) => ({
-        pubkey: new PublicKey(key.pubkey),
-        isSigner: key.isSigner,
-        isWritable: key.isWritable,
-      })),
-      data: Buffer.from(instructionPayload.data, "base64"),
-    });
-  };
-
-  const API_ENDPOINT = "https://quote-api.jup.ag/v6";
-
-  const getQuote = async (
-    fromMint: PublicKey,
-    toMint: PublicKey,
-    amount: number
-  ) => {
-    return fetch(
-      `${API_ENDPOINT}/quote?outputMint=${toMint.toBase58()}&inputMint=${fromMint.toBase58()}&amount=${amount}&slippage=0.5&onlyDirectRoutes=true`
-    ).then((response) => response.json());
-  };
-
-  const getSwapIx = async (
-    user: PublicKey,
-    outputAccount: PublicKey,
-    quote: any
-  ) => {
-    const data = {
-      quoteResponse: quote,
-      userPublicKey: user.toBase58(),
-      destinationTokenAccount: outputAccount.toBase58(),
-    };
-    return fetch(`${API_ENDPOINT}/swap-instructions`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    }).then((response) => response.json());
-  };
-
-  const swapToSol = async (
-    computeBudgetPayloads: any[],
-    swapPayload: any,
-    addressLookupTableAddresses: string[]
-  ) => {
-    let swapInstruction = instructionDataToTransactionInstruction(swapPayload);
-
-    const instructions = [
-      ...computeBudgetPayloads.map(instructionDataToTransactionInstruction),
-      await program.methods
-        .swapToSol(swapInstruction.data)
-        .accounts({
-          programAuthority: programAuthority,
-          programWsolAccount: programWSOLAccount,
-          userAccount: program.provider.publicKey,
-          solMint: NATIVE_MINT,
-          jupiterProgram: jupiterProgramId,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-        })
-        .remainingAccounts(swapInstruction.keys)
-        .instruction(),
-    ];
-
-    const blockhash = (await connection.getLatestBlockhash()).blockhash;
-
-    // If you want, you can add more lookup table accounts here
-    const addressLookupTableAccounts = await getAdressLookupTableAccounts(
-      addressLookupTableAddresses
+const getAdressLookupTableAccounts = async (
+  keys: string[]
+): Promise<AddressLookupTableAccount[]> => {
+  const addressLookupTableAccountInfos =
+    await connection.getMultipleAccountsInfo(
+      keys.map((key) => new PublicKey(key))
     );
-    const messageV0 = new TransactionMessage({
-      payerKey: program.provider.publicKey,
-      recentBlockhash: blockhash,
-      instructions,
-    }).compileToV0Message(addressLookupTableAccounts);
-    const transaction = new VersionedTransaction(messageV0);
 
-    try {
-      await provider.simulate(transaction, []);
-
-      const txID = await provider.sendAndConfirm(transaction, []);
-      console.log({ txID });
-    } catch (e) {
-      console.log({ simulationResponse: e.simulationResponse });
+  return addressLookupTableAccountInfos.reduce((acc, accountInfo, index) => {
+    const addressLookupTableAddress = keys[index];
+    if (accountInfo) {
+      const addressLookupTableAccount = new AddressLookupTableAccount({
+        key: new PublicKey(addressLookupTableAddress),
+        state: AddressLookupTableAccount.deserialize(accountInfo.data),
+      });
+      acc.push(addressLookupTableAccount);
     }
+
+    return acc;
+  }, new Array<AddressLookupTableAccount>());
+};
+
+const instructionDataToTransactionInstruction = (
+  instructionPayload: any
+) => {
+  if (instructionPayload === null) {
+    return null;
+  }
+
+  return new TransactionInstruction({
+    programId: new PublicKey(instructionPayload.programId),
+    keys: instructionPayload.accounts.map((key) => ({
+      pubkey: new PublicKey(key.pubkey),
+      isSigner: key.isSigner,
+      isWritable: key.isWritable,
+    })),
+    data: Buffer.from(instructionPayload.data, "base64"),
+  });
+};
+
+const API_ENDPOINT = "https://quote-api.jup.ag/v6";
+
+const getQuote = async (
+  fromMint: PublicKey,
+  toMint: PublicKey,
+  amount: number
+) => {
+  return fetch(
+    `${API_ENDPOINT}/quote?outputMint=${toMint.toBase58()}&inputMint=${fromMint.toBase58()}&amount=${amount}&slippage=0.5&onlyDirectRoutes=true`
+  ).then((response) => response.json());
+};
+
+const getSwapIx = async (
+  user: PublicKey,
+  outputAccount: PublicKey,
+  quote: any
+) => {
+  const data = {
+    quoteResponse: quote,
+    userPublicKey: user.toBase58(),
+    destinationTokenAccount: outputAccount.toBase58(),
   };
+  return fetch(`${API_ENDPOINT}/swap-instructions`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(data),
+  }).then((response) => response.json());
+};
+
+const swapToSol = async (
+  computeBudgetPayloads: any[],
+  swapPayload: any,
+  addressLookupTableAddresses: string[]
+) => {
+  let swapInstruction = instructionDataToTransactionInstruction(swapPayload);
+
+  const instructions = [
+    ...computeBudgetPayloads.map(instructionDataToTransactionInstruction),
+    await program.methods
+      .swapToSol(swapInstruction.data)
+      .accounts({
+        programAuthority: programAuthority,
+        programWsolAccount: programWSOLAccount,
+        userAccount: programAuthority,
+        solMint: NATIVE_MINT,
+        jupiterProgram: jupiterProgramId,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+      })
+      .remainingAccounts(swapInstruction.keys)
+      .instruction(),
+  ];
+
+  const blockhash = (await connection.getLatestBlockhash()).blockhash;
+
+  // If you want, you can add more lookup table accounts here
+  const addressLookupTableAccounts = await getAdressLookupTableAccounts(
+    addressLookupTableAddresses
+  );
+  const messageV0 = new TransactionMessage({
+    payerKey: programAuthority,
+    recentBlockhash: blockhash,
+    instructions,
+  }).compileToV0Message(addressLookupTableAccounts);
+  const transaction = new VersionedTransaction(messageV0);
+
+  try {
+    await provider.simulate(transaction, []);
+
+    const txID = await provider.sendAndConfirm(transaction, []);
+    console.log({ txID });
+  } catch (e) {
+    console.log({ simulationResponse: e.simulationResponse });
+  }
+};
