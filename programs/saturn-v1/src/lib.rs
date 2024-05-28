@@ -14,7 +14,7 @@ use instructions::*;
 declare_id!("5mWSmPkAEesVq134hxA1gqFiwDXLArUacKXfmbmXwBBt");
 
 #[program]
-pub mod saturn_v1 {
+pub mod saturn_v_1 {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
