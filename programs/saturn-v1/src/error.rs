@@ -23,6 +23,8 @@ pub enum BondError {
     #[msg("Already Redeemed")]
     AlreadyRedeem,
     #[msg("Not enough staked Saturn To Unstake")]
-    UnstakingError
+    UnstakingError,
+    #[msg("IncorrectOwner")]
+    IncorrectOwner
 }
 

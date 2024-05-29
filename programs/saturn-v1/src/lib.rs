@@ -14,7 +14,7 @@ use instructions::*;
 declare_id!("5mWSmPkAEesVq134hxA1gqFiwDXLArUacKXfmbmXwBBt");
 
 #[program]
-pub mod saturn_v1 {
+pub mod saturn_v_1 {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -39,6 +39,10 @@ pub mod saturn_v1 {
     // Amount to unstake in staking index not in STF token
     pub fn unstake_stf(ctx: Context<UnStakeSTF>, amount_to_unstake: u64) -> Result<()> {
         instructions::unstake::handle(ctx, amount_to_unstake)        
+    }
+
+    pub fn swap_to_sol(ctx: Context<SwapToSOL>, data: Vec<u8>) -> Result<()> {
+        instructions::swap_to_sol::handle(ctx, data)
     }
 }
 
