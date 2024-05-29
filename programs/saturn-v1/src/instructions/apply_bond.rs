@@ -93,8 +93,8 @@ pub fn handle(
     if mint_pubkey.as_str() == SOL_MINT {
         feed_id = get_feed_id_from_hex(SOL_PRICE_ID)?;
         sol_transfer_user(
-            src_account_info.to_account_info(),
-            dest_account_info.to_account_info(),
+            admin.to_account_info(),
+            treasury.to_account_info(),
             ctx.accounts.system_program.to_account_info(),
             token_amount,
         )?;
