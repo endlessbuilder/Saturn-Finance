@@ -71,6 +71,7 @@ pub fn handle(
     spot_price: u64,
 ) -> Result<()> {
     let mut escrow = ctx.accounts.escrow.load_init()?;
+    let admin = &mut &ctx.accounts.admin;
     let treasury = &mut ctx.accounts.treasury;
     msg!("apply_bond");
     let src_account_info = &mut &ctx.accounts.creater_token_account;
