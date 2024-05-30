@@ -4,11 +4,13 @@ import { SaturnV1 } from "../target/types/saturn_v_1";
 import {
   PublicKey,
   Transaction,
+  Connection,
   AddressLookupTableAccount,
   TransactionInstruction,
   SystemProgram,
   TransactionMessage,
   VersionedTransaction,
+  LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
 import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import {
@@ -17,13 +19,15 @@ import {
   NATIVE_MINT,
 } from "@solana/spl-token";
 import fetch from "node-fetch";
+import { assert } from "chai";
 
 const RPC_URL = "https://api.devnet.solana.com";
 
 const TREASURY_SEED = "global-treasury-2";
 const EMPTY_USER = "11111111111111111111111111111111";
+const PERSONAL_SEED = "personal-saturn";
 
-const PROGRAM_ID = "HqWuLVZLBZ5MbDNvLqieWiERNNmpTBG7q5t99CtmGYQa";
+// const PROGRAM_ID = "HqWuLVZLBZ5MbDNvLqieWiERNNmpTBG7q5t99CtmGYQa";
 const STF_TOKEN = "3HWcdN9fxD3ytB7L2FG5c3WJXQin3QFUNZoESCQriLD7";
 const USDC_TOKEN = "9cmYPgxT1wGP6ySgSDHCmTrLYzeDp1iVssy4grjdjDyQ";
 
@@ -39,14 +43,31 @@ const provider = program.provider;
 const connection = program.provider.connection;
 
 const programId = program.programId;
+console.log(">>> programId : ", programId);
+
 const jupiterProgramId = new PublicKey(
   "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
 );
+
+const user = anchor.web3.Keypair.generate();
+console.log(">>> create user publickey : ", user.publicKey.toBase58());
+/*
+let token_airdrop = await provider.connection.requestAirdrop(user.publicKey,
+  10 * LAMPORTS_PER_SOL);
+
+const latestBlockHash = await provider.connection.getLatestBlockhash();
+await provider.connection.confirmTransaction({
+  blockhash: latestBlockHash.blockhash,
+  lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+  signature: token_airdrop,
+});
+*/
 
 // ### initializing project test scenario ###
 describe("# test scenario - initialize project", () => {
   //test initialize project
   it("initialize the project", async () => {
+    //here, teasury admin is provider wallet
     const ix = await program.methods.initialize().accounts({
       admin: provider.publicKey,
       treasury: treasuryAuthority,
@@ -59,6 +80,7 @@ describe("# test scenario - initialize project", () => {
     try {
       const txId = await provider.sendAndConfirm(tx, [], {
         commitment: "confirmed",
+        skipPreflight: true
       });
 
       console.log(">>> initialize project transaction = ", txId);
@@ -66,9 +88,13 @@ describe("# test scenario - initialize project", () => {
       console.log(error);
     };
 
+    const treasruyAccount = await program.account.treasury.fetch(treasuryAuthority);
+    assert.equal(treasruyAccount.treasuryAdmin.toBase58(), provider.publicKey.toBase58());
+
   });
 });
 
+/*
 // ### bond test scenario ###
 describe("# test scenario - bond", () => {
   // test create bond
@@ -273,7 +299,6 @@ describe("# test scenario - bond", () => {
   })
 })
 
-
 // ### jupiter swap test scenario ###
 describe("# test scenario - jupiter swap to sol", () => {
   //test jupiter swap
@@ -308,14 +333,18 @@ describe("# test scenario - jupiter swap to sol", () => {
   })
 
 });
-
+*/
 // ### staking & unstaking STF test scenario ###
-describe("# test scenario - skaking & unstaking SNF", () => {
+describe("# test scenario - staking & unstaking SNF", () => {
 
-  let userAccountToken: anchor.web3.PublicKey, treasuryTokenAccount: anchor.web3.PublicKey;
-  it("setup", async () => {
-    userAccountToken = await getAssociatedTokenAccount(provider.publicKey, new PublicKey(STF_TOKEN));
+  let userTokenAccount: anchor.web3.PublicKey;
+  let treasuryTokenAccount: anchor.web3.PublicKey;
+
+  it("setup for staking & unstaking", async () => {
+
+    userTokenAccount = await getAssociatedTokenAccount(user.publicKey, new PublicKey(STF_TOKEN));
     treasuryTokenAccount = await getAssociatedTokenAccount(treasuryAuthority, new PublicKey(STF_TOKEN));
+
   });
 
   // test staking SNF
@@ -323,29 +352,33 @@ describe("# test scenario - skaking & unstaking SNF", () => {
     let amountToStake = new anchor.BN(10 * 10 ** 2);
     const ix = await program.methods.stakeStf(amountToStake)
       .accounts({
-        user: provider.publicKey,
-        userProgramAccount: program.programId,
+        user: user.publicKey,
+        userStakeAccount: userStakeAccount,
         treasury: treasuryAuthority,
-        userAccountToken: userAccountToken,
+        userTokenAccount: userTokenAccount,
         treasuryTokenAccount: treasuryTokenAccount,
         stfTokenMint: new PublicKey(STF_TOKEN),
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId
-      }).instruction();
+      })
+      .instruction();
 
     let tx = new Transaction();
     tx.add(ix);
     // console.log(">>> stake SNF tx : \n", tx);
 
     try {
-      const txId = await provider.sendAndConfirm(tx, [], {
-        commitment: "confirmed"
+      const txId = await provider.sendAndConfirm(tx, [user], {
+        commitment: "confirmed",
+        skipPreflight: true
       });
 
       console.log(">>> staking STF transaction = ", txId);
     } catch (error) {
       console.log(error);
     };
+
+
 
   });
 
@@ -354,10 +387,10 @@ describe("# test scenario - skaking & unstaking SNF", () => {
     let amountToUnstake = new anchor.BN(10 * 10 ** 2);
     const ix = await program.methods.unstakeStf(amountToUnstake)
       .accounts({
-        user: provider.publicKey,
-        userProgramAccount: program.programId,
+        user: user.publicKey,
+        userStakeAccount: userStakeAccount,
         treasury: treasuryAuthority,
-        userAccountToken: userAccountToken,
+        userTokenAccount: userTokenAccount,
         treasuryTokenAccount: treasuryTokenAccount,
         stfTokenMint: new PublicKey(STF_TOKEN),
         tokenProgram: TOKEN_PROGRAM_ID,
@@ -369,8 +402,9 @@ describe("# test scenario - skaking & unstaking SNF", () => {
     // console.log(">>> unstake SNF tx : \n", tx);
 
     try {
-      const txId = await provider.sendAndConfirm(tx, [], {
-        commitment: "confirmed"
+      const txId = await provider.sendAndConfirm(tx, [user], {
+        commitment: "confirmed",
+        skipPreflight: true
       });
 
       console.log(">>> unstaking STF transaction = ", txId);
@@ -398,18 +432,37 @@ const findTreasuryWSOLAccount = (): PublicKey => {
 };
 const treasuryWSOLAccount = findTreasuryWSOLAccount();
 
+const findUserStakeAccount = (userPublicKey: PublicKey): PublicKey => {
+  return PublicKey.findProgramAddressSync([Buffer.from(PERSONAL_SEED), userPublicKey.toBuffer()], programId)[0];
+};
+const userStakeAccount = findUserStakeAccount(user.publicKey);
+
 const getAssociatedTokenAccount = async (ownerPubkey: PublicKey, mintPk: PublicKey): Promise<PublicKey> => {
-  let associatedTokenAccountPubkey = (await PublicKey.findProgramAddressSync(
-    [
-      ownerPubkey.toBuffer(),
-      TOKEN_PROGRAM_ID.toBuffer(),
-      mintPk.toBuffer(), // mint address
-    ],
-    ASSOCIATED_TOKEN_PROGRAM_ID
-  ))[0];
+  const associatedTokenAccountPubkey = getUserTokenAccountCreateIfNeeded(ownerPubkey, mintPk);
+  console.log("### associatedTokenAccountPubkey : ", associatedTokenAccountPubkey);
   return associatedTokenAccountPubkey;
 };
 
+const getUserTokenAccountCreateIfNeeded = async (userPubKey: PublicKey, mintPk: PublicKey): Promise<PublicKey> => {
+  const { instruction, destinationPubkey } = await getATokenAccountsNeedCreate(connection, userPubKey, userPubKey, mintPk);
+
+  // Send the transaction
+  let tx = new Transaction();
+  tx.add(instruction);
+
+  try {
+    const txId = await provider.sendAndConfirm(tx, [user], {
+      commitment: "confirmed",
+      skipPreflight: true
+    });
+    console.log(">>> create User Token Account = ", txId);
+    return destinationPubkey;
+  } catch (error) {
+    console.log(error);
+    return null;
+  };
+
+};
 
 const getAdressLookupTableAccounts = async (
   keys: string[]
@@ -532,41 +585,38 @@ const swapToSol = async (
 
 const getATokenAccountsNeedCreate = async (
   connection: anchor.web3.Connection,
-  walletAddress: anchor.web3.PublicKey,
+  payer: anchor.web3.PublicKey,
   owner: anchor.web3.PublicKey,
-  nfts: anchor.web3.PublicKey[],
+  mintPk: anchor.web3.PublicKey,
 ) => {
-  let instructions = [], destinationAccounts = [];
-  for (const mint of nfts) {
-    const destinationPubkey = await getAssociatedTokenAccount(owner, mint);
-    let response = await connection.getAccountInfo(destinationPubkey);
-    if (!response) {
-      const createATAIx = createAssociatedTokenAccountInstruction(
-        destinationPubkey,
-        walletAddress,
-        owner,
-        mint,
-      );
-      instructions.push(createATAIx);
-    }
-    destinationAccounts.push(destinationPubkey);
+  let instruction: TransactionInstruction, destinationPubkey: PublicKey;
+  destinationPubkey = await getAssociatedTokenAccount(owner, mintPk);
+  let response = await connection.getAccountInfo(destinationPubkey);
+  if (!response) {
+    instruction = createAssociatedTokenAccountInstruction(
+      destinationPubkey,
+      payer,
+      owner,
+      mintPk,
+    );
   }
+
   return {
-    instructions,
-    destinationAccounts,
+    instruction,
+    destinationPubkey,
   };
 };
 
 const createAssociatedTokenAccountInstruction = (
   associatedTokenAddress: anchor.web3.PublicKey,
   payer: anchor.web3.PublicKey,
-  walletAddress: anchor.web3.PublicKey,
+  owner: anchor.web3.PublicKey,
   splTokenMintAddress: anchor.web3.PublicKey
 ) => {
   const keys = [
     { pubkey: payer, isSigner: true, isWritable: true },
     { pubkey: associatedTokenAddress, isSigner: false, isWritable: true },
-    { pubkey: walletAddress, isSigner: false, isWritable: false },
+    { pubkey: owner, isSigner: false, isWritable: false },
     { pubkey: splTokenMintAddress, isSigner: false, isWritable: false },
     {
       pubkey: anchor.web3.SystemProgram.programId,

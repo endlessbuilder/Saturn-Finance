@@ -5,17 +5,17 @@ seeds = false
 skip-lint = false
 
 [programs.devnet]
-saturn_v_1 = "HqWuLVZLBZ5MbDNvLqieWiERNNmpTBG7q5t99CtmGYQa"
+saturn_v_1 = "6y1CpFjLdNfs5KUh1PfkjS11FiwH5ZrxmeMtJm9yLdJF"
 
 [programs.localnet]
-saturn_v_1 = "HqWuLVZLBZ5MbDNvLqieWiERNNmpTBG7q5t99CtmGYQa"
+saturn_v_1 = "6y1CpFjLdNfs5KUh1PfkjS11FiwH5ZrxmeMtJm9yLdJF"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
 cluster = "localnet"
-wallet = "~/.config/solana/id.json"
+wallet = "/home/tonicallum/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
