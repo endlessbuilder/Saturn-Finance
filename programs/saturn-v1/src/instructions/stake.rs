@@ -23,7 +23,7 @@ pub struct StakeSTF<'info> {
         seeds=[PERSONAL_SEED.as_ref(), user.key.as_ref()], // Static Seed Path (1)
         bump, 
     )]
-    pub user_program_account: Account<'info, UserStakeAccount>,
+    pub user_stake_account: Account<'info, UserStakeAccount>,
 
     #[account(
         mut,
@@ -33,10 +33,10 @@ pub struct StakeSTF<'info> {
     pub treasury: Account<'info, Treasury>,
     #[account(
         mut,
-        constraint = user_account_token.mint == *stf_token_mint.to_account_info().key,
-        constraint = user_account_token.owner == *user.key,
+        constraint = user_token_account.mint == *stf_token_mint.to_account_info().key,
+        constraint = user_token_account.owner == *user.key,
     )]
-    pub user_account_token: Account<'info, TokenAccount>,
+    pub user_token_account: Account<'info, TokenAccount>,
 
     #[account(
         mut,
@@ -52,11 +52,11 @@ pub struct StakeSTF<'info> {
 
 pub fn handle(ctx: Context<StakeSTF>, amount_to_stake: u64) -> Result<()> {
     let treasury = &mut ctx.accounts.treasury;
-    let source_token_account = &mut &ctx.accounts.user_account_token;
+    let source_token_account = &mut &ctx.accounts.user_token_account;
     let dest_stf_account = &mut &ctx.accounts.treasury_token_account;
     let stf_token_mint = &mut &ctx.accounts.stf_token_mint;
     let user = &mut ctx.accounts.user;
-    let personal_account = &mut ctx.accounts.user_program_account;
+    let personal_account = &mut ctx.accounts.user_stake_account;
 
     assert!(
         stf_token_mint.key().to_string().as_str() == STF_MINT,

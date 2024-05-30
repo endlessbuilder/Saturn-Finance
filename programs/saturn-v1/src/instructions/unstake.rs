@@ -24,7 +24,7 @@ pub struct UnStakeSTF<'info> {
         seeds=[PERSONAL_SEED.as_ref(), user.key.as_ref()], // Static Seed Path (1)
         bump, 
     )]
-    pub user_program_account: Account<'info, UserStakeAccount>,
+    pub user_stake_account: Account<'info, UserStakeAccount>,
 
     #[account(
         mut,
@@ -34,10 +34,10 @@ pub struct UnStakeSTF<'info> {
     pub treasury: Account<'info, Treasury>,
     #[account(
         mut,
-        constraint = user_account_token.mint == *stf_token_mint.to_account_info().key,
-        constraint = user_account_token.owner == *user.key,
+        constraint = user_token_account.mint == *stf_token_mint.to_account_info().key,
+        constraint = user_token_account.owner == *user.key,
     )]
-    pub user_account_token: Account<'info, TokenAccount>,
+    pub user_token_account: Account<'info, TokenAccount>,
 
     #[account(
         mut,
@@ -55,11 +55,11 @@ pub struct UnStakeSTF<'info> {
 // Amount to unstake is in sSTF
 pub fn handle(ctx: Context<UnStakeSTF>, amount_to_unstake: u64) -> Result<()> {
     let treasury = &mut ctx.accounts.treasury;
-    let user_token_account = &mut &ctx.accounts.user_account_token;
+    let user_token_account = &mut &ctx.accounts.user_token_account;
     let treasury_token_account = &mut &ctx.accounts.treasury_token_account;
     let stf_token_mint = &mut &ctx.accounts.stf_token_mint;
     let user = &mut ctx.accounts.user;
-    let personal_account = &mut ctx.accounts.user_program_account;
+    let personal_account = &mut ctx.accounts.user_stake_account;
 
 
     require!(personal_account.total_staked_index as u64 > amount_to_unstake, BondError::UnstakingError); 
