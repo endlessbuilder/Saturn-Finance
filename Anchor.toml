@@ -25,17 +25,67 @@ filename = "./tests/mainnet-dump/bonk.json"
 address = "GbNJigVGMPgn9qhfmTDtc1yxhX6ppnuD5bMpRe23nE2k"
 filename = "./tests/mainnet-dump/user_usdc_token_account_200.json"
 
-# [[test.validator.clone]]
-# address = "7NL2qWArf2BbEBBH1vTRZCsoNqFATTddH6h8GkVvrLpG"
-
 [[test.genesis]]
 address = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
 program = "./tests/mainnet-dump/jupiter.so"
 
+[[test.genesis]]
+address = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+program = "./tests/mainnet-dump/tokenprogram.so"
 
+[[test.validator.clone]]
+address = "7NL2qWArf2BbEBBH1vTRZCsoNqFATTddH6h8GkVvrLpG"
 
+[[test.validator.clone]]
+address = "9nnLbotNTcUhvbrsA6Mdkx45Sm82G35zo28AqUvjExn8"
 
+[[test.validator.clone]]
+address = "G3ix7QJaikxgwgnFpHc1oDZPrvatALxButimWMiH8qw8"
 
+[[test.validator.clone]]
+address = "55pxvo3haRNqXGAHExZWkYLnLEzKycGxLdg8qEvopryp"
+
+[[test.validator.clone]]
+address = "EXrqY7jLTLp83H38L8Zw3GvGkk1KoQbYTckPGBghwD8X"
+
+[[test.validator.clone]]
+address = "A8kEy5wWgdW4FG593fQJ5QPVbqx1wkfXw9c4L9bPo2CN"
+
+[[test.validator.clone]]
+address = "9m9qjoZeqdgWgjzVufhM1bakfqA9AYYDsb3tKfZZnjze"
+
+[[test.validator.clone]]
+address = "D8cy77BBepLMngZx6ZukaTff5hCt1HrWyKk3Hnd9oitf"
+
+[[test.validator.clone]]
+address = "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo"
+
+[[test.validator.clone]]
+address = "5rCf1DM8LjKTw4YqhnoLcngyZYeNnQqztScTogYHAS6"
+
+[[test.validator.clone]]
+address = "EYj9xKw6ZszwpyNibHY7JD5o3QgTVrSdcBp1fMJhrR9o"
+
+[[test.validator.clone]]
+address = "CoaxzEh8p5YyGLcj36Eo3cUThVJxeKCs7qvLAGDYwBcz"
+
+[[test.validator.clone]]
+address = "59YuGWPunbchD2mbi9U7qvjWQKQReGeepn4ZSr9zz9Li"
+
+[[test.validator.clone]]
+address = "9nnLbotNTcUhvbrsA6Mdkx45Sm82G35zo28AqUvjExn8"
+
+[[test.validator.clone]]
+address = "D1ZN9Wj1fRSUQfCjhvnu1hqDMT7hzjzBBpi12nVniYD6"
+
+[[test.validator.clone]]
+address = "7xmtz8hDZtkUm3nphp4PMNsiZv5fJxVxh8VjN6kt7ws4"
+
+[[test.validator.clone]]
+address = "GBDuzqBgZN68TdiU8jzmh2V34pifTi4qDtD89fuTdQgr"
+
+[[test.validator.clone]]
+address = "2mGnsXcGorA6iULhEnvHeLtwbmdsDW9hwPgwg6iKPXYb"
 
 [registry]
 url = "https://api.apr.dev"
