@@ -77,6 +77,7 @@ pub fn create_wsol_token_idempotent<'info>(
     system_program: Program<'info, System>,
     authority_bump: u8,
     wsol_bump: u8,
+    from_amount: u64
 ) -> Result<TokenAccount> {
     if treasury_wsol_account.data_is_empty() {
         let signer_seeds: &[&[&[u8]]] = &[
@@ -87,7 +88,7 @@ pub fn create_wsol_token_idempotent<'info>(
         msg!("Initialize program wSOL account");
         let rent = Rent::get()?;
         let space = TokenAccount::LEN;
-        let lamports = rent.minimum_balance(space);
+        let lamports = rent.minimum_balance(space) + from_amount;
         system_program::create_account(
             CpiContext::new_with_signer(
                 system_program.to_account_info(),
