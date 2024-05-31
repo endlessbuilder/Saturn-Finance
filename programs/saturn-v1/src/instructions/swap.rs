@@ -1,3 +1,5 @@
+use std::str::FromStr;
+
 use anchor_lang::{
     prelude::*,
     solana_program::{entrypoint::ProgramResult, instruction::Instruction, program::invoke_signed},
@@ -13,7 +15,7 @@ use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint};
 
 
 #[derive(Accounts)]
-pub struct SwapToSOL<'info> {
+pub struct Swap<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
     /// CHECK: this is pda
@@ -23,31 +25,35 @@ pub struct SwapToSOL<'info> {
         bump,
     )]
     pub treasury_authority: UncheckedAccount<'info>,
+
     /// CHECK: This may not be initialized yet.
-    #[account(mut, seeds = [WSOL_SEED], bump)]
-    pub treasury_wsol_account: UncheckedAccount<'info>,
-    #[account(address = spl_token::native_mint::id())]
-    pub sol_mint: Account<'info, Mint>,
+    #[account(mut, seeds = [to_mint.key().as_ref()], bump)]
+    pub treasury_token_account: UncheckedAccount<'info>,
+
+    pub to_mint: Account<'info, Mint>,
+
     pub jupiter_program: Program<'info, Jupiter>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
 
-pub fn handle(ctx: Context<SwapToSOL>, data: Vec<u8>) -> Result<()> {
+pub fn handle(ctx: Context<Swap>, data: Vec<u8>) -> Result<()> {
 
     let authority_bump = ctx.bumps.treasury_authority;
-    let wsol_bump = ctx.bumps.treasury_wsol_account;
+    let wsol_bump = ctx.bumps.treasury_token_account;
+    let wsol_mint = Pubkey::from_str(WSOL_MINT).unwrap();
 
-    create_wsol_token_idempotent(
-        ctx.accounts.treasury_authority.clone(),
-        ctx.accounts.treasury_wsol_account.clone(),
-        ctx.accounts.sol_mint.clone(),
-        ctx.accounts.token_program.clone(),
-        ctx.accounts.system_program.clone(),
-        authority_bump,
-        wsol_bump,
-    )?;
-
+    if ctx.accounts.to_mint.key() == wsol_mint {
+        create_wsol_token_idempotent(
+            ctx.accounts.treasury_authority.clone(),
+            ctx.accounts.treasury_token_account.clone(),
+            ctx.accounts.to_mint.clone(),
+            ctx.accounts.token_program.clone(),
+            ctx.accounts.system_program.clone(),
+            authority_bump,
+            wsol_bump,
+        )?;
+    }
     msg!("Swap on Jupiter");
     
     let authority_bump_seeds = [authority_bump];
@@ -60,16 +66,14 @@ pub fn handle(ctx: Context<SwapToSOL>, data: Vec<u8>) -> Result<()> {
         ctx.accounts.treasury_authority.key
     )?;
 
-    let after_swap_lamports = ctx.accounts.treasury_wsol_account.lamports();
-
-    close_treasury_wsol(
-        ctx.accounts.treasury_authority.clone(),
-        ctx.accounts.treasury_wsol_account.clone(),
-        ctx.accounts.token_program.clone(),
-        &[authority_bump],
-    )?;
-
-
+    if ctx.accounts.to_mint.key() == wsol_mint {
+        close_treasury_wsol(
+            ctx.accounts.treasury_authority.clone(),
+            ctx.accounts.treasury_token_account.clone(),
+            ctx.accounts.token_program.clone(),
+            &[authority_bump],
+        )?;
+    }
 
     Ok(())
 }

@@ -13,5 +13,5 @@ pub use stake::*;
 pub mod unstake;
 pub use unstake::*;
 
-pub mod swap_to_sol;
-pub use swap_to_sol::*;
+pub mod swap;
+pub use swap::*;
