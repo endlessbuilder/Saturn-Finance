@@ -17,9 +17,11 @@ import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   NATIVE_MINT,
+  getAccount,
 } from "@solana/spl-token";
 import fetch from "node-fetch";
 import { assert } from "chai";
+import userJson from "./users/user.json"
 
 const RPC_URL = "https://api.devnet.solana.com";
 
@@ -29,7 +31,7 @@ const PERSONAL_SEED = "personal-saturn";
 
 // const PROGRAM_ID = "HqWuLVZLBZ5MbDNvLqieWiERNNmpTBG7q5t99CtmGYQa";
 const STF_TOKEN = "3HWcdN9fxD3ytB7L2FG5c3WJXQin3QFUNZoESCQriLD7";
-const USDC_TOKEN = "9cmYPgxT1wGP6ySgSDHCmTrLYzeDp1iVssy4grjdjDyQ";
+const USDC_TOKEN_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
 
 const ESCROW_SIZE = 112;
 const DECIMALS = 100;
@@ -49,7 +51,7 @@ const jupiterProgramId = new PublicKey(
   "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
 );
 
-const user = anchor.web3.Keypair.generate();
+const user = anchor.web3.Keypair.fromSecretKey(Uint8Array.from(userJson))
 console.log(">>> create user publickey : ", user.publicKey.toBase58());
 /*
 let token_airdrop = await provider.connection.requestAirdrop(user.publicKey,
@@ -64,9 +66,19 @@ await provider.connection.confirmTransaction({
 */
 
 // ### initializing project test scenario ###
-describe("# test scenario - initialize project", () => {
-  //test initialize project
-  it("initialize the project", async () => {
+describe("# test scenario - bonding", () => {
+  //test initialize treasury
+  it("initialize treasury account", async () => {
+    // check user's USDC balance
+    const response = await connection.getParsedTokenAccountsByOwner(user.publicKey, {mint: new PublicKey(USDC_TOKEN_MINT)});
+    const userUsdcTokenAccountPubkey = response.value[0].pubkey;
+    const balanceResponse = await connection.getTokenAccountBalance(userUsdcTokenAccountPubkey);
+
+    console.log("userUsdcTokenAccountPubkey", userUsdcTokenAccountPubkey.toString())
+    console.log("usdc amount", balanceResponse.value.uiAmount)
+
+    
+
     //here, teasury admin is provider wallet
     const ix = await program.methods.initialize().accounts({
       admin: provider.publicKey,
@@ -76,14 +88,14 @@ describe("# test scenario - initialize project", () => {
 
     let tx = new Transaction();
     tx.add(ix);
-    // console.log(">>> initialize project tx : \n", tx);
+    // console.log(">>> initialize treasury tx : \n", tx);
     try {
       const txId = await provider.sendAndConfirm(tx, [], {
         commitment: "confirmed",
         skipPreflight: true
       });
 
-      console.log(">>> initialize project transaction = ", txId);
+      console.log(">>> initialize treasury transaction = ", txId);
     } catch (error) {
       console.log(error);
     };
@@ -92,11 +104,8 @@ describe("# test scenario - initialize project", () => {
     assert.equal(treasruyAccount.treasuryAdmin.toBase58(), provider.publicKey.toBase58());
 
   });
-});
 
-/*
-// ### bond test scenario ###
-describe("# test scenario - bond", () => {
+  /*
   // test create bond
   it("create bond", async () => {
     const createBondTx = async (
@@ -296,46 +305,13 @@ describe("# test scenario - bond", () => {
         console.log(error);
       }
     };
-  })
-})
-
-// ### jupiter swap test scenario ###
-describe("# test scenario - jupiter swap to sol", () => {
-  //test jupiter swap
-  it("jupiter swap to sol", async () => {
-    const USDC = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
-    const SOL = new PublicKey("So11111111111111111111111111111111111111112");
-
-    // Find the best Quote from the Jupiter API
-    const quote = await getQuote(USDC, SOL, 1000000);
-    console.log({ quote });
-
-    // Convert the Quote into a Swap instruction
-    const result = await getSwapIx(treasuryAuthority, treasuryWSOLAccount, quote);
-
-    if ("error" in result) {
-      console.log({ result });
-      return result;
-    }
-
-    // We have now both the instruction and the lookup table addresses.
-    const {
-      computeBudgetInstructions, // The necessary instructions to setup the compute budget.
-      swapInstruction, // The actual swap instruction.
-      addressLookupTableAddresses, // The lookup table addresses that you can use if you are using versioned transaction.
-    } = result;
-
-    await swapToSol(
-      computeBudgetInstructions,
-      swapInstruction,
-      addressLookupTableAddresses
-    );
-  })
-
+  });
+  */
 });
-*/
+
+/*
 // ### staking & unstaking STF test scenario ###
-describe("# test scenario - staking & unstaking SNF", () => {
+describe("# test scenario - staking", () => {
 
   let userTokenAccount: anchor.web3.PublicKey;
   let treasuryTokenAccount: anchor.web3.PublicKey;
@@ -415,7 +391,44 @@ describe("# test scenario - staking & unstaking SNF", () => {
   });
 
 });
+*/
 
+
+// ### jupiter swap test scenario ###
+describe("# test scenario - jupiter swap", () => {
+  //test jupiter swap
+  it("jupiter swap to sol", async () => {
+    const USDC = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+    const SOL = new PublicKey("So11111111111111111111111111111111111111112");
+
+    // Find the best Quote from the Jupiter API
+    const quote = await getQuote(USDC, SOL, 1000000);
+    console.log({ quote });
+
+    // Convert the Quote into a Swap instruction
+    const result = await getSwapIx(treasuryAuthority, treasuryWSOLAccount, quote);
+
+    if ("error" in result) {
+      console.log({ result });
+      return result;
+    }
+
+    // We have now both the instruction and the lookup table addresses.
+    const {
+      computeBudgetInstructions, // The necessary instructions to setup the compute budget.
+      swapInstruction, // The actual swap instruction.
+      addressLookupTableAddresses, // The lookup table addresses that you can use if you are using versioned transaction.
+    } = result;
+    console.log("swapInstruction", JSON.stringify(swapInstruction))
+
+    await swapToSol(
+      computeBudgetInstructions,
+      swapInstruction,
+      addressLookupTableAddresses
+    );
+  })
+
+});
 
 
 

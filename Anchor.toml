@@ -10,6 +10,33 @@ saturn_v_1 = "6y1CpFjLdNfs5KUh1PfkjS11FiwH5ZrxmeMtJm9yLdJF"
 [programs.localnet]
 saturn_v_1 = "6y1CpFjLdNfs5KUh1PfkjS11FiwH5ZrxmeMtJm9yLdJF"
 
+[test.validator]
+url = "https://api.mainnet-beta.solana.com" 
+
+[[test.validator.account]]
+address = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"
+filename = "./tests/mainnet-dump/usdc.json"
+
+[[test.validator.account]]
+address = "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263"
+filename = "./tests/mainnet-dump/bonk.json"
+
+[[test.validator.account]]
+address = "GbNJigVGMPgn9qhfmTDtc1yxhX6ppnuD5bMpRe23nE2k"
+filename = "./tests/mainnet-dump/user_usdc_token_account_200.json"
+
+# [[test.validator.clone]]
+# address = "7NL2qWArf2BbEBBH1vTRZCsoNqFATTddH6h8GkVvrLpG"
+
+[[test.genesis]]
+address = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
+program = "./tests/mainnet-dump/jupiter.so"
+
+
+
+
+
+
 [registry]
 url = "https://api.apr.dev"
 
@@ -19,3 +46,6 @@ wallet = "/home/tonicallum/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+
+[test]
+startup_wait = 10000
