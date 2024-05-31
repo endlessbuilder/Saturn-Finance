@@ -38,12 +38,15 @@ pub fn swap_on_jupiter<'info>(
     remaining_accounts: &[AccountInfo],
     jupiter_program: Program<'info, Jupiter>,
     data: Vec<u8>,
+    signer_seeds: &[&[&[u8]]],
+    treasury_authority: &Pubkey,
 ) -> ProgramResult {
+    
     let accounts: Vec<AccountMeta> = remaining_accounts
         .iter()
         .map(|acc| AccountMeta {
             pubkey: *acc.key,
-            is_signer: acc.is_signer,
+            is_signer: if acc.key == treasury_authority {true} else {acc.is_signer},
             is_writable: acc.is_writable,
         })
         .collect();
@@ -62,7 +65,7 @@ pub fn swap_on_jupiter<'info>(
             data,
         },
         &accounts_infos,
-        &[],
+        signer_seeds,
     )
 }
 
@@ -72,13 +75,13 @@ pub fn create_wsol_token_idempotent<'info>(
     sol_mint: Account<'info, Mint>,
     token_program: Program<'info, Token>,
     system_program: Program<'info, System>,
-    authority_bump: &[u8],
-    wsol_bump: &[u8],
+    authority_bump: u8,
+    wsol_bump: u8,
 ) -> Result<TokenAccount> {
     if treasury_wsol_account.data_is_empty() {
         let signer_seeds: &[&[&[u8]]] = &[
-            &[TREASURY_AUTHORITY_SEED.as_bytes(), authority_bump.as_ref()],
-            &[WSOL_SEED, wsol_bump.as_ref()],
+            &[TREASURY_AUTHORITY_SEED.as_bytes(), &[authority_bump]],
+            &[WSOL_SEED, &[wsol_bump]],
         ];
 
         msg!("Initialize program wSOL account");

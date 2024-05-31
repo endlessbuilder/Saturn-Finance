@@ -18,13 +18,17 @@ import {
   TOKEN_PROGRAM_ID,
   NATIVE_MINT,
   getAccount,
+  createMint,
+  getOrCreateAssociatedTokenAccount,
+  mintTo,
+  transfer
 } from "@solana/spl-token";
 import fetch from "node-fetch";
 import { assert } from "chai";
 import userJson from "./users/user.json"
 
 const RPC_URL = "https://api.devnet.solana.com";
-
+const TREASURY_AUTHORITY_SEED = "treasury-authority";
 const TREASURY_SEED = "global-treasury-2";
 const EMPTY_USER = "11111111111111111111111111111111";
 const PERSONAL_SEED = "personal-saturn";
@@ -32,6 +36,7 @@ const PERSONAL_SEED = "personal-saturn";
 // const PROGRAM_ID = "HqWuLVZLBZ5MbDNvLqieWiERNNmpTBG7q5t99CtmGYQa";
 const STF_TOKEN = "3HWcdN9fxD3ytB7L2FG5c3WJXQin3QFUNZoESCQriLD7";
 const USDC_TOKEN_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+const BONK_TOKEN_MINT = "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263";
 
 const ESCROW_SIZE = 112;
 const DECIMALS = 100;
@@ -50,60 +55,147 @@ console.log(">>> programId : ", programId);
 const jupiterProgramId = new PublicKey(
   "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
 );
+const API_ENDPOINT = "https://quote-api.jup.ag/v6";
 
 const user = anchor.web3.Keypair.fromSecretKey(Uint8Array.from(userJson))
 console.log(">>> create user publickey : ", user.publicKey.toBase58());
-/*
-let token_airdrop = await provider.connection.requestAirdrop(user.publicKey,
-  10 * LAMPORTS_PER_SOL);
+//3qtahdn6ez4hwRy3UwEC3Cf9pPdbMeGUvspWvgY2N6Ws
 
-const latestBlockHash = await provider.connection.getLatestBlockhash();
-await provider.connection.confirmTransaction({
-  blockhash: latestBlockHash.blockhash,
-  lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-  signature: token_airdrop,
-});
-*/
-
+let userUsdcTokenAccountPubkey: PublicKey,
+  userBonkTokenAccountPubkey: PublicKey,
+  treasuryAuthority: PublicKey,
+  treasuryUsdcTokenAccount: any,
+  treasuryBonkTokenAccount: any;
+let treasuryUsdcTokenAccountPubkey;
+let treasuryBonkTokenAccountPubkey;
 // ### initializing project test scenario ###
 describe("# test scenario - bonding", () => {
-  //test initialize treasury
-  it("initialize treasury account", async () => {
+  // setup for test
+  it("setup for test", async () => {
+    await connection.requestAirdrop(user.publicKey, 100_000_000_000);
+    await connection.requestAirdrop(provider.publicKey, 100_000_000_000);
+    await connection.requestAirdrop(new PublicKey("5rCf1DM8LjKTw4YqhnoLcngyZYeNnQqztScTogYHAS6"), 124_740_000_000);
+    await connection.requestAirdrop(new PublicKey("3msVd34R5KxonDzyNSV5nT19UtUeJ2RF1NaQhvVPNLxL"), 293_000_000_000);
+
+
+    await connection.requestAirdrop(new PublicKey("6LXutJvKUw8Q5ue2gCgKHQdAN4suWW8awzFVC6XCguFx"), 300_000_000_000);
+    // await connection.requestAirdrop(new PublicKey("6mh9yR8fhdrPjS1Gg6KZCjjjS74hnKUy1bPZf9tVuPBW"), 300_000_000_000);
+    // await connection.requestAirdrop(new PublicKey("D8cy77BBepLMngZx6ZukaTff5hCt1HrWyKk3Hnd9oitf"), 300_000_000_000);
+    await connection.requestAirdrop(new PublicKey("9iFER3bpjf1PTTCQCfTRu17EJgvsxo9pVyA9QWwEuX4x"), 300_000_000_000);
+    await connection.requestAirdrop(new PublicKey("8sLbNZoA1cfnvMJLPfp98ZLAnFSYCFApfJKMbiXNLwxj"), 300_000_000_000);
+    await connection.requestAirdrop(new PublicKey("3MsJXVvievxAbsMsaT6TS4i6oMitD9jazucuq3X234tC"), 300_000_000_000);
+    await connection.requestAirdrop(new PublicKey("4gPzKMT68i89kc8whamW5yGgRRMrYw5pjqUiHkvwQS1j"), 300_000_000_000);
+    await connection.requestAirdrop(new PublicKey("DoPuiZfJu7sypqwR4eiU7C5TMcmmiFoU4HaF5SoD8mRy"), 300_000_000_000);
+    await connection.requestAirdrop(new PublicKey("2W7aa5mVuzJiaM43uFtutVFdSoWx963AKT8dtizqejTF"), 300_000_000_000);
+    await connection.requestAirdrop(new PublicKey("3nLYkE5zHKgGBxXW8Rj4neWZT5JHgdAjVRqUDcDk8nF9"), 300_000_000_000);
+
     // check user's USDC balance
-    const response = await connection.getParsedTokenAccountsByOwner(user.publicKey, {mint: new PublicKey(USDC_TOKEN_MINT)});
-    const userUsdcTokenAccountPubkey = response.value[0].pubkey;
-    const balanceResponse = await connection.getTokenAccountBalance(userUsdcTokenAccountPubkey);
+    let response = await connection.getParsedTokenAccountsByOwner(user.publicKey, { mint: new PublicKey(USDC_TOKEN_MINT) });
+    userUsdcTokenAccountPubkey = response.value[0].pubkey;
+    let balanceResponseUsdc = await connection.getTokenAccountBalance(userUsdcTokenAccountPubkey);
 
-    console.log("userUsdcTokenAccountPubkey", userUsdcTokenAccountPubkey.toString())
-    console.log("usdc amount", balanceResponse.value.uiAmount)
+    console.log("userUsdcTokenAccountPubkey", userUsdcTokenAccountPubkey.toString());
+    console.log("user usdc balance = ", balanceResponseUsdc.value.uiAmount);
 
-    
+    // check user's Bonk balance
+    let responseBonk = await connection.getParsedTokenAccountsByOwner(user.publicKey, { mint: new PublicKey(BONK_TOKEN_MINT) });
+    userBonkTokenAccountPubkey = responseBonk.value[0].pubkey;
+    let balanceResponseBonk = await connection.getTokenAccountBalance(userBonkTokenAccountPubkey);
 
-    //here, teasury admin is provider wallet
-    const ix = await program.methods.initialize().accounts({
-      admin: provider.publicKey,
-      treasury: treasuryAuthority,
-      systemProgram: SystemProgram.programId,
-    }).instruction();
+    console.log("userBonkTokenAccountPubkey", userBonkTokenAccountPubkey.toString());
+    console.log("user bonk balance = ", balanceResponseBonk.value.uiAmount);
 
-    let tx = new Transaction();
-    tx.add(ix);
-    // console.log(">>> initialize treasury tx : \n", tx);
-    try {
-      const txId = await provider.sendAndConfirm(tx, [], {
-        commitment: "confirmed",
-        skipPreflight: true
-      });
-
-      console.log(">>> initialize treasury transaction = ", txId);
-    } catch (error) {
-      console.log(error);
+    const findTreasuryAuthority = (): PublicKey => {
+      return PublicKey.findProgramAddressSync([Buffer.from(TREASURY_AUTHORITY_SEED)], programId)[0];
     };
+    treasuryAuthority = findTreasuryAuthority();
+    console.log(">>> treasury authority = ", treasuryAuthority);
 
-    const treasruyAccount = await program.account.treasury.fetch(treasuryAuthority);
-    assert.equal(treasruyAccount.treasuryAdmin.toBase58(), provider.publicKey.toBase58());
+    // const getTreasuryTokenAccount = async (mintPk: PublicKey) => {
+    //   return await getUserTokenAccountCreateIfNeeded(treasuryAuthority, mintPk);
+    // }
+    try {
+      treasuryUsdcTokenAccount = await getOrCreateAssociatedTokenAccount(
+        connection,
+        user,
+        new PublicKey(USDC_TOKEN_MINT),
+        treasuryAuthority,
+        true, "confirmed",
+        {
+          commitment: "confirmed",
+          skipPreflight: true
+        }
+      );
+      console.log(">>> treasury USDC token account = ", treasuryUsdcTokenAccount);
+      treasuryBonkTokenAccount = await getOrCreateAssociatedTokenAccount(
+        connection,
+        user,
+        new PublicKey(BONK_TOKEN_MINT),
+        treasuryAuthority,
+        true,
+        "confirmed",
+        {
+          commitment: "confirmed",
+          skipPreflight: true
+        }
+      );
+      console.log(">>> treasury BONK token account = ", treasuryBonkTokenAccount);
+
+      const txIdUsdc = await transfer(connection, user, userUsdcTokenAccountPubkey, treasuryUsdcTokenAccount.address, user.publicKey, 100000000);
+      console.log(">>> transfer USDC transaction = ", txIdUsdc);
+      const txIdBonk = await transfer(connection, user, userBonkTokenAccountPubkey, treasuryBonkTokenAccount.address, user.publicKey, 10000000000);
+      console.log(">>> transfer Bonk transaction = ", txIdBonk);
+
+
+    } catch (error) {
+      console.log(">>> ", error);
+    }
+
+    response = await connection.getParsedTokenAccountsByOwner(treasuryAuthority, { mint: new PublicKey(USDC_TOKEN_MINT) });
+    treasuryUsdcTokenAccountPubkey = response.value[0].pubkey;
+    balanceResponseUsdc = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
+
+    console.log("treasuryUsdcTokenAccountPubkey", userUsdcTokenAccountPubkey.toString());
+    console.log(">>> treasury usdc balance = ", balanceResponseUsdc.value.uiAmount);
+
+    response = await connection.getParsedTokenAccountsByOwner(treasuryAuthority, { mint: new PublicKey(BONK_TOKEN_MINT) });
+    treasuryBonkTokenAccountPubkey = response.value[0].pubkey;
+    balanceResponseBonk = await connection.getTokenAccountBalance(treasuryBonkTokenAccountPubkey);
+
+    console.log("treasuryBonkTokenAccountPubkey", balanceResponseBonk.toString());
+    console.log(">>> treasury bonk balance = ", balanceResponseBonk.value.uiAmount);
+
+    await connection.requestAirdrop(treasuryAuthority, 10_000_000_000);
 
   });
+
+  //test initialize treasury
+  // it("initialize treasury account", async () => {
+  //   //here, teasury admin is provider wallet
+  //   const ix = await program.methods.initialize().accounts({
+  //     admin: provider.publicKey,
+  //     treasury: treasuryAuthority,
+  //     systemProgram: SystemProgram.programId,
+  //   }).instruction();
+
+  //   let tx = new Transaction();
+  //   tx.add(ix);
+  //   // console.log(">>> initialize treasury tx : \n", tx);
+  //   try {
+  //     const txId = await provider.sendAndConfirm(tx, [], {
+  //       commitment: "confirmed",
+  //       skipPreflight: true
+  //     });
+
+  //     console.log(">>> initialize treasury transaction = ", txId);
+  //   } catch (error) {
+  //     console.log(error);
+  //   };
+
+  //   const treasruyAccount = await program.account.treasury.fetch(treasuryAuthority);
+  //   assert.equal(treasruyAccount.treasuryAdmin.toBase58(), provider.publicKey.toBase58());
+
+  // });
 
   /*
   // test create bond
@@ -307,7 +399,7 @@ describe("# test scenario - bonding", () => {
     };
   });
   */
- 
+
 });
 
 /*
@@ -394,6 +486,11 @@ describe("# test scenario - staking", () => {
 });
 */
 
+const findTreasuryWSOLAccount = (): PublicKey => {
+  return PublicKey.findProgramAddressSync([Buffer.from("wsol")], programId)[0];
+};
+const treasuryWSOLAccount = findTreasuryWSOLAccount();
+console.log(">>> treasury wSol account = ", treasuryWSOLAccount);
 
 // ### jupiter swap test scenario ###
 describe("# test scenario - jupiter swap", () => {
@@ -403,9 +500,9 @@ describe("# test scenario - jupiter swap", () => {
     const SOL = new PublicKey("So11111111111111111111111111111111111111112");
 
     // Find the best Quote from the Jupiter API
-    const quote = await getQuote(USDC, SOL, 1000000);
-    console.log({ quote });
-
+    const quote = await getQuote(USDC, SOL, 100000);
+    //const quote = JSON.parse('{"inputMint":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v","inAmount":"1000000","outputMint":"So11111111111111111111111111111111111111112","outAmount":"6015074","otherAmountThreshold":"5984999","swapMode":"ExactIn","slippageBps":50,"platformFee":null,"priceImpactPct":"0.0000251694641401135192706162","routePlan":[{"swapInfo":{"ammKey":"8sLbNZoA1cfnvMJLPfp98ZLAnFSYCFApfJKMbiXNLwxj","label":"Raydium CLMM","inputMint":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v","outputMint":"So11111111111111111111111111111111111111112","inAmount":"1000000","outAmount":"6015074","feeAmount":"84","feeMint":"EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v"},"percent":100}],"contextSlot":269097074,"timeTaken":0.002004022}')
+    console.log(">>> get quote USDC->sol 1000000 : ", JSON.stringify(quote));
     // Convert the Quote into a Swap instruction
     const result = await getSwapIx(treasuryAuthority, treasuryWSOLAccount, quote);
 
@@ -420,31 +517,41 @@ describe("# test scenario - jupiter swap", () => {
       swapInstruction, // The actual swap instruction.
       addressLookupTableAddresses, // The lookup table addresses that you can use if you are using versioned transaction.
     } = result;
-    console.log("swapInstruction", JSON.stringify(swapInstruction))
+
+    console.log("\n\naddresses\n\n", JSON.stringify(result))
+    console.log("\n\n\n")
+
+
+    const solBalance = await connection.getBalance(treasuryAuthority);
+    console.log(">>> treasury sol balance = ", solBalance / 1_000_000_000);
+
+    const balanceResponseUsdc = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
+    console.log(">>> treasury usdc balance = ", balanceResponseUsdc.value.uiAmount);
+
+    const balanceResponseBonk = await connection.getTokenAccountBalance(treasuryBonkTokenAccountPubkey);
+    console.log(">>> treasury bonk balance = ", balanceResponseBonk.value.uiAmount);
 
     await swapToSol(
       computeBudgetInstructions,
       swapInstruction,
       addressLookupTableAddresses
     );
+
+    const solBalance2 = await connection.getBalance(treasuryAuthority);
+    console.log(">>> treasury sol balance = ", solBalance2 / 1_000_000_000);
+    
+    const balanceResponseUsdc2 = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
+    console.log(">>> treasury usdc balance = ", balanceResponseUsdc2.value.uiAmount);
+
+    const balanceResponseBonk2 = await connection.getTokenAccountBalance(treasuryBonkTokenAccountPubkey);
+    console.log(">>> treasury bonk balance = ", balanceResponseBonk2.value.uiAmount);
+
+
   })
 
 });
 
 
-
-
-const API_ENDPOINT = "https://quote-api.jup.ag/v6";
-
-const findTreasuryAuthority = (): PublicKey => {
-  return PublicKey.findProgramAddressSync([Buffer.from(TREASURY_SEED)], programId)[0];
-};
-const treasuryAuthority = findTreasuryAuthority();
-
-const findTreasuryWSOLAccount = (): PublicKey => {
-  return PublicKey.findProgramAddressSync([Buffer.from("wsol")], programId)[0];
-};
-const treasuryWSOLAccount = findTreasuryWSOLAccount();
 
 const findUserStakeAccount = (userPublicKey: PublicKey): PublicKey => {
   return PublicKey.findProgramAddressSync([Buffer.from(PERSONAL_SEED), userPublicKey.toBuffer()], programId)[0];
@@ -511,7 +618,7 @@ const instructionDataToTransactionInstruction = (
     programId: new PublicKey(instructionPayload.programId),
     keys: instructionPayload.accounts.map((key) => ({
       pubkey: new PublicKey(key.pubkey),
-      isSigner: key.isSigner,
+      isSigner: /* key.isSigner*/ false,
       isWritable: key.isWritable,
     })),
     data: Buffer.from(instructionPayload.data, "base64"),
@@ -555,12 +662,13 @@ const swapToSol = async (
   addressLookupTableAddresses: string[]
 ) => {
   let swapInstruction = instructionDataToTransactionInstruction(swapPayload);
-
+  // console.log("swapInstruction.keys", swapInstruction.keys)
   const instructions = [
     ...computeBudgetPayloads.map(instructionDataToTransactionInstruction),
     await program.methods
       .swapToSol(swapInstruction.data)
       .accounts({
+        payer: provider.publicKey,
         treasuryAuthority: treasuryAuthority,
         treasuryWsolAccount: treasuryWSOLAccount,
         solMint: NATIVE_MINT,
@@ -578,8 +686,9 @@ const swapToSol = async (
   const addressLookupTableAccounts = await getAdressLookupTableAccounts(
     addressLookupTableAddresses
   );
+  console.log("\n\naddressLookupTableAddresses", addressLookupTableAddresses)
   const messageV0 = new TransactionMessage({
-    payerKey: treasuryAuthority,
+    payerKey: provider.publicKey,
     recentBlockhash: blockhash,
     instructions,
   }).compileToV0Message(addressLookupTableAccounts);
@@ -588,12 +697,10 @@ const swapToSol = async (
   // console.log(">>> swap to sol tx : \n", transaction);
 
   try {
-    await provider.simulate(transaction, []);
-
     const txID = await provider.sendAndConfirm(transaction, []);
-    console.log({ txID });
+    console.log(">>> swap usdc to sol transaction = ", { txID });
   } catch (e) {
-    console.log({ simulationResponse: e.simulationResponse });
+    console.log(">>> simulation error ", e);
   }
 };
 

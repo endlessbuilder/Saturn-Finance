@@ -14,6 +14,8 @@ use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint};
 
 #[derive(Accounts)]
 pub struct SwapToSOL<'info> {
+    #[account(mut)]
+    pub payer: Signer<'info>,
     /// CHECK: this is pda
     #[account(
         mut,
@@ -42,15 +44,20 @@ pub fn handle(ctx: Context<SwapToSOL>, data: Vec<u8>) -> Result<()> {
         ctx.accounts.sol_mint.clone(),
         ctx.accounts.token_program.clone(),
         ctx.accounts.system_program.clone(),
-        &[authority_bump],
-        &[wsol_bump],
+        authority_bump,
+        wsol_bump,
     )?;
 
     msg!("Swap on Jupiter");
+    
+    let authority_bump_seeds = [authority_bump];
+    let signer_seeds: &[&[&[u8]]] = &[&[TREASURY_AUTHORITY_SEED.as_bytes(), authority_bump_seeds.as_ref()]];
     swap_on_jupiter(
         ctx.remaining_accounts,
         ctx.accounts.jupiter_program.clone(),
         data,
+        signer_seeds,
+        ctx.accounts.treasury_authority.key
     )?;
 
     let after_swap_lamports = ctx.accounts.treasury_wsol_account.lamports();

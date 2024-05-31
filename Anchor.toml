@@ -25,67 +25,71 @@ filename = "./tests/mainnet-dump/bonk.json"
 address = "GbNJigVGMPgn9qhfmTDtc1yxhX6ppnuD5bMpRe23nE2k"
 filename = "./tests/mainnet-dump/user_usdc_token_account_200.json"
 
+[[test.validator.account]]
+address = "CdYZ7op8CwNKf3HjnYtXk4H7AYjaUbfZKQtECmhdmxCu"
+filename = "./tests/mainnet-dump/user_bonk_token_account_200k.json"
+
 [[test.genesis]]
 address = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
 program = "./tests/mainnet-dump/jupiter.so"
 
 [[test.genesis]]
-address = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
-program = "./tests/mainnet-dump/tokenprogram.so"
+address = "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo"
+program = "./tests/mainnet-dump/dlmm.so"
 
-[[test.validator.clone]]
-address = "7NL2qWArf2BbEBBH1vTRZCsoNqFATTddH6h8GkVvrLpG"
-
-[[test.validator.clone]]
-address = "9nnLbotNTcUhvbrsA6Mdkx45Sm82G35zo28AqUvjExn8"
-
-[[test.validator.clone]]
-address = "G3ix7QJaikxgwgnFpHc1oDZPrvatALxButimWMiH8qw8"
-
-[[test.validator.clone]]
-address = "55pxvo3haRNqXGAHExZWkYLnLEzKycGxLdg8qEvopryp"
+[[test.genesis]]
+address = "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
+program = "./tests/mainnet-dump/ray_concentrated_lp.so"
 
 [[test.validator.clone]]
 address = "EXrqY7jLTLp83H38L8Zw3GvGkk1KoQbYTckPGBghwD8X"
-
 [[test.validator.clone]]
 address = "A8kEy5wWgdW4FG593fQJ5QPVbqx1wkfXw9c4L9bPo2CN"
-
-[[test.validator.clone]]
-address = "9m9qjoZeqdgWgjzVufhM1bakfqA9AYYDsb3tKfZZnjze"
-
-[[test.validator.clone]]
-address = "D8cy77BBepLMngZx6ZukaTff5hCt1HrWyKk3Hnd9oitf"
-
 [[test.validator.clone]]
 address = "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo"
-
+[[test.validator.clone]]
+address = "8kR2HTHzPtTJuzpFZ8jtGCQ9TpahPaWbZfTNRs2GJdxq"
+[[test.validator.clone]]
+address = "EeThDNkUuNhJFHYqR3yTB6wzcj1hrubgVQuvSSGjNt4W"
+[[test.validator.clone]]
+address = "EXrqY7jLTLp83H38L8Zw3GvGkk1KoQbYTckPGBghwD8X"
+[[test.validator.clone]]
+address = "A8kEy5wWgdW4FG593fQJ5QPVbqx1wkfXw9c4L9bPo2CN"
+[[test.validator.clone]]
+address = "G4CD7aqqZZ6QKCNHrc1MPdS9Aw8BWmQ5ZkDd54W6mAEG"
+[[test.validator.clone]]
+address = "BuqEDKUwyAotZuK37V4JYEykZVKY8qo1zKbpfU9gkJMo"
+[[test.validator.clone]]
+address = "BuqEDKUwyAotZuK37V4JYEykZVKY8qo1zKbpfU9gkJMo"
+[[test.validator.clone]]
+address = "6mK4Pxs6GhwnessH7CvPivqDYauiHZmAdbEFDpXFk9zt"
+[[test.validator.clone]]
+address = "6P4tvbzRY6Bh3MiWDHuLqyHywovsRwRpfskPvyeSoHsz"
+[[test.validator.clone]]
+address = "D6XNrxMsDoABJVVY5YyHxJuAB6WGzYCXpZeKyNtqu2v4"
 [[test.validator.clone]]
 address = "5rCf1DM8LjKTw4YqhnoLcngyZYeNnQqztScTogYHAS6"
-
 [[test.validator.clone]]
-address = "EYj9xKw6ZszwpyNibHY7JD5o3QgTVrSdcBp1fMJhrR9o"
-
+address = "3msVd34R5KxonDzyNSV5nT19UtUeJ2RF1NaQhvVPNLxL"
 [[test.validator.clone]]
-address = "CoaxzEh8p5YyGLcj36Eo3cUThVJxeKCs7qvLAGDYwBcz"
-
+address = "6LXutJvKUw8Q5ue2gCgKHQdAN4suWW8awzFVC6XCguFx"
 [[test.validator.clone]]
-address = "59YuGWPunbchD2mbi9U7qvjWQKQReGeepn4ZSr9zz9Li"
-
+address = "9iFER3bpjf1PTTCQCfTRu17EJgvsxo9pVyA9QWwEuX4x"
 [[test.validator.clone]]
-address = "9nnLbotNTcUhvbrsA6Mdkx45Sm82G35zo28AqUvjExn8"
-
+address = "8sLbNZoA1cfnvMJLPfp98ZLAnFSYCFApfJKMbiXNLwxj"
 [[test.validator.clone]]
-address = "D1ZN9Wj1fRSUQfCjhvnu1hqDMT7hzjzBBpi12nVniYD6"
-
+address = "3MsJXVvievxAbsMsaT6TS4i6oMitD9jazucuq3X234tC"
 [[test.validator.clone]]
-address = "7xmtz8hDZtkUm3nphp4PMNsiZv5fJxVxh8VjN6kt7ws4"
-
+address = "4gPzKMT68i89kc8whamW5yGgRRMrYw5pjqUiHkvwQS1j"
 [[test.validator.clone]]
-address = "GBDuzqBgZN68TdiU8jzmh2V34pifTi4qDtD89fuTdQgr"
-
+address = "DoPuiZfJu7sypqwR4eiU7C5TMcmmiFoU4HaF5SoD8mRy"
 [[test.validator.clone]]
-address = "2mGnsXcGorA6iULhEnvHeLtwbmdsDW9hwPgwg6iKPXYb"
+address = "2W7aa5mVuzJiaM43uFtutVFdSoWx963AKT8dtizqejTF"
+[[test.validator.clone]]
+address = "3nLYkE5zHKgGBxXW8Rj4neWZT5JHgdAjVRqUDcDk8nF9"
+[[test.validator.clone]]
+address = "AddressLookupTab1e1111111111111111111111111"
+
 
 [registry]
 url = "https://api.apr.dev"
@@ -98,4 +102,4 @@ wallet = "/home/tonicallum/.config/solana/id.json"
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
 
 [test]
-startup_wait = 10000
+startup_wait = 20000
