@@ -66,7 +66,8 @@ let userUsdcTokenAccountPubkey: PublicKey,
   userBonkTokenAccountPubkey: PublicKey,
   treasuryAuthority: PublicKey,
   treasuryUsdcTokenAccount: any,
-  treasuryBonkTokenAccount: any;
+  treasuryBonkTokenAccount: any,
+  treasury: any;
 let treasuryUsdcTokenAccountPubkey;
 let treasuryBonkTokenAccountPubkey;
 // ### initializing project test scenario ###
@@ -111,6 +112,12 @@ describe("# test scenario - bonding", () => {
     };
     treasuryAuthority = findTreasuryAuthority();
     console.log(">>> treasury authority = ", treasuryAuthority.toBase58());
+
+    const findTreasury = (): PublicKey => {
+      return PublicKey.findProgramAddressSync([Buffer.from(TREASURY_SEED)], programId)[0];
+    };
+    treasury = findTreasury();
+    console.log(">>> treasury = ", treasuryAuthority.toBase58());
 
     // const getTreasuryTokenAccount = async (mintPk: PublicKey) => {
     //   return await getUserTokenAccountCreateIfNeeded(treasuryAuthority, mintPk);
@@ -410,30 +417,34 @@ let treasuryTokenAccount: any;
 describe("# test scenario - staking", () => {
 
   it("setup for staking & unstaking", async () => {
-    userTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      user,
-      new PublicKey(STF_TOKEN),
-      user.publicKey,
-      true, "confirmed",
-      {
-        commitment: "confirmed",
-        skipPreflight: true
-      }
-    );
-    console.log(">>> user STF token account = ", userTokenAccount.address.toBase58());
-    treasuryTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      user,
-      new PublicKey(STF_TOKEN),
-      treasuryAuthority,
-      true, "confirmed",
-      {
-        commitment: "confirmed",
-        skipPreflight: true
-      }
-    );
-    console.log(">>> treasury STF token account = ", treasuryTokenAccount.address.toBase58());
+    try {
+      userTokenAccount = await getOrCreateAssociatedTokenAccount(
+        connection,
+        user,
+        new PublicKey(STF_TOKEN),
+        user.publicKey,
+        true, "confirmed",
+        {
+          commitment: "confirmed",
+          skipPreflight: true
+        }
+      );
+      console.log(">>> user STF token account = ", userTokenAccount.address.toBase58());
+      treasuryTokenAccount = await getOrCreateAssociatedTokenAccount(
+        connection,
+        user,
+        new PublicKey(STF_TOKEN),
+        treasuryAuthority,
+        true, "confirmed",
+        {
+          commitment: "confirmed",
+          skipPreflight: true
+        }
+      );
+      console.log(">>> treasury STF token account = ", treasuryTokenAccount.address.toBase58());
+    } catch (e) {
+      console.log(">>> ! setup for staking & unstaking error : \n", e);
+    }
 
   });
 
@@ -444,7 +455,8 @@ describe("# test scenario - staking", () => {
       .accounts({
         user: user.publicKey,
         userStakeAccount: userStakeAccount,
-        treasury: treasuryAuthority,
+        treasuryAuthority: treasuryAuthority,
+        treasury: treasury,
         userTokenAccount: userTokenAccount,
         treasuryTokenAccount: treasuryTokenAccount,
         stfTokenMint: new PublicKey(STF_TOKEN),

@@ -24,6 +24,14 @@ pub struct StakeSTF<'info> {
         bump, 
     )]
     pub user_stake_account: Account<'info, UserStakeAccount>,
+    
+    /// CHECK: this is pda
+    #[account(
+        mut,
+        seeds = [TREASURY_AUTHORITY_SEED.as_ref()],
+        bump,
+    )]
+    pub treasury_authority: UncheckedAccount<'info>,
 
     #[account(
         mut,
@@ -31,6 +39,7 @@ pub struct StakeSTF<'info> {
         bump,
     )]
     pub treasury: Account<'info, Treasury>,
+    
     #[account(
         mut,
         constraint = user_token_account.mint == *stf_token_mint.to_account_info().key,
@@ -39,11 +48,16 @@ pub struct StakeSTF<'info> {
     pub user_token_account: Account<'info, TokenAccount>,
 
     #[account(
-        mut,
+        init_if_needed,
+        space = mem::size_of::<TokenAccount>() as usize + 8,
+        payer = user,
+        seeds=[PERSONAL_SEED.as_ref(), user.key.as_ref()],
+        bump,
         constraint = treasury_token_account.mint == *stf_token_mint.to_account_info().key,
-        constraint = treasury_token_account.owner == *treasury.to_account_info().key,
+        constraint = treasury_token_account.owner == *treasury_authority.to_account_info().key,
     )]
     pub treasury_token_account: Account<'info, TokenAccount>,
+
     /// CHECK: This is not dangerous because we don't read or write from this account
     pub stf_token_mint: Account<'info, Mint>,
     pub token_program: Program<'info, Token>,
@@ -56,7 +70,7 @@ pub fn handle(ctx: Context<StakeSTF>, amount_to_stake: u64) -> Result<()> {
     let dest_stf_account = &mut &ctx.accounts.treasury_token_account;
     let stf_token_mint = &mut &ctx.accounts.stf_token_mint;
     let user = &mut ctx.accounts.user;
-    let personal_account = &mut ctx.accounts.user_stake_account;
+    let personal_stake_account = &mut ctx.accounts.user_stake_account;
 
     assert!(
         stf_token_mint.key().to_string().as_str() == STF_MINT,
@@ -78,7 +92,7 @@ pub fn handle(ctx: Context<StakeSTF>, amount_to_stake: u64) -> Result<()> {
 
     // Add STF
     let amount_to_transfer = amount_to_stake / treasury.staking_index;
-    personal_account.total_staked_index  += amount_to_transfer;
+    personal_stake_account.total_staked_index  += amount_to_transfer;
     treasury.token_staked += amount_to_transfer;
 
 
