@@ -417,34 +417,41 @@ let treasuryTokenAccount: any;
 describe("# test scenario - staking", () => {
 
   it("setup for staking & unstaking", async () => {
-    try {
-      userTokenAccount = await getOrCreateAssociatedTokenAccount(
-        connection,
-        user,
-        new PublicKey(STF_TOKEN),
-        user.publicKey,
-        true, "confirmed",
-        {
-          commitment: "confirmed",
-          skipPreflight: true
-        }
-      );
-      console.log(">>> user STF token account = ", userTokenAccount.address.toBase58());
-      treasuryTokenAccount = await getOrCreateAssociatedTokenAccount(
-        connection,
-        user,
-        new PublicKey(STF_TOKEN),
-        treasuryAuthority,
-        true, "confirmed",
-        {
-          commitment: "confirmed",
-          skipPreflight: true
-        }
-      );
-      console.log(">>> treasury STF token account = ", treasuryTokenAccount.address.toBase58());
-    } catch (e) {
-      console.log(">>> ! setup for staking & unstaking error : \n", e);
-    }
+
+    let responseUserToken = await connection.getParsedTokenAccountsByOwner(user.publicKey, { mint: new PublicKey(STF_TOKEN) });
+    userTokenAccount = responseUserToken.value[0].pubkey;
+    console.log(">>> user STF token account = ", userTokenAccount.toBase58());
+    let responseTreasuryToken = await connection.getParsedTokenAccountsByOwner(user.publicKey, { mint: new PublicKey(STF_TOKEN) });
+    treasuryTokenAccount = responseTreasuryToken.value[0].pubkey;
+    console.log(">>> treasury STF token account = ", treasuryTokenAccount.toBase58());
+    // try {
+    //   userTokenAccount = await getOrCreateAssociatedTokenAccount(
+    //     connection,
+    //     user,
+    //     new PublicKey(STF_TOKEN),
+    //     user.publicKey,
+    //     true, "confirmed",
+    //     {
+    //       commitment: "confirmed",
+    //       skipPreflight: true
+    //     }
+    //   );
+    //   console.log(">>> user STF token account = ", userTokenAccount.address.toBase58());
+    //   treasuryTokenAccount = await getOrCreateAssociatedTokenAccount(
+    //     connection,
+    //     user,
+    //     new PublicKey(STF_TOKEN),
+    //     treasuryAuthority,
+    //     true, "confirmed",
+    //     {
+    //       commitment: "confirmed",
+    //       skipPreflight: true
+    //     }
+    //   );
+    //   console.log(">>> treasury STF token account = ", treasuryTokenAccount.address.toBase58());
+    // } catch (e) {
+    //   console.log(">>> ! setup for staking & unstaking error : \n", e);
+    // }
 
   });
 
