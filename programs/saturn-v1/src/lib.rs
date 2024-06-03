@@ -41,8 +41,8 @@ pub mod saturn_v_1 {
         instructions::unstake::handle(ctx, amount_to_unstake)        
     }
 
-    pub fn swap(ctx: Context<Swap>, data: Vec<u8>) -> Result<()> {
-        instructions::swap::handle(ctx, data)
+    pub fn swap(ctx: Context<Swap>, data: Vec<u8>/*, from_amount: u64*/) -> Result<()> {
+        instructions::swap::handle(ctx, data/*, from_amount*/)
     }
 }
 

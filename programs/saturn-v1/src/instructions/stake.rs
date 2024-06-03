@@ -5,7 +5,7 @@ use crate::{
     error::*,
     utils::*
 };
-use anchor_spl::token::{self, Token, TokenAccount, Transfer};
+use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 use solana_program::pubkey::Pubkey;
 use std::mem;
 
@@ -45,7 +45,7 @@ pub struct StakeSTF<'info> {
     )]
     pub treasury_token_account: Account<'info, TokenAccount>,
     /// CHECK: This is not dangerous because we don't read or write from this account
-    pub stf_token_mint: AccountInfo<'info>,
+    pub stf_token_mint: Account<'info, Mint>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
