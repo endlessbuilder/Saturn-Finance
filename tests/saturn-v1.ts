@@ -25,7 +25,8 @@ import {
 } from "@solana/spl-token";
 import fetch from "node-fetch";
 import { assert } from "chai";
-import userJson from "./users/user.json"
+import userJson from "./users/user.json";
+import stfTokenMintJson from "./mint/stf_token_mint.json";
 import { BN } from "bn.js";
 
 const RPC_URL = "https://api.devnet.solana.com";
@@ -58,66 +59,97 @@ const jupiterProgramId = new PublicKey(
 );
 const API_ENDPOINT = "https://quote-api.jup.ag/v6";
 
-const user = anchor.web3.Keypair.fromSecretKey(Uint8Array.from(userJson))
+const user = anchor.web3.Keypair.fromSecretKey(Uint8Array.from(userJson));
 console.log(">>> create user publickey : ", user.publicKey.toBase58());
 //3qtahdn6ez4hwRy3UwEC3Cf9pPdbMeGUvspWvgY2N6Ws
 
+const stfTokenMint = anchor.web3.Keypair.fromSecretKey(Uint8Array.from(stfTokenMintJson));
+console.log(">>> create stf token mint publickey : ", stfTokenMint.publicKey.toBase58());
+//2qTMAdL7bC3kuNEvEpdbaEMLhyAtLDe2cPRamkRhkkwq
+
 let userUsdcTokenAccountPubkey: PublicKey,
   userBonkTokenAccountPubkey: PublicKey,
+  userStfTokenAccountPubkey: PublicKey,
+  userStfTokenAccount: any,
   treasuryAuthority: PublicKey,
   treasuryUsdcTokenAccount: any,
   treasuryBonkTokenAccount: any,
   treasury: any;
-let treasuryUsdcTokenAccountPubkey;
-let treasuryBonkTokenAccountPubkey;
+
+let treasuryUsdcTokenAccountPubkey: PublicKey,
+  treasuryBonkTokenAccountPubkey: PublicKey,
+  treasuryStfTokenAccountPubkey: PublicKey,
+  treasuryStfTokenAccount: any;
+
+let stfTokenMintPubkey: PublicKey;
+
+treasuryAuthority = PublicKey.findProgramAddressSync([Buffer.from(TREASURY_AUTHORITY_SEED)], programId)[0];
+console.log(">>> treasury authority pubickey = ", treasuryAuthority.toBase58());
+treasury = PublicKey.findProgramAddressSync([Buffer.from(TREASURY_SEED)], programId)[0];
+console.log(">>> treasury = ", treasury.toBase58());
+
 // ### initializing project test scenario ###
 describe("# test scenario - bonding", () => {
-  // setup for test
+  //# setup for test
   it("setup for test", async () => {
-    await connection.requestAirdrop(user.publicKey, 100_000_000_000);
-    await connection.requestAirdrop(provider.publicKey, 100_000_000_000);
+
+    let userSolBalance = 0;
+    let providerSolBalance = 0;
+    let treasurySolBalance = 0;
+    while (userSolBalance < 5) {
+      await connection.requestAirdrop(user.publicKey, 20_000_000_000);
+      userSolBalance = await connection.getBalance(user.publicKey) / 1_000_000_000;
+      // console.log(">>> user sol balance = ", userSolBalance);
+    }
+    while (providerSolBalance < 5) {
+      await connection.requestAirdrop(provider.publicKey, 20_000_000_000);
+      providerSolBalance = await connection.getBalance(user.publicKey) / 1_000_000_000;
+      // console.log(">>> user sol balance = ", providerSolBalance);
+    }
+    while (treasurySolBalance < 5) {
+      await connection.requestAirdrop(treasuryAuthority, 20_000_000_000);
+      treasurySolBalance = await connection.getBalance(user.publicKey) / 1_000_000_000;
+      // console.log(">>> user sol balance = ", treasurySolBalance);
+    }
+       
     await connection.requestAirdrop(new PublicKey("5rCf1DM8LjKTw4YqhnoLcngyZYeNnQqztScTogYHAS6"), 124_740_000_000);
     await connection.requestAirdrop(new PublicKey("3msVd34R5KxonDzyNSV5nT19UtUeJ2RF1NaQhvVPNLxL"), 293_000_000_000);
 
+    await connection.requestAirdrop(new PublicKey("6LXutJvKUw8Q5ue2gCgKHQdAN4suWW8awzFVC6XCguFx"), 100_000_000_000);
+    // await connection.requestAirdrop(new PublicKey("6mh9yR8fhdrPjS1Gg6KZCjjjS74hnKUy1bPZf9tVuPBW"), 100_000_000_000);
+    // await connection.requestAirdrop(new PublicKey("D8cy77BBepLMngZx6ZukaTff5hCt1HrWyKk3Hnd9oitf"), 100_000_000_000);
+    await connection.requestAirdrop(new PublicKey("9iFER3bpjf1PTTCQCfTRu17EJgvsxo9pVyA9QWwEuX4x"), 100_000_000_000);
+    await connection.requestAirdrop(new PublicKey("8sLbNZoA1cfnvMJLPfp98ZLAnFSYCFApfJKMbiXNLwxj"), 100_000_000_000);
+    await connection.requestAirdrop(new PublicKey("3MsJXVvievxAbsMsaT6TS4i6oMitD9jazucuq3X234tC"), 100_000_000_000);
+    await connection.requestAirdrop(new PublicKey("4gPzKMT68i89kc8whamW5yGgRRMrYw5pjqUiHkvwQS1j"), 100_000_000_000);
+    await connection.requestAirdrop(new PublicKey("DoPuiZfJu7sypqwR4eiU7C5TMcmmiFoU4HaF5SoD8mRy"), 100_000_000_000);
+    await connection.requestAirdrop(new PublicKey("2W7aa5mVuzJiaM43uFtutVFdSoWx963AKT8dtizqejTF"), 100_000_000_000);
+    await connection.requestAirdrop(new PublicKey("3nLYkE5zHKgGBxXW8Rj4neWZT5JHgdAjVRqUDcDk8nF9"), 100_000_000_000);
 
-    await connection.requestAirdrop(new PublicKey("6LXutJvKUw8Q5ue2gCgKHQdAN4suWW8awzFVC6XCguFx"), 300_000_000_000);
-    // await connection.requestAirdrop(new PublicKey("6mh9yR8fhdrPjS1Gg6KZCjjjS74hnKUy1bPZf9tVuPBW"), 300_000_000_000);
-    // await connection.requestAirdrop(new PublicKey("D8cy77BBepLMngZx6ZukaTff5hCt1HrWyKk3Hnd9oitf"), 300_000_000_000);
-    await connection.requestAirdrop(new PublicKey("9iFER3bpjf1PTTCQCfTRu17EJgvsxo9pVyA9QWwEuX4x"), 300_000_000_000);
-    await connection.requestAirdrop(new PublicKey("8sLbNZoA1cfnvMJLPfp98ZLAnFSYCFApfJKMbiXNLwxj"), 300_000_000_000);
-    await connection.requestAirdrop(new PublicKey("3MsJXVvievxAbsMsaT6TS4i6oMitD9jazucuq3X234tC"), 300_000_000_000);
-    await connection.requestAirdrop(new PublicKey("4gPzKMT68i89kc8whamW5yGgRRMrYw5pjqUiHkvwQS1j"), 300_000_000_000);
-    await connection.requestAirdrop(new PublicKey("DoPuiZfJu7sypqwR4eiU7C5TMcmmiFoU4HaF5SoD8mRy"), 300_000_000_000);
-    await connection.requestAirdrop(new PublicKey("2W7aa5mVuzJiaM43uFtutVFdSoWx963AKT8dtizqejTF"), 300_000_000_000);
-    await connection.requestAirdrop(new PublicKey("3nLYkE5zHKgGBxXW8Rj4neWZT5JHgdAjVRqUDcDk8nF9"), 300_000_000_000);
+    console.log("--------------------------------------------");
+    let response: any, balanceResponse: any;
 
-    // check user's USDC balance
-    let response = await connection.getParsedTokenAccountsByOwner(user.publicKey, { mint: new PublicKey(USDC_TOKEN_MINT) });
+    //# user setup (sol, usdc, bonk, stf)
+    console.log("\n----- user setup -----");
+    userSolBalance = await connection.getBalance(user.publicKey);
+    console.log(">>> user sol balance = ", userSolBalance / 1_000_000_000);
+
+    response = await connection.getParsedTokenAccountsByOwner(user.publicKey, { mint: new PublicKey(USDC_TOKEN_MINT) });
     userUsdcTokenAccountPubkey = response.value[0].pubkey;
-    let balanceResponseUsdc = await connection.getTokenAccountBalance(userUsdcTokenAccountPubkey);
-
+    balanceResponse = await connection.getTokenAccountBalance(userUsdcTokenAccountPubkey);
     console.log(">>> userUsdcTokenAccountPubkey", userUsdcTokenAccountPubkey.toString());
-    console.log(">>> user usdc balance = ", balanceResponseUsdc.value.uiAmount);
+    console.log(">>> user usdc balance = ", balanceResponse.value.uiAmount);
 
-    // check user's Bonk balance
-    let responseBonk = await connection.getParsedTokenAccountsByOwner(user.publicKey, { mint: new PublicKey(BONK_TOKEN_MINT) });
-    userBonkTokenAccountPubkey = responseBonk.value[0].pubkey;
-    let balanceResponseBonk = await connection.getTokenAccountBalance(userBonkTokenAccountPubkey);
-
+    response = await connection.getParsedTokenAccountsByOwner(user.publicKey, { mint: new PublicKey(BONK_TOKEN_MINT) });
+    userBonkTokenAccountPubkey = response.value[0].pubkey;
+    balanceResponse = await connection.getTokenAccountBalance(userBonkTokenAccountPubkey);
     console.log(">>> userBonkTokenAccountPubkey", userBonkTokenAccountPubkey.toString());
-    console.log(">>> user bonk balance = ", balanceResponseBonk.value.uiAmount);
+    console.log(">>> user bonk balance = ", balanceResponse.value.uiAmount);
 
-    const findTreasuryAuthority = (): PublicKey => {
-      return PublicKey.findProgramAddressSync([Buffer.from(TREASURY_AUTHORITY_SEED)], programId)[0];
-    };
-    treasuryAuthority = findTreasuryAuthority();
-    console.log(">>> treasury authority = ", treasuryAuthority.toBase58());
-
-    const findTreasury = (): PublicKey => {
-      return PublicKey.findProgramAddressSync([Buffer.from(TREASURY_SEED)], programId)[0];
-    };
-    treasury = findTreasury();
-    console.log(">>> treasury = ", treasuryAuthority.toBase58());
+    //# treasuryAuthority setup (sol, usdc, bonk, stf)  
+    console.log("\n----- treasuryAuthority setup -----");
+    treasurySolBalance = await connection.getBalance(treasuryAuthority);
+    console.log(">>> treasury authority sol balance = ", treasurySolBalance / 1_000_000_000);
 
     // const getTreasuryTokenAccount = async (mintPk: PublicKey) => {
     //   return await getUserTokenAccountCreateIfNeeded(treasuryAuthority, mintPk);
@@ -134,7 +166,7 @@ describe("# test scenario - bonding", () => {
           skipPreflight: true
         }
       );
-      console.log(">>> treasury USDC token account = ", treasuryUsdcTokenAccount.address.toBase58());
+      // console.log(">>> treasury USDC token account = ", treasuryUsdcTokenAccount.address.toBase58());
       treasuryBonkTokenAccount = await getOrCreateAssociatedTokenAccount(
         connection,
         user,
@@ -147,13 +179,12 @@ describe("# test scenario - bonding", () => {
           skipPreflight: true
         }
       );
-      console.log(">>> treasury BONK token account = ", treasuryBonkTokenAccount.address.toBase58());
+      // console.log(">>> treasury BONK token account = ", treasuryBonkTokenAccount.address.toBase58());
 
-      const txIdUsdc = await transfer(connection, user, userUsdcTokenAccountPubkey, treasuryUsdcTokenAccount.address, user.publicKey, 100000000);
-      console.log(">>> transfer USDC transaction = ", txIdUsdc);
-      const txIdBonk = await transfer(connection, user, userBonkTokenAccountPubkey, treasuryBonkTokenAccount.address, user.publicKey, 10000000000);
-      console.log(">>> transfer Bonk transaction = ", txIdBonk);
-
+      const txIdUsdc = await transfer(connection, user, userUsdcTokenAccountPubkey, treasuryUsdcTokenAccount.address, user.publicKey, 100_000_000);
+      // console.log(">>> transfer USDC transaction = ", txIdUsdc);
+      const txIdBonk = await transfer(connection, user, userBonkTokenAccountPubkey, treasuryBonkTokenAccount.address, user.publicKey, 10_000_000_000);
+      // console.log(">>> transfer Bonk transaction = ", txIdBonk);
 
     } catch (error) {
       console.log(">>> ", error);
@@ -161,298 +192,262 @@ describe("# test scenario - bonding", () => {
 
     response = await connection.getParsedTokenAccountsByOwner(treasuryAuthority, { mint: new PublicKey(USDC_TOKEN_MINT) });
     treasuryUsdcTokenAccountPubkey = response.value[0].pubkey;
-    balanceResponseUsdc = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
-
-    console.log(">>> treasuryUsdcTokenAccountPubkey", userUsdcTokenAccountPubkey.toString());
-    console.log(">>> treasury usdc balance = ", balanceResponseUsdc.value.uiAmount);
+    balanceResponse = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
+    console.log(">>> treasuryUsdcTokenAccountPubkey", treasuryUsdcTokenAccountPubkey.toBase58());
+    console.log(">>> treasury usdc balance = ", balanceResponse.value.uiAmount);
 
     response = await connection.getParsedTokenAccountsByOwner(treasuryAuthority, { mint: new PublicKey(BONK_TOKEN_MINT) });
     treasuryBonkTokenAccountPubkey = response.value[0].pubkey;
-    balanceResponseBonk = await connection.getTokenAccountBalance(treasuryBonkTokenAccountPubkey);
+    balanceResponse = await connection.getTokenAccountBalance(treasuryBonkTokenAccountPubkey);
+    console.log(">>> treasuryBonkTokenAccountPubkey", treasuryBonkTokenAccountPubkey.toBase58());
+    console.log(">>> treasury bonk balance = ", balanceResponse.value.uiAmount);
 
-    console.log(">>> treasuryBonkTokenAccountPubkey", balanceResponseBonk.toString());
-    console.log(">>> treasury bonk balance = ", balanceResponseBonk.value.uiAmount);
+    console.log("\n----- stf token mint -----");
+    stfTokenMintPubkey = await createMint(connection, user, user.publicKey, null, 2, stfTokenMint); //decimal 2
+    console.log(">>> create stf token mint pubkey = ", stfTokenMintPubkey.toBase58());
 
-    await connection.requestAirdrop(treasuryAuthority, 10_000_000_000);
+    treasuryStfTokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      user,
+      stfTokenMintPubkey,
+      treasuryAuthority,
+      true, "confirmed",
+      {
+        commitment: "confirmed",
+        skipPreflight: true
+      }
+    );
+    console.log(">>> treasury Stf Token Account Pubkey = ", treasuryStfTokenAccount.address.toString());
+    treasuryStfTokenAccountPubkey = treasuryStfTokenAccount.address;
+    userStfTokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      user,
+      stfTokenMintPubkey,
+      user.publicKey,
+      true, "confirmed",
+      {
+        commitment: "confirmed",
+        skipPreflight: true
+      }
+    );
+    console.log(">>> user Stf Token Account Pubkey = ", userStfTokenAccount.address.toString());
+    userStfTokenAccountPubkey = userStfTokenAccount.address;
 
+
+    let txId = await mintTo(connection, user, stfTokenMintPubkey, userStfTokenAccountPubkey, user, 2000);
+    // console.log(">>> mintTo txId : ", txId);
+    txId = await mintTo(connection, user, stfTokenMintPubkey, treasuryStfTokenAccountPubkey, user, 4000);
+    // console.log(">>> mintTo txId : ", txId);
+
+    balanceResponse = await connection.getTokenAccountBalance(userStfTokenAccountPubkey);
+    console.log(">>> user Stf balance = ", balanceResponse.value.uiAmount);
+    balanceResponse = await connection.getTokenAccountBalance(treasuryStfTokenAccountPubkey);
+    console.log(">>> treasury Stf balance = ", balanceResponse.value.uiAmount);
+
+    //# find treasury(it contains only info)
+
+
+    console.log("--------------------------------------------");
   });
-
-  //test initialize treasury
-  // it("initialize treasury account", async () => {
-  //   //here, teasury admin is provider wallet
-  //   const ix = await program.methods.initialize().accounts({
-  //     admin: provider.publicKey,
-  //     treasury: treasuryAuthority,
-  //     systemProgram: SystemProgram.programId,
-  //   }).instruction();
-
-  //   let tx = new Transaction();
-  //   tx.add(ix);
-  //   // console.log(">>> initialize treasury tx : \n", tx);
-  //   try {
-  //     const txId = await provider.sendAndConfirm(tx, [], {
-  //       commitment: "confirmed",
-  //       skipPreflight: true
-  //     });
-
-  //     console.log(">>> initialize treasury transaction = ", txId);
-  //   } catch (error) {
-  //     console.log(error);
-  //   };
-
-  //   const treasruyAccount = await program.account.treasury.fetch(treasuryAuthority);
-  //   assert.equal(treasruyAccount.treasuryAdmin.toBase58(), provider.publicKey.toBase58());
-
-  // });
+  /*
+    // test initialize treasury
+    it("initialize treasury account", async () => {
+      //here, teasury admin is provider wallet
+      const ix = await program.methods.initialize().accounts({
+        admin: provider.publicKey,
+        treasury: treasuryAuthority,
+        systemProgram: SystemProgram.programId,
+      }).instruction();
+  
+      let tx = new Transaction();
+      tx.add(ix);
+      // console.log(">>> initialize treasury tx : \n", tx);
+      try {
+        const txId = await provider.sendAndConfirm(tx, [], {
+          commitment: "confirmed",
+          skipPreflight: true
+        });
+  
+        console.log(">>> initialize treasury transaction = ", txId);
+      } catch (error) {
+        console.log(error);
+      };
+  
+      const treasruyAccount = await program.account.treasury.fetch(treasuryAuthority);
+      assert.equal(treasruyAccount.treasuryAdmin.toBase58(), provider.publicKey.toBase58());
+  
+    });
+  */
 
   /*
-  // test create bond
-  it("create bond", async () => {
-    const createBondTx = async (
-      program: anchor.Program<SaturnV1>,
-      userAddress: PublicKey | undefined,
-      escrow_mint: PublicKey,
-      tokenAmount: number,
-      spot_price: number,
-    ) => {
-      if (!userAddress) return;
+// test create bond
+it("create bond", async () => {
+  const createBondTx = async (
+    program: anchor.Program<SaturnV1>,
+    userAddress: PublicKey | undefined,
+    escrow_mint: PublicKey,
+    tokenAmount: number,
+    spot_price: number,
+  ) => {
+    if (!userAddress) return;
 
-      // console.log("HERE", userAddress);
-      // console.log(treasuryAuthority.toBase58());
+    // console.log(escrow?.toBase58());
+    let tx = new Transaction();
+    if (escrow) {
+      // console.log(program.programId.toBase58());
+      let ix = SystemProgram.createAccountWithSeed({
+        fromPubkey: userAddress,
+        basePubkey: userAddress,
+        seed: escrow_mint.toBase58().slice(0, i),
+        newAccountPubkey: escrow,
+        lamports: await connection.getMinimumBalanceForRentExemption(ESCROW_SIZE),
+        space: ESCROW_SIZE,
+        programId: program.programId,
+      });
 
-      //Source Token Account 
-      let ownerNftAccount = await getAssociatedTokenAccount(userAddress, escrow_mint);
-      // console.log("Src USDC Account = ", ownerNftAccount.toBase58());
-      let ix0 = await getATokenAccountsNeedCreate(
-        connection,
-        userAddress,
-        treasuryAuthority,
-        [escrow_mint]
-      );
-      // console.log("Dest USDC Account = ", ix0.destinationAccounts[0].toBase58());
+      // let price_update = await PublicKey.createWithSeed(
+      //     userAddress,
+      //     "PRICE_ACCOUNT___",
+      //     new PublicKey("rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ"),
+      // );
+      // let ix_for_price = SystemProgram.createAccountWithSeed({
+      //     fromPubkey: userAddress,
+      //     basePubkey: userAddress,
+      //     seed: "PRICE_ACCOUNT___",
+      //     newAccountPubkey: price_update,
+      //     lamports: await solConnection.getMinimumBalanceForRentExemption(134),
+      //     space: 134,
+      //     programId: new PublicKey("rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ"),
+      // });
+      // console.log(ix_for_price.keys);
+      // tx.add(ix_for_price);
+      // //5SRy5arRpGmeohJGeF2UvT4aTuFio38qRsDevJ5mTC5C returned for owner of oracle
+      // return tx;
 
-      //Create STF Token Account on the user and on the treasury
+      tx.add(ix);
+      if (ix0.instructions.length > 0 && escrow_mint.toBase58() != EMPTY_USER) tx.add(...ix0.instructions)
+      if (ix1.instructions.length > 0) tx.add(...ix1.instructions)
+      if (ix3.instructions.length > 0) tx.add(...ix3.instructions)
 
-      let ix1 = await getATokenAccountsNeedCreate(
-        connection,
-        userAddress,
-        userAddress,
-        [new PublicKey(STF_TOKEN)]
-      );
-
-      // console.log("Creator STF Account = ", ix1.destinationAccounts[0].toBase58());
-
-      let ix3 = await getATokenAccountsNeedCreate(
-        connection,
-        userAddress,
-        treasuryAuthority,
-        [new PublicKey(STF_TOKEN)]
-      );
-
-      // console.log("Treasury STF Account = ", ix3.destinationAccounts[0].toBase58());
-
-      let escrow;
-      let i;
-
-      for (i = 11; i > 0; i--) {
-        escrow = await PublicKey.createWithSeed(
-          userAddress,
-          escrow_mint.toBase58().slice(0, i),
-          program.programId,
-        );
-        // let state = await getStateByKey(escrow);
-        // if (state === null) {
-        //     console.log(i);
-        //     break;
-        // }
-        break;
+      const applyBondArgs = {
+        tokenAmount: new anchor.BN(tokenAmount),    // replace with your desired amount
+        spotPrice: new anchor.BN(spot_price),      // replace with the spot price
       }
 
-      // console.log(escrow?.toBase58());
-      let tx = new Transaction();
-      if (escrow) {
-        // console.log(program.programId.toBase58());
-        let ix = SystemProgram.createAccountWithSeed({
-          fromPubkey: userAddress,
-          basePubkey: userAddress,
-          seed: escrow_mint.toBase58().slice(0, i),
-          newAccountPubkey: escrow,
-          lamports: await connection.getMinimumBalanceForRentExemption(ESCROW_SIZE),
-          space: ESCROW_SIZE,
-          programId: program.programId,
-        });
-
-        // let price_update = await PublicKey.createWithSeed(
-        //     userAddress,
-        //     "PRICE_ACCOUNT___",
-        //     new PublicKey("rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ"),
-        // );
-        // let ix_for_price = SystemProgram.createAccountWithSeed({
-        //     fromPubkey: userAddress,
-        //     basePubkey: userAddress,
-        //     seed: "PRICE_ACCOUNT___",
-        //     newAccountPubkey: price_update,
-        //     lamports: await solConnection.getMinimumBalanceForRentExemption(134),
-        //     space: 134,
-        //     programId: new PublicKey("rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ"),
-        // });
-        // console.log(ix_for_price.keys);
-        // tx.add(ix_for_price);
-        // //5SRy5arRpGmeohJGeF2UvT4aTuFio38qRsDevJ5mTC5C returned for owner of oracle
-        // return tx;
-
-        tx.add(ix);
-        if (ix0.instructions.length > 0 && escrow_mint.toBase58() != EMPTY_USER) tx.add(...ix0.instructions)
-        if (ix1.instructions.length > 0) tx.add(...ix1.instructions)
-        if (ix3.instructions.length > 0) tx.add(...ix3.instructions)
-
-        const applyBondArgs = {
-          tokenAmount: new anchor.BN(tokenAmount),    // replace with your desired amount
-          spotPrice: new anchor.BN(spot_price),      // replace with the spot price
-        }
-
-        const ix2 = await program.methods.applyBond(
-          applyBondArgs
-        ).accounts({
-          admin: userAddress,
-          treasury: treasuryAuthority,
-          escrow,
-          createrTokenAccount: ownerNftAccount,
-          destTokenAccount: ix0.destinationAccounts[0],
-          destStfAccount: ix3.destinationAccounts[0],
-          priceUpdate: new PublicKey("Dpw1EAVrSB1ibxiDQyTAW6Zip3J4Btk2x4SgApQCeFbX"),
-          tokenMintAddress: escrow_mint,
-          stfTokenMint: new PublicKey(STF_TOKEN),
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId
-        }).instruction();
-        tx.add(ix2);
-      }
-
-      // console.log(">>> create bond tx : \n", tx);
-      return tx;
+      const ix2 = await program.methods.applyBond(
+        applyBondArgs
+      ).accounts({
+        admin: userAddress,
+        treasury: treasuryAuthority,
+        escrow,
+        createrTokenAccount: userTokenAccount,
+        destTokenAccount: ix0.destinationAccounts[0],
+        destStfAccount: ix3.destinationAccounts[0],
+        priceUpdate: new PublicKey("Dpw1EAVrSB1ibxiDQyTAW6Zip3J4Btk2x4SgApQCeFbX"),
+        tokenMintAddress: escrow_mint,
+        stfTokenMint: stfTokenMintPubkey,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId
+      }).instruction();
+      tx.add(ix2);
     }
 
+    // console.log(">>> create bond tx : \n", tx);
+    return tx;
+  }
+
+  try {
+    const tx = await createBondTx(
+      program,
+      provider.publicKey,
+      new PublicKey(USDC_TOKEN_MINT), //assume USDC
+      1000, //tokenAmount,
+      15 * 10 ** 6 //spot_price per small unit for STF which is DECIMAL of 2 (8 - 6)
+    );
+    const txId = await provider.sendAndConfirm(tx, [], {
+      commitment: "confirmed",
+    });
+    console.log(">>> create bond transaction =", txId);
+  } catch (error) {
+
+    console.log(">>> create bond error = \n", error);
+  }
+
+});
+
+// test finish bond
+it("finish bond", () => {
+  const finishBondTx = async (
+    program: anchor.Program<SaturnV1>,
+    userAddress: PublicKey | undefined,
+  ) => {
+    let ix3 = await getATokenAccountsNeedCreate(
+      connection,
+      userAddress,
+      userAddress,
+      [stfTokenMintPubkey]
+    );
+
+    console.log("userAddress STF Account = ", ix3.destinationAccounts[0].toBase58());
+
+    let escrow = new PublicKey("Bcs4HEbeBgXxy2TFLRTZ4SMWR6dapyRrLr6qVJ93wuxA");
+    console.log(escrow?.toBase58());
+
+    let tx = new Transaction();
+    if (escrow) {
+      if (ix3.instructions.length > 0) tx.add(...ix3.instructions)
+
+      const ix2 = await program.methods.finishBond()
+        .accounts({
+          admin: userAddress,
+          treasury: treasuryAuthority,
+          destStfAccount: ix3.destinationAccounts[0],
+          escrow,
+          stfTokenMint: stfTokenMintPubkey,
+          tokenProgram: TOKEN_PROGRAM_ID
+        }).instruction();
+      tx.add(ix2);
+    }
+
+    // console.log(">>> finish bond tx : \n", tx);
+    return tx;
+  };
+
+  const finishBond = async (
+  ) => {
     try {
-      const tx = await createBondTx(
+      const tx = await finishBondTx(
         program,
-        provider.publicKey,
-        new PublicKey(USDC_TOKEN), //assume USDC
-        1000, //tokenAmount,
-        15 * 10 ** 6 //spot_price per small unit for STF which is DECIMAL of 2 (8 - 6)
+        provider.publicKey
       );
       const txId = await provider.sendAndConfirm(tx, [], {
         commitment: "confirmed",
       });
-      console.log(">>> create bond transaction =", txId);
+      console.log(">>> finish bond transaction =", txId);
     } catch (error) {
-
       console.log(error);
     }
-
-  });
-
-  // test finish bond
-  it("finish bond", () => {
-    const finishBondTx = async (
-      program: anchor.Program<SaturnV1>,
-      userAddress: PublicKey | undefined,
-    ) => {
-      let ix3 = await getATokenAccountsNeedCreate(
-        connection,
-        userAddress,
-        userAddress,
-        [new PublicKey(STF_TOKEN)]
-      );
-
-      console.log("userAddress STF Account = ", ix3.destinationAccounts[0].toBase58());
-
-      let escrow = new PublicKey("Bcs4HEbeBgXxy2TFLRTZ4SMWR6dapyRrLr6qVJ93wuxA");
-      console.log(escrow?.toBase58());
-
-      let tx = new Transaction();
-      if (escrow) {
-        if (ix3.instructions.length > 0) tx.add(...ix3.instructions)
-
-        const ix2 = await program.methods.finishBond()
-          .accounts({
-            admin: userAddress,
-            treasury: treasuryAuthority,
-            destStfAccount: ix3.destinationAccounts[0],
-            escrow,
-            stfTokenMint: new PublicKey(STF_TOKEN),
-            tokenProgram: TOKEN_PROGRAM_ID
-          }).instruction();
-        tx.add(ix2);
-      }
-
-      // console.log(">>> finish bond tx : \n", tx);
-      return tx;
-    };
-
-    const finishBond = async (
-    ) => {
-      try {
-        const tx = await finishBondTx(
-          program,
-          provider.publicKey
-        );
-        const txId = await provider.sendAndConfirm(tx, [], {
-          commitment: "confirmed",
-        });
-        console.log(">>> finish bond transaction =", txId);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-  });
-  */
-
+  };
 });
+*/
+});
+
 
 let userTokenAccount: any;
 let treasuryTokenAccount: any;
+
 
 // ### staking & unstaking STF test scenario ###
 describe("# test scenario - staking", () => {
 
   it("setup for staking & unstaking", async () => {
-
-    let responseUserToken = await connection.getParsedTokenAccountsByOwner(user.publicKey, { mint: new PublicKey(STF_TOKEN) });
-    userTokenAccount = responseUserToken.value[0].pubkey;
-    console.log(">>> user STF token account = ", userTokenAccount.toBase58());
-    let responseTreasuryToken = await connection.getParsedTokenAccountsByOwner(user.publicKey, { mint: new PublicKey(STF_TOKEN) });
-    treasuryTokenAccount = responseTreasuryToken.value[0].pubkey;
-    console.log(">>> treasury STF token account = ", treasuryTokenAccount.toBase58());
-    // try {
-    //   userTokenAccount = await getOrCreateAssociatedTokenAccount(
-    //     connection,
-    //     user,
-    //     new PublicKey(STF_TOKEN),
-    //     user.publicKey,
-    //     true, "confirmed",
-    //     {
-    //       commitment: "confirmed",
-    //       skipPreflight: true
-    //     }
-    //   );
-    //   console.log(">>> user STF token account = ", userTokenAccount.address.toBase58());
-    //   treasuryTokenAccount = await getOrCreateAssociatedTokenAccount(
-    //     connection,
-    //     user,
-    //     new PublicKey(STF_TOKEN),
-    //     treasuryAuthority,
-    //     true, "confirmed",
-    //     {
-    //       commitment: "confirmed",
-    //       skipPreflight: true
-    //     }
-    //   );
-    //   console.log(">>> treasury STF token account = ", treasuryTokenAccount.address.toBase58());
-    // } catch (e) {
-    //   console.log(">>> ! setup for staking & unstaking error : \n", e);
-    // }
-
+    // user.pubkey 3qtahdn6ez4hwRy3UwEC3Cf9pPdbMeGUvspWvgY2N6Ws
+    console.log("\n---------- staking unstaking setup ----------");
+    let balanceResponse = await connection.getTokenAccountBalance(userStfTokenAccountPubkey);
+    console.log(">>> user Stf balance = ", balanceResponse.value.uiAmount);
+    balanceResponse = await connection.getTokenAccountBalance(treasuryStfTokenAccountPubkey);
+    console.log(">>> treasury Stf balance = ", balanceResponse.value.uiAmount);
+    
   });
 
   // test staking SNF
@@ -464,9 +459,9 @@ describe("# test scenario - staking", () => {
         userStakeAccount: userStakeAccount,
         treasuryAuthority: treasuryAuthority,
         treasury: treasury,
-        userTokenAccount: userTokenAccount,
-        treasuryTokenAccount: treasuryTokenAccount,
-        stfTokenMint: new PublicKey(STF_TOKEN),
+        userTokenAccount: userStfTokenAccountPubkey,
+        treasuryTokenAccount: treasuryStfTokenAccountPubkey,
+        stfTokenMint: stfTokenMintPubkey,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId
       })
@@ -498,10 +493,11 @@ describe("# test scenario - staking", () => {
       .accounts({
         user: user.publicKey,
         userStakeAccount: userStakeAccount,
-        treasury: treasuryAuthority,
-        userTokenAccount: userTokenAccount,
-        treasuryTokenAccount: treasuryTokenAccount,
-        stfTokenMint: new PublicKey(STF_TOKEN),
+        treasuryAuthority: treasuryAuthority,
+        treasury: treasury,
+        userTokenAccount: userStfTokenAccountPubkey,
+        treasuryTokenAccount: treasuryStfTokenAccountPubkey,
+        stfTokenMint: stfTokenMintPubkey,
         tokenProgram: TOKEN_PROGRAM_ID,
         systemProgram: SystemProgram.programId
       }).instruction();
@@ -525,11 +521,7 @@ describe("# test scenario - staking", () => {
 
 });
 
-
-const findTreasuryWSOLAccount = (): PublicKey => {
-  return PublicKey.findProgramAddressSync([Buffer.from("wsol")], programId)[0];
-};
-
+/*
 let treasuryWSOLAccount: PublicKey;
 const USDC = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 const SOL = new PublicKey("So11111111111111111111111111111111111111112");
@@ -684,8 +676,20 @@ describe("# test scenario - jupiter swap", () => {
   });
 
 });
+*/
 
 
+const findTreasuryAuthority = (): PublicKey => {
+  return PublicKey.findProgramAddressSync([Buffer.from(TREASURY_AUTHORITY_SEED)], programId)[0];
+};
+
+const findTreasury = (): PublicKey => {
+  return PublicKey.findProgramAddressSync([Buffer.from(TREASURY_SEED)], programId)[0];
+};
+
+const findTreasuryWSOLAccount = (): PublicKey => {
+  return PublicKey.findProgramAddressSync([Buffer.from("wsol")], programId)[0];
+};
 
 const findUserStakeAccount = (userPublicKey: PublicKey): PublicKey => {
   return PublicKey.findProgramAddressSync([Buffer.from(PERSONAL_SEED), userPublicKey.toBuffer()], programId)[0];
