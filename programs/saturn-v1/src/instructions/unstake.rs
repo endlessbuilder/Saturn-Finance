@@ -7,7 +7,7 @@ use crate::{
     error::*,
     utils::*
 };
-use anchor_spl::{token::{Token, TokenAccount}, token_interface::{transfer_checked, TransferChecked}};
+use anchor_spl::{token::{Mint, Token, TokenAccount}, token_interface::{transfer_checked, TransferChecked}};
 
 
 #[derive(Accounts)]
@@ -25,6 +25,14 @@ pub struct UnStakeSTF<'info> {
         bump, 
     )]
     pub user_stake_account: Account<'info, UserStakeAccount>,
+    
+    /// CHECK: this is pda
+    #[account(
+        mut,
+        seeds = [TREASURY_AUTHORITY_SEED.as_ref()],
+        bump,
+    )]
+    pub treasury_authority: UncheckedAccount<'info>,
 
     #[account(
         mut,
@@ -32,6 +40,7 @@ pub struct UnStakeSTF<'info> {
         bump,
     )]
     pub treasury: Account<'info, Treasury>,
+    
     #[account(
         mut,
         constraint = user_token_account.mint == *stf_token_mint.to_account_info().key,
@@ -40,13 +49,18 @@ pub struct UnStakeSTF<'info> {
     pub user_token_account: Account<'info, TokenAccount>,
 
     #[account(
-        mut,
+        init_if_needed,
+        space = mem::size_of::<TokenAccount>() as usize + 8,
+        payer = user,
+        seeds=[PERSONAL_SEED.as_ref(), user.key.as_ref()],
+        bump,
         constraint = treasury_token_account.mint == *stf_token_mint.to_account_info().key,
-        constraint = treasury_token_account.owner == *treasury.to_account_info().key,
+        constraint = treasury_token_account.owner == *treasury_authority.to_account_info().key,
     )]
     pub treasury_token_account: Account<'info, TokenAccount>,
+
     /// CHECK: This is not dangerous because we don't read or write from this account
-    pub stf_token_mint: AccountInfo<'info>,
+    pub stf_token_mint: Account<'info, Mint>,
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
 }
@@ -55,6 +69,7 @@ pub struct UnStakeSTF<'info> {
 // Amount to unstake is in sSTF
 pub fn handle(ctx: Context<UnStakeSTF>, amount_to_unstake: u64) -> Result<()> {
     let treasury = &mut ctx.accounts.treasury;
+    let treasury_authority = &mut ctx.accounts.treasury_authority;
     let user_token_account = &mut &ctx.accounts.user_token_account;
     let treasury_token_account = &mut &ctx.accounts.treasury_token_account;
     let stf_token_mint = &mut &ctx.accounts.stf_token_mint;
@@ -76,12 +91,12 @@ pub fn handle(ctx: Context<UnStakeSTF>, amount_to_unstake: u64) -> Result<()> {
     let accounts = TransferChecked {
         from: treasury_token_account.to_account_info(),
         to: user_token_account.to_account_info(),
-        authority: treasury_token_account.to_account_info(),
+        authority: treasury_authority.to_account_info(),
         mint: stf_token_mint.to_account_info()
     };
 
     let seeds = &[
-        &b"TREASURY_SEED"[..],
+        &b"treasury-authority"[..],
     ];
 
     let signer_seeds = &[&seeds[..]];

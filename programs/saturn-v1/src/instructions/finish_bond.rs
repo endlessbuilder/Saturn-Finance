@@ -12,7 +12,15 @@ use crate::{
 #[instruction()]
 pub struct FinishBond<'info> {
     #[account(mut)]
-    pub admin: Signer<'info>,
+    pub user: Signer<'info>,
+
+    /// CHECK: this is pda
+    #[account(
+        mut,
+        seeds = [TREASURY_AUTHORITY_SEED.as_ref()],
+        bump,
+    )]
+    pub treasury_authority: UncheckedAccount<'info>,
 
     #[account(
         mut,
@@ -24,7 +32,7 @@ pub struct FinishBond<'info> {
     #[account(
         mut,
         constraint = dest_stf_account.mint == *stf_token_mint.to_account_info().key,
-        constraint = dest_stf_account.owner == *admin.to_account_info().key,
+        constraint = dest_stf_account.owner == *user.to_account_info().key,
     )]
     pub dest_stf_account: Account<'info, TokenAccount>,
 
@@ -41,6 +49,7 @@ pub fn handle(ctx: Context<FinishBond>) -> Result<()> {
     let timestamp = Clock::get()?.unix_timestamp;
     let escrow = &mut ctx.accounts.escrow.load_mut()?;
     let treasury = &mut ctx.accounts.treasury;
+    let treasury_authority = &mut ctx.accounts.treasury_authority;
     let stf_token_mint = &mut &ctx.accounts.stf_token_mint;
     let dest_stf_account = &mut &ctx.accounts.dest_stf_account;
     let token_program = &mut &ctx.accounts.token_program;
@@ -48,7 +57,7 @@ pub fn handle(ctx: Context<FinishBond>) -> Result<()> {
     // if timestamp < escrow.end_timestamp {
     //     return Err(BondError::BondNotFinished.into());
     // }
-    if escrow.creator != ctx.accounts.admin.key() {
+    if escrow.creator != ctx.accounts.user.key() {
         return Err(BondError::CreatorError.into());
     }
     if escrow.is_finished != 1 {
@@ -56,13 +65,13 @@ pub fn handle(ctx: Context<FinishBond>) -> Result<()> {
     }
 
     //Mint Token to Redeem to the creator
-    let seeds = &[TREASURY_SEED.as_bytes(), &[ctx.bumps.treasury]];
+    let seeds = &[TREASURY_AUTHORITY_SEED.as_bytes(), &[ctx.bumps.treasury_authority]];
     let signer = &[&seeds[..]];
     
     let cpi_accounts = MintTo {
         mint: stf_token_mint.to_account_info().clone(),
         to: dest_stf_account.to_account_info().clone(),
-        authority: ctx.accounts.treasury.to_account_info().clone(),
+        authority: treasury_authority.to_account_info().clone(),
     };
     token::mint_to(
         CpiContext::new_with_signer(

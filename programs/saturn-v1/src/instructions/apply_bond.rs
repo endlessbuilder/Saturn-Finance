@@ -20,7 +20,15 @@ pub struct ApplyBondArgs {
 #[instruction(args: ApplyBondArgs)]
 pub struct ApplyBond<'info> {
     #[account(mut)]
-    pub admin: Signer<'info>,
+    pub creator: Signer<'info>,
+
+    /// CHECK: this is pda
+    #[account(
+        mut,
+        seeds = [TREASURY_AUTHORITY_SEED.as_ref()],
+        bump,
+    )]
+    pub treasury_authority: UncheckedAccount<'info>,
 
     #[account(
         mut,
@@ -34,23 +42,23 @@ pub struct ApplyBond<'info> {
 
     #[account(
         mut,
-        constraint = creater_token_account.mint == *token_mint_address.to_account_info().key,
-        constraint = creater_token_account.owner == *admin.key,
+        constraint = creator_token_account.mint == *token_mint_address.to_account_info().key,
+        constraint = creator_token_account.owner == *creator.key,
     )]
-    pub creater_token_account: Account<'info, TokenAccount>,
+    pub creator_token_account: Account<'info, TokenAccount>,
 
     #[account(
         mut,
-        constraint = dest_token_account.mint == *token_mint_address.to_account_info().key,
-        constraint = dest_token_account.owner == *treasury.to_account_info().key,
+        constraint = treasury_token_account.mint == *token_mint_address.to_account_info().key,
+        constraint = treasury_token_account.owner == *treasury.to_account_info().key,
     )]
-    pub dest_token_account: Account<'info, TokenAccount>,
+    pub treasury_token_account: Account<'info, TokenAccount>,
     #[account(
         mut,
-        constraint = dest_stf_account.mint == *stf_token_mint.to_account_info().key,
-        constraint = dest_stf_account.owner == *treasury.to_account_info().key,
+        constraint = treasury_stf_token_account.mint == *stf_token_mint.to_account_info().key,
+        constraint = treasury_stf_token_account.owner == *treasury.to_account_info().key,
     )]
-    pub dest_stf_account: Account<'info, TokenAccount>,
+    pub treasury_stf_token_account: Account<'info, TokenAccount>,
 
     pub price_update: Account<'info, PriceUpdateV2>,
 
@@ -71,12 +79,13 @@ pub fn handle(
     spot_price: u64,
 ) -> Result<()> {
     let mut escrow = ctx.accounts.escrow.load_init()?;
-    let admin = &mut &ctx.accounts.admin;
+    let creator = &mut &ctx.accounts.creator;
     let treasury = &mut ctx.accounts.treasury;
+    let treasury_authority = &mut ctx.accounts.treasury_authority;
     msg!("apply_bond");
-    let src_account_info = &mut &ctx.accounts.creater_token_account;
-    let dest_account_info = &mut &ctx.accounts.dest_token_account;
-    let dest_stf_account = &mut &ctx.accounts.dest_stf_account;
+    let src_account_info = &mut &ctx.accounts.creator_token_account;
+    let dest_account_info = &mut &ctx.accounts.treasury_token_account;
+    let treasury_stf_token_account = &mut &ctx.accounts.treasury_stf_token_account;
     let token_program = &mut &ctx.accounts.token_program;
     let stf_token_mint = &mut &ctx.accounts.stf_token_mint;
     let mint_pubkey = &mut &ctx.accounts.token_mint_address.key().to_string();
@@ -94,8 +103,8 @@ pub fn handle(
     if mint_pubkey.as_str() == SOL_MINT {
         feed_id = get_feed_id_from_hex(SOL_PRICE_ID)?;
         sol_transfer_user(
-            admin.to_account_info(),
-            treasury.to_account_info(),
+            creator.to_account_info(),
+            treasury_authority.to_account_info(),
             ctx.accounts.system_program.to_account_info(),
             token_amount,
         )?;
@@ -104,7 +113,7 @@ pub fn handle(
         let cpi_accounts = Transfer {
             from: src_account_info.to_account_info().clone(),
             to: dest_account_info.to_account_info().clone(),
-            authority: ctx.accounts.admin.to_account_info().clone(),
+            authority: ctx.accounts.creator.to_account_info().clone(),
         };
         token::transfer(
             CpiContext::new(token_program.clone().to_account_info(), cpi_accounts),
@@ -115,7 +124,7 @@ pub fn handle(
         let cpi_accounts = Transfer {
             from: src_account_info.to_account_info().clone(),
             to: dest_account_info.to_account_info().clone(),
-            authority: ctx.accounts.admin.to_account_info().clone(),
+            authority: ctx.accounts.creator.to_account_info().clone(),
         };
         token::transfer(
             CpiContext::new(token_program.clone().to_account_info(), cpi_accounts),
@@ -162,10 +171,10 @@ pub fn handle(
 
     let cpi_accounts = MintTo {
         mint: stf_token_mint.to_account_info().clone(),
-        to: dest_stf_account.to_account_info().clone(),
-        authority: ctx.accounts.treasury.to_account_info().clone(),
+        to: treasury_stf_token_account.to_account_info().clone(),
+        authority: ctx.accounts.treasury_authority.to_account_info().clone(),
     };
-    let seeds = &[TREASURY_SEED.as_bytes(), &[ctx.bumps.treasury]];
+    let seeds = &[TREASURY_AUTHORITY_SEED.as_bytes(), &[ctx.bumps.treasury_authority]];
     let signer = &[&seeds[..]];
     
     token::mint_to(
@@ -178,7 +187,7 @@ pub fn handle(
     )?;
 
     let timestamp = Clock::get()?.unix_timestamp;
-    escrow.creator = ctx.accounts.admin.key();
+    escrow.creator = ctx.accounts.creator.key();
     escrow.token_mint = ctx.accounts.token_mint_address.key();
     escrow.token_amount = token_amount;
     escrow.num_token_to_redeem = num_token_to_redeem;
