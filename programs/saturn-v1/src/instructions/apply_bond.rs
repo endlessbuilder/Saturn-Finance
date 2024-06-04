@@ -43,7 +43,7 @@ pub struct ApplyBond<'info> {
     #[account(
         mut,
         constraint = creator_token_account.mint == *token_mint_address.to_account_info().key,
-        constraint = creator_token_account.owner == *creator.key,
+        constraint = creator_token_account.owner == *creator.to_account_info().key,
     )]
     pub creator_token_account: Account<'info, TokenAccount>,
 

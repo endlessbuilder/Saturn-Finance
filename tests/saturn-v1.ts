@@ -25,6 +25,7 @@ import {
 } from "@solana/spl-token";
 import fetch from "node-fetch";
 import { assert } from "chai";
+import adminJson from "./users/admin.json";
 import userJson from "./users/user.json";
 import stfTokenMintJson from "./mint/stf_token_mint.json";
 import { BN } from "bn.js";
@@ -52,12 +53,16 @@ const provider = program.provider;
 const connection = program.provider.connection;
 
 const programId = program.programId;
-console.log(">>> programId : ", programId);
+console.log(">>> programId : ", programId.toBase58());
 
 const jupiterProgramId = new PublicKey(
   "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
 );
 const API_ENDPOINT = "https://quote-api.jup.ag/v6";
+
+const admin = anchor.web3.Keypair.fromSecretKey(Uint8Array.from(adminJson));
+console.log(">>> create admin publickey : ", admin.publicKey.toBase58());
+//5vSwrp6mk5Po9d4L9uN6Vd18w26wVdrsVHjcNJKX62aG
 
 const user = anchor.web3.Keypair.fromSecretKey(Uint8Array.from(userJson));
 console.log(">>> create user publickey : ", user.publicKey.toBase58());
@@ -84,33 +89,40 @@ let treasuryUsdcTokenAccountPubkey: PublicKey,
 let stfTokenMintPubkey: PublicKey;
 
 treasuryAuthority = PublicKey.findProgramAddressSync([Buffer.from(TREASURY_AUTHORITY_SEED)], programId)[0];
-console.log(">>> treasury authority pubickey = ", treasuryAuthority.toBase58());
+console.log(">>> treasury authority pubickey : ", treasuryAuthority.toBase58());
 treasury = PublicKey.findProgramAddressSync([Buffer.from(TREASURY_SEED)], programId)[0];
-console.log(">>> treasury = ", treasury.toBase58());
+console.log(">>> treasury publickey : ", treasury.toBase58());
 
 // ### initializing project test scenario ###
 describe("# test scenario - bonding", () => {
   //# setup for test
   it("setup for test", async () => {
 
+    let adminSolBalance = 0;
     let userSolBalance = 0;
     let providerSolBalance = 0;
     let treasurySolBalance = 0;
+
+    while (adminSolBalance < 5) {
+      await connection.requestAirdrop(admin.publicKey, 20_000_000_000);
+      adminSolBalance = await connection.getBalance(admin.publicKey) / 1_000_000_000;
+      // console.log(">>> admin sol balance = ", adminSolBalance);
+    };
     while (userSolBalance < 5) {
       await connection.requestAirdrop(user.publicKey, 20_000_000_000);
       userSolBalance = await connection.getBalance(user.publicKey) / 1_000_000_000;
       // console.log(">>> user sol balance = ", userSolBalance);
-    }
+    };
     while (providerSolBalance < 5) {
       await connection.requestAirdrop(provider.publicKey, 20_000_000_000);
       providerSolBalance = await connection.getBalance(user.publicKey) / 1_000_000_000;
       // console.log(">>> user sol balance = ", providerSolBalance);
-    }
+    };
     while (treasurySolBalance < 5) {
       await connection.requestAirdrop(treasuryAuthority, 20_000_000_000);
       treasurySolBalance = await connection.getBalance(user.publicKey) / 1_000_000_000;
       // console.log(">>> user sol balance = ", treasurySolBalance);
-    }
+    };
        
     await connection.requestAirdrop(new PublicKey("5rCf1DM8LjKTw4YqhnoLcngyZYeNnQqztScTogYHAS6"), 124_740_000_000);
     await connection.requestAirdrop(new PublicKey("3msVd34R5KxonDzyNSV5nT19UtUeJ2RF1NaQhvVPNLxL"), 293_000_000_000);
@@ -131,6 +143,9 @@ describe("# test scenario - bonding", () => {
 
     //# user setup (sol, usdc, bonk, stf)
     console.log("\n----- user setup -----");
+    adminSolBalance = await connection.getBalance(admin.publicKey);
+    console.log(">>> admin sol balance = ", adminSolBalance / 1_000_000_000);
+
     userSolBalance = await connection.getBalance(user.publicKey);
     console.log(">>> user sol balance = ", userSolBalance / 1_000_000_000);
 
@@ -249,13 +264,13 @@ describe("# test scenario - bonding", () => {
 
     console.log("--------------------------------------------");
   });
-  /*
+  
     // test initialize treasury
     it("initialize treasury account", async () => {
       //here, teasury admin is provider wallet
       const ix = await program.methods.initialize().accounts({
-        admin: provider.publicKey,
-        treasury: treasuryAuthority,
+        admin: admin.publicKey,
+        treasury: treasury,
         systemProgram: SystemProgram.programId,
       }).instruction();
   
@@ -263,7 +278,7 @@ describe("# test scenario - bonding", () => {
       tx.add(ix);
       // console.log(">>> initialize treasury tx : \n", tx);
       try {
-        const txId = await provider.sendAndConfirm(tx, [], {
+        const txId = await provider.sendAndConfirm(tx, [admin], {
           commitment: "confirmed",
           skipPreflight: true
         });
@@ -273,11 +288,11 @@ describe("# test scenario - bonding", () => {
         console.log(error);
       };
   
-      const treasruyAccount = await program.account.treasury.fetch(treasuryAuthority);
-      assert.equal(treasruyAccount.treasuryAdmin.toBase58(), provider.publicKey.toBase58());
+      const treasruyAccount = await program.account.treasury.fetch(treasury);
+      assert.equal(treasruyAccount.treasuryAdmin.toBase58(), admin.publicKey.toBase58());
   
     });
-  */
+  
 
   /*
 // test create bond
@@ -447,7 +462,11 @@ describe("# test scenario - staking", () => {
     console.log(">>> user Stf balance = ", balanceResponse.value.uiAmount);
     balanceResponse = await connection.getTokenAccountBalance(treasuryStfTokenAccountPubkey);
     console.log(">>> treasury Stf balance = ", balanceResponse.value.uiAmount);
-    
+    console.log(">>> treasury publickey = ", treasury.toBase58());
+    console.log(">>> treasury authority publickey = ", treasuryAuthority.toBase58());
+    console.log(">>> user stf token account publickey = ", userStfTokenAccountPubkey.toBase58());
+    console.log(">>> treasury stf token account publickey = ", treasuryStfTokenAccountPubkey.toBase58());
+    console.log(">>> stf token mint publickey = ", stfTokenMintPubkey.toBase58());
   });
 
   // test staking SNF
@@ -488,7 +507,7 @@ describe("# test scenario - staking", () => {
 
   // test unstaking SNF
   it("unstake SNF", async () => {
-    let amountToUnstake = new anchor.BN(10 * 10 ** 2);
+    let amountToUnstake = new anchor.BN(200);
     const ix = await program.methods.unstakeStf(amountToUnstake)
       .accounts({
         user: user.publicKey,

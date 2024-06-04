@@ -43,16 +43,12 @@ pub struct StakeSTF<'info> {
     #[account(
         mut,
         constraint = user_token_account.mint == *stf_token_mint.to_account_info().key,
-        constraint = user_token_account.owner == *user.key,
+        constraint = user_token_account.owner == *user.to_account_info().key,
     )]
     pub user_token_account: Account<'info, TokenAccount>,
 
     #[account(
-        init_if_needed,
-        space = mem::size_of::<TokenAccount>() as usize + 8,
-        payer = user,
-        seeds=[PERSONAL_SEED.as_ref(), user.key.as_ref()],
-        bump,
+        mut,
         constraint = treasury_token_account.mint == *stf_token_mint.to_account_info().key,
         constraint = treasury_token_account.owner == *treasury_authority.to_account_info().key,
     )]
@@ -72,10 +68,10 @@ pub fn handle(ctx: Context<StakeSTF>, amount_to_stake: u64) -> Result<()> {
     let user = &mut ctx.accounts.user;
     let personal_stake_account = &mut ctx.accounts.user_stake_account;
 
-    assert!(
-        stf_token_mint.key().to_string().as_str() == STF_MINT,
-        "STF_TOKEN_MINT ERROR"
-    );
+    // assert!(
+    //     stf_token_mint.key().to_string().as_str() == STF_MINT,
+    //     "STF_TOKEN_MINT ERROR"
+    // );
 
 
     // Transfer Tokens To Treasury 
@@ -94,8 +90,6 @@ pub fn handle(ctx: Context<StakeSTF>, amount_to_stake: u64) -> Result<()> {
     let amount_to_transfer = amount_to_stake / treasury.staking_index;
     personal_stake_account.total_staked_index  += amount_to_transfer;
     treasury.token_staked += amount_to_transfer;
-
-
 
     Ok(())
 }

@@ -16,7 +16,6 @@ pub struct UnStakeSTF<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
 
-
     #[account(
         init_if_needed,
         space = mem::size_of::<UserStakeAccount>() as usize + 8,
@@ -44,16 +43,12 @@ pub struct UnStakeSTF<'info> {
     #[account(
         mut,
         constraint = user_token_account.mint == *stf_token_mint.to_account_info().key,
-        constraint = user_token_account.owner == *user.key,
+        constraint = user_token_account.owner == *user.to_account_info().key,
     )]
     pub user_token_account: Account<'info, TokenAccount>,
 
     #[account(
-        init_if_needed,
-        space = mem::size_of::<TokenAccount>() as usize + 8,
-        payer = user,
-        seeds=[PERSONAL_SEED.as_ref(), user.key.as_ref()],
-        bump,
+        mut,
         constraint = treasury_token_account.mint == *stf_token_mint.to_account_info().key,
         constraint = treasury_token_account.owner == *treasury_authority.to_account_info().key,
     )]
@@ -75,14 +70,15 @@ pub fn handle(ctx: Context<UnStakeSTF>, amount_to_unstake: u64) -> Result<()> {
     let stf_token_mint = &mut &ctx.accounts.stf_token_mint;
     let user = &mut ctx.accounts.user;
     let personal_account = &mut ctx.accounts.user_stake_account;
+    let authority_bump = ctx.bumps.treasury_authority;
 
 
     require!(personal_account.total_staked_index as u64 > amount_to_unstake, BondError::UnstakingError); 
 
-    assert!(
-        stf_token_mint.key().to_string().as_str() == STF_MINT,
-        "STF_TOKEN_MINT ERROR"
-    );
+    // assert!(
+    //     stf_token_mint.key().to_string().as_str() == STF_MINT,
+    //     "STF_TOKEN_MINT ERROR"
+    // );
     // Add STF
     let amount_to_transfer = amount_to_unstake * treasury.staking_index;
     personal_account.total_staked_index  -= amount_to_unstake;
@@ -95,11 +91,8 @@ pub fn handle(ctx: Context<UnStakeSTF>, amount_to_unstake: u64) -> Result<()> {
         mint: stf_token_mint.to_account_info()
     };
 
-    let seeds = &[
-        &b"treasury-authority"[..],
-    ];
-
-    let signer_seeds = &[&seeds[..]];
+    let authority_bump_seeds = [authority_bump];
+    let signer_seeds: &[&[&[u8]]] = &[&[TREASURY_AUTHORITY_SEED.as_bytes(), authority_bump_seeds.as_ref()]];
 
     let ctx = CpiContext::new_with_signer(
         ctx.accounts.token_program.to_account_info(),
@@ -107,7 +100,7 @@ pub fn handle(ctx: Context<UnStakeSTF>, amount_to_unstake: u64) -> Result<()> {
         signer_seeds
     );
 
-    let _ = transfer_checked(ctx, amount_to_transfer, 9);
+    let _ = transfer_checked(ctx, amount_to_transfer, 2);
 
 
 
