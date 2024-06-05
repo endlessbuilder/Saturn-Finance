@@ -12,7 +12,6 @@ import {
   VersionedTransaction,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
-import { bs58 } from "@coral-xyz/anchor/dist/cjs/utils/bytes";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
@@ -29,6 +28,9 @@ import adminJson from "./users/admin.json";
 import userJson from "./users/user.json";
 import stfTokenMintJson from "./mint/stf_token_mint.json";
 import { BN } from "bn.js";
+import { publicKey } from "@coral-xyz/anchor/dist/cjs/utils";
+import { PriceServiceConnection } from "@pythnetwork/price-service-client";
+import { InstructionWithEphemeralSigners, PythSolanaReceiver } from "@pythnetwork/pyth-solana-receiver"
 
 const RPC_URL = "https://api.devnet.solana.com";
 const TREASURY_AUTHORITY_SEED = "treasury-authority";
@@ -87,6 +89,7 @@ let treasuryUsdcTokenAccountPubkey: PublicKey,
   treasuryStfTokenAccount: any;
 
 let stfTokenMintPubkey: PublicKey;
+let escrow: PublicKey;
 
 treasuryAuthority = PublicKey.findProgramAddressSync([Buffer.from(TREASURY_AUTHORITY_SEED)], programId)[0];
 console.log(">>> treasury authority pubickey : ", treasuryAuthority.toBase58());
@@ -123,7 +126,7 @@ describe("# test scenario - bonding", () => {
       treasurySolBalance = await connection.getBalance(user.publicKey) / 1_000_000_000;
       // console.log(">>> user sol balance = ", treasurySolBalance);
     };
-       
+
     await connection.requestAirdrop(new PublicKey("5rCf1DM8LjKTw4YqhnoLcngyZYeNnQqztScTogYHAS6"), 124_740_000_000);
     await connection.requestAirdrop(new PublicKey("3msVd34R5KxonDzyNSV5nT19UtUeJ2RF1NaQhvVPNLxL"), 293_000_000_000);
 
@@ -175,13 +178,14 @@ describe("# test scenario - bonding", () => {
         user,
         new PublicKey(USDC_TOKEN_MINT),
         treasuryAuthority,
-        true, "confirmed",
+        true,
+        "confirmed",
         {
           commitment: "confirmed",
           skipPreflight: true
         }
       );
-      // console.log(">>> treasury USDC token account = ", treasuryUsdcTokenAccount.address.toBase58());
+      console.log(">>> treasury USDC token account = ", treasuryUsdcTokenAccount.address.toBase58());
       treasuryBonkTokenAccount = await getOrCreateAssociatedTokenAccount(
         connection,
         user,
@@ -194,12 +198,12 @@ describe("# test scenario - bonding", () => {
           skipPreflight: true
         }
       );
-      // console.log(">>> treasury BONK token account = ", treasuryBonkTokenAccount.address.toBase58());
-
-      const txIdUsdc = await transfer(connection, user, userUsdcTokenAccountPubkey, treasuryUsdcTokenAccount.address, user.publicKey, 100_000_000);
-      // console.log(">>> transfer USDC transaction = ", txIdUsdc);
-      const txIdBonk = await transfer(connection, user, userBonkTokenAccountPubkey, treasuryBonkTokenAccount.address, user.publicKey, 10_000_000_000);
-      // console.log(">>> transfer Bonk transaction = ", txIdBonk);
+      console.log(">>> treasury BONK token account = ", treasuryBonkTokenAccount.address.toBase58());
+      // console.log(">>> !!! ", user, userUsdcTokenAccountPubkey, treasuryUsdcTokenAccount.address, user.publicKey);
+      const txIdUsdc = await transfer(connection, user, userUsdcTokenAccountPubkey, treasuryUsdcTokenAccount.address, user, 100_000_000);
+      console.log(">>> transfer USDC transaction = ", txIdUsdc);
+      const txIdBonk = await transfer(connection, user, userBonkTokenAccountPubkey, treasuryBonkTokenAccount.address, user, 10_000_000_000);
+      console.log(">>> transfer Bonk transaction = ", txIdBonk);
 
     } catch (error) {
       console.log(">>> ", error);
@@ -261,195 +265,180 @@ describe("# test scenario - bonding", () => {
 
     //# find treasury(it contains only info)
 
+    //# find escrow
+    escrow = PublicKey.findProgramAddressSync([Buffer.from("escrow"), user.publicKey.toBuffer()], programId)[0];
+    console.log(">>> escrow = ", escrow.toBase58());
 
     console.log("--------------------------------------------");
   });
-  
-    // test initialize treasury
-    it("initialize treasury account", async () => {
-      //here, teasury admin is provider wallet
-      const ix = await program.methods.initialize().accounts({
-        admin: admin.publicKey,
-        treasury: treasury,
-        systemProgram: SystemProgram.programId,
-      }).instruction();
-  
-      let tx = new Transaction();
-      tx.add(ix);
-      // console.log(">>> initialize treasury tx : \n", tx);
-      try {
-        const txId = await provider.sendAndConfirm(tx, [admin], {
-          commitment: "confirmed",
-          skipPreflight: true
-        });
-  
-        console.log(">>> initialize treasury transaction = ", txId);
-      } catch (error) {
-        console.log(error);
-      };
-  
-      const treasruyAccount = await program.account.treasury.fetch(treasury);
-      assert.equal(treasruyAccount.treasuryAdmin.toBase58(), admin.publicKey.toBase58());
-  
-    });
-  
 
-  /*
-// test create bond
-it("create bond", async () => {
-  const createBondTx = async (
-    program: anchor.Program<SaturnV1>,
-    userAddress: PublicKey | undefined,
-    escrow_mint: PublicKey,
-    tokenAmount: number,
-    spot_price: number,
-  ) => {
-    if (!userAddress) return;
+  //# test initialize treasury
+  it("initialize treasury account", async () => {
+    //here, teasury admin is provider wallet
+    const ix = await program.methods.initialize().accounts({
+      admin: admin.publicKey,
+      treasury: treasury,
+      systemProgram: SystemProgram.programId,
+    }).instruction();
 
-    // console.log(escrow?.toBase58());
     let tx = new Transaction();
-    if (escrow) {
-      // console.log(program.programId.toBase58());
-      let ix = SystemProgram.createAccountWithSeed({
-        fromPubkey: userAddress,
-        basePubkey: userAddress,
-        seed: escrow_mint.toBase58().slice(0, i),
-        newAccountPubkey: escrow,
-        lamports: await connection.getMinimumBalanceForRentExemption(ESCROW_SIZE),
-        space: ESCROW_SIZE,
-        programId: program.programId,
+    tx.add(ix);
+    // console.log(">>> initialize treasury tx : \n", tx);
+    try {
+      const txId = await provider.sendAndConfirm(tx, [admin], {
+        commitment: "confirmed",
+        skipPreflight: true
       });
 
-      // let price_update = await PublicKey.createWithSeed(
-      //     userAddress,
-      //     "PRICE_ACCOUNT___",
-      //     new PublicKey("rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ"),
-      // );
-      // let ix_for_price = SystemProgram.createAccountWithSeed({
-      //     fromPubkey: userAddress,
-      //     basePubkey: userAddress,
-      //     seed: "PRICE_ACCOUNT___",
-      //     newAccountPubkey: price_update,
-      //     lamports: await solConnection.getMinimumBalanceForRentExemption(134),
-      //     space: 134,
-      //     programId: new PublicKey("rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ"),
-      // });
-      // console.log(ix_for_price.keys);
-      // tx.add(ix_for_price);
-      // //5SRy5arRpGmeohJGeF2UvT4aTuFio38qRsDevJ5mTC5C returned for owner of oracle
-      // return tx;
+      console.log(">>> initialize treasury transaction = ", txId);
+    } catch (error) {
+      console.log(error);
+    };
 
-      tx.add(ix);
-      if (ix0.instructions.length > 0 && escrow_mint.toBase58() != EMPTY_USER) tx.add(...ix0.instructions)
-      if (ix1.instructions.length > 0) tx.add(...ix1.instructions)
-      if (ix3.instructions.length > 0) tx.add(...ix3.instructions)
+    const treasruyAccount = await program.account.treasury.fetch(treasury);
+    assert.equal(treasruyAccount.treasuryAdmin.toBase58(), admin.publicKey.toBase58());
 
-      const applyBondArgs = {
-        tokenAmount: new anchor.BN(tokenAmount),    // replace with your desired amount
-        spotPrice: new anchor.BN(spot_price),      // replace with the spot price
-      }
+  });
 
-      const ix2 = await program.methods.applyBond(
-        applyBondArgs
-      ).accounts({
-        admin: userAddress,
-        treasury: treasuryAuthority,
-        escrow,
-        createrTokenAccount: userTokenAccount,
-        destTokenAccount: ix0.destinationAccounts[0],
-        destStfAccount: ix3.destinationAccounts[0],
-        priceUpdate: new PublicKey("Dpw1EAVrSB1ibxiDQyTAW6Zip3J4Btk2x4SgApQCeFbX"),
-        tokenMintAddress: escrow_mint,
-        stfTokenMint: stfTokenMintPubkey,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId
-      }).instruction();
-      tx.add(ix2);
+
+
+  //# test create bond
+  it("create bond", async () => {
+
+    // let tx = new Transaction();
+
+    const applyBondArgs = {
+      tokenAmount: new anchor.BN(20),    // replace with your desired amount
+      spotPrice: new anchor.BN(1_000_000),      // replace with the spot price
     }
 
-    // console.log(">>> create bond tx : \n", tx);
-    return tx;
-  }
+    // const ix = await program.methods.applyBond(
+    //   applyBondArgs
+    // ).accounts({
+    // creator: user.publicKey,
+    // treasuryAuthority: treasuryAuthority,
+    // treasury: treasury,
+    // escrow: escrow,
+    // creatorTokenAccount: userUsdcTokenAccountPubkey,
+    // treasuryTokenAccount: treasuryUsdcTokenAccountPubkey,
+    // treasuryStfTokenAccount: treasuryStfTokenAccountPubkey,
+    // priceUpdate: new PublicKey("Dpw1EAVrSB1ibxiDQyTAW6Zip3J4Btk2x4SgApQCeFbX"),
+    // tokenMintAddress: new PublicKey(USDC_TOKEN_MINT),
+    // stfTokenMint: stfTokenMintPubkey,
+    // tokenProgram: TOKEN_PROGRAM_ID,
+    // systemProgram: SystemProgram.programId
+    // }).instruction();
 
-  try {
-    const tx = await createBondTx(
-      program,
-      provider.publicKey,
-      new PublicKey(USDC_TOKEN_MINT), //assume USDC
-      1000, //tokenAmount,
-      15 * 10 ** 6 //spot_price per small unit for STF which is DECIMAL of 2 (8 - 6)
-    );
-    const txId = await provider.sendAndConfirm(tx, [], {
-      commitment: "confirmed",
-    });
-    console.log(">>> create bond transaction =", txId);
-  } catch (error) {
+    // tx.add(ix);
 
-    console.log(">>> create bond error = \n", error);
-  }
+    // try {
 
-});
+    //   const txId = await provider.sendAndConfirm(tx, [user], {
+    //     commitment: "confirmed",
+    //     skipPreflight: true,
+    //   });
+    //   console.log(">>> create bond transaction =", txId);
+    // } catch (error) {
 
-// test finish bond
-it("finish bond", () => {
-  const finishBondTx = async (
-    program: anchor.Program<SaturnV1>,
-    userAddress: PublicKey | undefined,
-  ) => {
-    let ix3 = await getATokenAccountsNeedCreate(
-      connection,
-      userAddress,
-      userAddress,
-      [stfTokenMintPubkey]
-    );
+    //   console.log(">>> create bond error = \n", error);
+    // }
 
-    console.log("userAddress STF Account = ", ix3.destinationAccounts[0].toBase58());
-
-    let escrow = new PublicKey("Bcs4HEbeBgXxy2TFLRTZ4SMWR6dapyRrLr6qVJ93wuxA");
-    console.log(escrow?.toBase58());
-
-    let tx = new Transaction();
-    if (escrow) {
-      if (ix3.instructions.length > 0) tx.add(...ix3.instructions)
-
-      const ix2 = await program.methods.finishBond()
-        .accounts({
-          admin: userAddress,
-          treasury: treasuryAuthority,
-          destStfAccount: ix3.destinationAccounts[0],
-          escrow,
-          stfTokenMint: stfTokenMintPubkey,
-          tokenProgram: TOKEN_PROGRAM_ID
-        }).instruction();
-      tx.add(ix2);
-    }
-
-    // console.log(">>> finish bond tx : \n", tx);
-    return tx;
-  };
-
-  const finishBond = async (
-  ) => {
     try {
-      const tx = await finishBondTx(
-        program,
-        provider.publicKey
+      // Add your test here.
+      const depositAmount = new anchor.BN(160);
+      const HERMES_URL = "https://hermes.pyth.network/";
+      const SOL_PRICE_FEED_ID = "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d";
+      const priceServiceConnection = new PriceServiceConnection(HERMES_URL, {
+        priceFeedRequestConfig: { binary: true },
+      });
+      const pythSolanaReceiver = new PythSolanaReceiver({
+        connection: program.provider.connection,
+        wallet: new anchor.Wallet(user),
+      });
+
+      const priceUpdateData = await priceServiceConnection.getLatestVaas([
+        SOL_PRICE_FEED_ID,
+      ]);
+
+      const transactionBuilder = pythSolanaReceiver.newTransactionBuilder({
+        closeUpdateAccounts: true,
+      });
+      await transactionBuilder.addPostPriceUpdates([priceUpdateData[0]]);
+
+      await transactionBuilder.addPriceConsumerInstructions(
+        async (
+          getPriceUpdateAccount: (priceFeedId: string) => anchor.web3.PublicKey
+        ): Promise<InstructionWithEphemeralSigners[]> => {
+          return [
+            {
+              instruction: await program.methods
+                .applyBond(applyBondArgs)
+                .accounts({
+                  creator: user.publicKey,
+                  treasuryAuthority: treasuryAuthority,
+                  treasury: treasury,
+                  escrow: escrow,
+                  creatorTokenAccount: userUsdcTokenAccountPubkey,
+                  treasuryTokenAccount: treasuryUsdcTokenAccountPubkey,
+                  treasuryStfTokenAccount: treasuryStfTokenAccountPubkey,
+                  priceUpdate: getPriceUpdateAccount(SOL_PRICE_FEED_ID),
+                  tokenMintAddress: new PublicKey(USDC_TOKEN_MINT),
+                  stfTokenMint: stfTokenMintPubkey,
+                  tokenProgram: TOKEN_PROGRAM_ID,
+                  systemProgram: SystemProgram.programId
+                })
+                .instruction(),
+              signers: [user],
+            },
+          ];
+        }
       );
-      const txId = await provider.sendAndConfirm(tx, [], {
+      console.log(">>> \n \n ============== \n", JSON.stringify(transactionBuilder.transactionInstructions));
+
+      await pythSolanaReceiver.provider.sendAll(
+        await transactionBuilder.buildVersionedTransactions({
+          computeUnitPriceMicroLamports: 50000,
+        }),
+        { skipPreflight: true }
+      );
+    }
+    catch (e) {
+      console.log("apply bond error =>", e)
+    }
+
+  });
+
+  //# test finish bond
+  it("finish bond", async () => {
+    console.log(">>> finish bond escrow = ", escrow.toBase58());
+    let tx = new Transaction();
+    const ix = await program.methods.finishBond()
+      .accounts({
+        user: user.publicKey,
+        treasuryAuthority: treasuryAuthority,
+        treasury: treasury,
+        destStfAccount: userStfTokenAccountPubkey,
+        escrow: escrow,
+        stfTokenMint: stfTokenMintPubkey,
+        tokenProgram: TOKEN_PROGRAM_ID
+      }).instruction();
+
+    tx.add(ix);
+
+    try {
+      const txId = await provider.sendAndConfirm(tx, [user], {
         commitment: "confirmed",
+        skipPreflight: true,
       });
       console.log(">>> finish bond transaction =", txId);
     } catch (error) {
-      console.log(error);
+      console.log(">>> finish bond error : ", error);
     }
-  };
-});
-*/
+
+  });
+
 });
 
-
-let userTokenAccount: any;
-let treasuryTokenAccount: any;
 
 
 // ### staking & unstaking STF test scenario ###
@@ -540,12 +529,12 @@ describe("# test scenario - staking", () => {
 
 });
 
-/*
+
 let treasuryWSOLAccount: PublicKey;
 const USDC = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 const SOL = new PublicKey("So11111111111111111111111111111111111111112");
 const BONK = new PublicKey("DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263");
-
+/*
 // ### jupiter swap test scenario ###
 describe("# test scenario - jupiter swap", () => {
   //test jupiter swap

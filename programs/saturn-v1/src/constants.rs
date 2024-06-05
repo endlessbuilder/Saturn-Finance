@@ -9,3 +9,4 @@ pub const USDC_PRICE_ID: &str = "0xeaa020c61cc479712813461ce153894a96a6c00b21ed0
 pub const SOL_PRICE_ID: &str = "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d";
 pub const STF_MINT: &str = "3HWcdN9fxD3ytB7L2FG5c3WJXQin3QFUNZoESCQriLD7";
 pub const PERSONAL_SEED: &str = "personal-saturn";
+pub const ESCROW: &str = "escrow";

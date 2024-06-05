@@ -36,7 +36,11 @@ pub struct FinishBond<'info> {
     )]
     pub dest_stf_account: Account<'info, TokenAccount>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        seeds = [ESCROW.as_ref(), user.key.as_ref()],
+        bump,
+    )]
     pub escrow: AccountLoader<'info, Escrow>,
 
     #[account(mut)]

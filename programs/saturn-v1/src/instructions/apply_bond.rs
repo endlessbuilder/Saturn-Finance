@@ -9,6 +9,7 @@ use crate::{
     error::*,
     utils::*,
 };
+use std::mem;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct ApplyBondArgs {
@@ -37,7 +38,13 @@ pub struct ApplyBond<'info> {
     )]
     pub treasury: Account<'info, Treasury>,
 
-    #[account(zero)]
+    #[account(
+        init_if_needed,
+        space = mem::size_of::<Escrow>() as usize + 8,
+        payer = creator,
+        seeds = [ESCROW.as_ref(), creator.key.as_ref()],
+        bump,
+    )]
     pub escrow: AccountLoader<'info, Escrow>,
 
     #[account(
@@ -50,13 +57,13 @@ pub struct ApplyBond<'info> {
     #[account(
         mut,
         constraint = treasury_token_account.mint == *token_mint_address.to_account_info().key,
-        constraint = treasury_token_account.owner == *treasury.to_account_info().key,
+        constraint = treasury_token_account.owner == *treasury_authority.to_account_info().key,
     )]
     pub treasury_token_account: Account<'info, TokenAccount>,
     #[account(
         mut,
         constraint = treasury_stf_token_account.mint == *stf_token_mint.to_account_info().key,
-        constraint = treasury_stf_token_account.owner == *treasury.to_account_info().key,
+        constraint = treasury_stf_token_account.owner == *treasury_authority.to_account_info().key,
     )]
     pub treasury_stf_token_account: Account<'info, TokenAccount>,
 
@@ -145,7 +152,7 @@ pub fn handle(
 
     let total_price = price.price * token_amount as i64; // 10 ** token_decimal 
     let backing_price = treasury.treasury_value / treasury.token_minted; // this is per lamport stf
-    let spot_price = spot_price;    
+    let spot_price = spot_price;
 
     let diff = (spot_price - backing_price) * 100 / backing_price;
     let deduction;
@@ -194,5 +201,6 @@ pub fn handle(
     escrow.start_timestamp = timestamp;
     escrow.end_timestamp = timestamp + 60 * 60 * 24 * 14; // 14days
     escrow.is_finished = 1;
+    
     Ok(())
 }
