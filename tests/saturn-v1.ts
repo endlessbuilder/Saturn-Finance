@@ -534,7 +534,7 @@ let treasuryWSOLAccount: PublicKey;
 const USDC = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
 const SOL = new PublicKey("So11111111111111111111111111111111111111112");
 const BONK = new PublicKey("DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263");
-/*
+
 // ### jupiter swap test scenario ###
 describe("# test scenario - jupiter swap", () => {
   //test jupiter swap
@@ -566,11 +566,11 @@ describe("# test scenario - jupiter swap", () => {
     // console.log("\n\n\n")
 
 
-    const solBalance = await connection.getBalance(treasuryAuthority);
-    console.log(">>> treasury sol balance = ", solBalance / 1_000_000_000);
+    // const solBalance = await connection.getBalance(treasuryAuthority);
+    // console.log(">>> treasury sol balance = ", solBalance / 1_000_000_000);
 
-    const balanceResponseUsdc = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
-    console.log(">>> treasury usdc balance = ", balanceResponseUsdc.value.uiAmount);
+    // const balanceResponseUsdc = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
+    // console.log(">>> treasury usdc balance = ", balanceResponseUsdc.value.uiAmount);
 
     await swap(
       computeBudgetInstructions,
@@ -579,11 +579,11 @@ describe("# test scenario - jupiter swap", () => {
       fromAmount
     );
 
-    const solBalance2 = await connection.getBalance(treasuryAuthority);
-    console.log(">>> treasury sol balance = ", solBalance2 / 1_000_000_000);
+    // const solBalance2 = await connection.getBalance(treasuryAuthority);
+    // console.log(">>> treasury sol balance = ", solBalance2 / 1_000_000_000);
 
-    const balanceResponseUsdc2 = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
-    console.log(">>> treasury usdc balance = ", balanceResponseUsdc2.value.uiAmount);
+    // const balanceResponseUsdc2 = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
+    // console.log(">>> treasury usdc balance = ", balanceResponseUsdc2.value.uiAmount);
 
   });
 
@@ -615,11 +615,11 @@ describe("# test scenario - jupiter swap", () => {
     // console.log("\n\n\n")
 
 
-    const solBalance = await connection.getBalance(treasuryAuthority);
-    console.log(">>> treasury sol balance = ", solBalance / 1_000_000_000);
+    // const solBalance = await connection.getBalance(treasuryAuthority);
+    // console.log(">>> treasury sol balance = ", solBalance / 1_000_000_000);
 
-    const balanceResponseUsdc = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
-    console.log(">>> treasury usdc balance = ", balanceResponseUsdc.value.uiAmount);
+    // const balanceResponseUsdc = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
+    // console.log(">>> treasury usdc balance = ", balanceResponseUsdc.value.uiAmount);
 
     await swap(
       computeBudgetInstructions,
@@ -628,11 +628,11 @@ describe("# test scenario - jupiter swap", () => {
       new BN(fromAmount)
     );
 
-    const solBalance2 = await connection.getBalance(treasuryAuthority);
-    console.log(">>> treasury sol balance = ", solBalance2 / 1_000_000_000);
+    // const solBalance2 = await connection.getBalance(treasuryAuthority);
+    // console.log(">>> treasury sol balance = ", solBalance2 / 1_000_000_000);
 
-    const balanceResponseUsdc2 = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
-    console.log(">>> treasury usdc balance = ", balanceResponseUsdc2.value.uiAmount);
+    // const balanceResponseUsdc2 = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
+    // console.log(">>> treasury usdc balance = ", balanceResponseUsdc2.value.uiAmount);
 
   });
 
@@ -662,11 +662,11 @@ describe("# test scenario - jupiter swap", () => {
     // console.log("\n\n\n")
 
 
-    const balanceResponseUsdc = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
-    console.log(">>> treasury usdc balance = ", balanceResponseUsdc.value.uiAmount);
+    // const balanceResponseUsdc = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
+    // console.log(">>> treasury usdc balance = ", balanceResponseUsdc.value.uiAmount);
 
-    const balanceResponseBonk = await connection.getTokenAccountBalance(treasuryBonkTokenAccountPubkey);
-    console.log(">>> treasury bonk balance = ", balanceResponseBonk.value.uiAmount);
+    // const balanceResponseBonk = await connection.getTokenAccountBalance(treasuryBonkTokenAccountPubkey);
+    // console.log(">>> treasury bonk balance = ", balanceResponseBonk.value.uiAmount);
 
     await swap(
       computeBudgetInstructions,
@@ -675,16 +675,16 @@ describe("# test scenario - jupiter swap", () => {
       new BN(fromAmount)
     );
 
-    const balanceResponseUsdc2 = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
-    console.log(">>> treasury usdc balance = ", balanceResponseUsdc2.value.uiAmount);
+    // const balanceResponseUsdc2 = await connection.getTokenAccountBalance(treasuryUsdcTokenAccountPubkey);
+    // console.log(">>> treasury usdc balance = ", balanceResponseUsdc2.value.uiAmount);
 
-    const balanceResponseBonk2 = await connection.getTokenAccountBalance(treasuryBonkTokenAccountPubkey);
-    console.log(">>> treasury bonk balance = ", balanceResponseBonk2.value.uiAmount);
+    // const balanceResponseBonk2 = await connection.getTokenAccountBalance(treasuryBonkTokenAccountPubkey);
+    // console.log(">>> treasury bonk balance = ", balanceResponseBonk2.value.uiAmount);
 
   });
 
 });
-*/
+
 
 
 const findTreasuryAuthority = (): PublicKey => {

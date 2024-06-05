@@ -34,12 +34,28 @@ address = "JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4"
 program = "./tests/mainnet-dump/jupiter.so"
 
 [[test.genesis]]
+address = "HDwcJBJXjL9FpJ7UBsYBtaDjsBUhuLCUYoz3zr8SWWaQ"
+program = "./tests/mainnet-dump/BPF_ungradeable_loader.so"
+
+[[test.genesis]]
 address = "LBUZKhRxPF3XUpBCjp4YzTKgLccjZhTSDM9YuVaPwxo"
 program = "./tests/mainnet-dump/dlmm.so"
 
 [[test.genesis]]
 address = "CAMMCzo5YL8w4VFF8KVHrK22GGUsp5VTaW7grrKgrWqK"
 program = "./tests/mainnet-dump/ray_concentrated_lp.so"
+
+[[test.genesis]]
+address = "rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ"
+program = "./tests/mainnet-dump/pyth_solana_receiver.so"
+
+[[test.genesis]]
+address = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+program = "./tests/mainnet-dump/bpf_loader2.so"
+
+[[test.genesis]]
+address = "pythWSnswVUd12oZpeFP8e9CVaEqJg25g1Vtc2biRsT"
+program = "./tests/mainnet-dump/pyth_push_oracle.so"
 
 [[test.validator.clone]]
 address = "EXrqY7jLTLp83H38L8Zw3GvGkk1KoQbYTckPGBghwD8X"
@@ -89,6 +105,15 @@ address = "2W7aa5mVuzJiaM43uFtutVFdSoWx963AKT8dtizqejTF"
 address = "3nLYkE5zHKgGBxXW8Rj4neWZT5JHgdAjVRqUDcDk8nF9"
 [[test.validator.clone]]
 address = "AddressLookupTab1e1111111111111111111111111"
+
+[[test.validator.clone]]
+address = "5gxPdahvSzcKySxXxPuRXZZ9s6h8hZ88XDVKavWpaQGn"
+[[test.validator.clone]]
+address = "DaWUKXCyXsnzcvLUyeJRWou8KTn7XtadgTsdhJ6RHS7b"
+[[test.validator.clone]]
+address = "51wNEbR5PAvV3jcCMEhL9baqbYj7x32T7AKDu8NPKfkw"
+[[test.validator.clone]]
+address = "GbNJigVGMPgn9qhfmTDtc1yxhX6ppnuD5bMpRe23nE2k"
 
 
 [registry]

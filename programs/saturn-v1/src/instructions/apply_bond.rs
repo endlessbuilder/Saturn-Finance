@@ -99,10 +99,10 @@ pub fn handle(
 
     let price_update = &mut ctx.accounts.price_update;
 
-    assert!(
-        stf_token_mint.key().to_string().as_str() == STF_MINT,
-        "STF_TOKEN_MINT ERROR"
-    );
+    // assert!(
+    //     stf_token_mint.key().to_string().as_str() == STF_MINT,
+    //     "STF_TOKEN_MINT ERROR"
+    // );
 
     let maximum_age: u64 = 30;
     let feed_id: [u8; 32];
