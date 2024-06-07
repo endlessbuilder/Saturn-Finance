@@ -26,3 +26,4 @@ solana-program = "=1.18.10"
 toml_datetime = "0.6.5"
 winnow = "0.6.5"
 spl-token = { version="3.5.0", features = [ "no-entrypoint"]}
+serde = { version = "1.0.136" }

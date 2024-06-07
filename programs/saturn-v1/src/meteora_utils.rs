@@ -1,7 +1,6 @@
 use anchor_lang::prelude::*;
-use context::*;
-use std::convert::TryFrom;
 use std::str::FromStr;
+use serde::{Deserialize, Serialize};
 
 use crate::constants::*;
 
@@ -12,6 +11,49 @@ pub const PERFORMANCE_FEE_DENOMINATOR: u128 = 10000u128;
 pub const MAX_STRATEGY: usize = 30;
 pub const MAX_BUMPS: usize = 10;
 pub const LOCKED_PROFIT_DEGRADATION_DENOMINATOR: u128 = 1_000_000_000_000;
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Default, Debug)]
+pub struct VaultBumps {
+    pub vault_bump: u8,
+    pub token_vault_bump: u8,
+}
+
+#[derive(
+    AnchorSerialize,
+    AnchorDeserialize,
+    Clone,
+    Copy,
+    Debug,
+    PartialEq,
+    Serialize,
+    Deserialize,
+    Eq,
+    Hash,
+)]
+pub enum StrategyType {
+    PortFinanceWithoutLM,
+    PortFinanceWithLM,
+    SolendWithoutLM,
+    Mango, // Mango is no longer supported
+    SolendWithLM,
+    ApricotWithoutLM,
+    Francium,
+    Tulip,
+    // This is for compatibility with some administrative endpoint
+    Vault,
+    Drift,
+    Frakt,
+    Marginfi,
+    Kamino,
+}
+
+impl std::fmt::Display for StrategyType {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{:?}", self)
+        // or, alternatively:
+        // fmt::Debug::fmt(self, f)
+    }
+}
 
 pub fn get_base_key() -> Pubkey {
     Pubkey::from_str("HWzXGcGHy4tcpYfaRDCyLNzXqBTv3E6BttpCH2vJxArv").unwrap()

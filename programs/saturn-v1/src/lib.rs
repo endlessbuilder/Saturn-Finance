@@ -7,14 +7,18 @@ mod error;
 mod instructions;
 mod constants;
 mod utils;
+mod meteora_utils;
 
 use account::*;
 use instructions::*;
+use meteora_utils::*;
 
 declare_id!("6y1CpFjLdNfs5KUh1PfkjS11FiwH5ZrxmeMtJm9yLdJF");
 
 #[program]
 pub mod saturn_v_1 {
+    use instruction::{MeteoraDeposit, MeteoraWithdraw};
+
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -45,15 +49,15 @@ pub mod saturn_v_1 {
         instructions::swap::handle(ctx, data/*, from_amount*/)
     }
 
-    pub fn meteora_initialize(ctx: Context<Initialize>) -> Result<()> {
+    pub fn meteora_initialize(ctx: Context<MeteoraInitialize>) -> Result<()> {
         instructions::meteora_initialize::handle(ctx)
     }
 
-    pub fn meteora_deposit(ctx: Context<DepositLiquidity>, token_amount: u64, minimum_lp_token_amount: u64) -> Result<()> {
+    pub fn meteora_deposit(ctx: Context<MeteoraDeposit>, token_amount: u64, minimum_lp_token_amount: u64) -> Result<()> {
         instructions::meteora_deposit::handle(ctx, token_amount, minimum_lp_token_amount)
     }
 
-    pub fn meteora_withdraw(ctx: Context<WithdrawLiquidity>, unmint_amount: u64, min_out_amount: u64) -> Result<()> {
+    pub fn meteora_withdraw(ctx: Context<MeteoraWithdraw>, unmint_amount: u64, min_out_amount: u64) -> Result<()> {
         instructions::meteora_withdraw::handle(ctx, unmint_amount, min_out_amount)
     }
 

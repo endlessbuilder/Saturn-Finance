@@ -1,3 +1,7 @@
+use anchor_lang::prelude::*;
+
+use crate::meteora_utils::{MAX_BUMPS, StrategyType};
+
 #[account]
 #[derive(Default, Debug)]
 pub struct Strategy {

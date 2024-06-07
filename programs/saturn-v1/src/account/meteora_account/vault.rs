@@ -2,8 +2,7 @@ use anchor_lang::prelude::*;
 use std::convert::TryFrom;
 use std::fmt::Debug;
 
-use crate::meteora_utils::MAX_STRATEGY;
-use crate::meteora_utils::LockedProfitTracker;
+use crate::meteora_utils::{MAX_STRATEGY, VaultBumps, LockedProfitTracker};
 
 #[account]
 #[derive(Default, Debug)]
@@ -74,7 +73,3 @@ impl Vault {
     }
 }
 
-pub struct VaultBumps {
-    pub vault_bump: u8,
-    pub token_vault_bump: u8,
-}

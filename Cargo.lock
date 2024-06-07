@@ -1811,6 +1811,7 @@ dependencies = [
  "bytemuck",
  "constant_time_eq",
  "pyth-solana-receiver-sdk",
+ "serde",
  "solana-program",
  "spl-token 3.5.0",
  "toml_datetime",

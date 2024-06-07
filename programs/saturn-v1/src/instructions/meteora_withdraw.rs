@@ -1,15 +1,14 @@
 use anchor_lang::prelude::*;
-use context::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use std::convert::TryFrom;
 use std::str::FromStr;
 
 use crate::meteora_utils::*;
 use crate::constants::{VAULT_PREFIX, TOKEN_VAULT_PREFIX, LP_MINT_PREFIX};
-use crate::account::*;
+use crate::account::meteora_account::*;
 
 #[derive(Accounts)]
-pub struct WithdrawLiquidity<'info> {
+pub struct MeteoraWithdraw<'info> {
     #[account(
         mut,
         has_one = token_vault,
@@ -28,8 +27,9 @@ pub struct WithdrawLiquidity<'info> {
     pub token_program: Program<'info, Token>,
 }
 
+#[allow(unused_variables)]
 pub fn handle(
-    ctx: Context<WithdrawLiquidity>,
+    ctx: Context<MeteoraWithdraw>,
     unmint_amount: u64,
     min_out_amount: u64,
 ) -> Result<()> {

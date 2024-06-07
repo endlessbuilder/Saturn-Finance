@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use context::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
 use std::convert::TryFrom;
 use std::str::FromStr;
@@ -10,7 +9,7 @@ use crate::constants::{VAULT_PREFIX, TOKEN_VAULT_PREFIX, LP_MINT_PREFIX};
 
 /// Accounts for initialize a new vault
 #[derive(Accounts)]
-pub struct Initialize<'info> {
+pub struct MeteoraInitialize<'info> {
     /// This is base account for all vault    
     /// No need base key now because we only allow 1 vault per token now
     // pub base: Signer<'info>,
@@ -19,7 +18,7 @@ pub struct Initialize<'info> {
     #[account(
         init,
         seeds = [
-            seed::VAULT_PREFIX.as_ref(), token_mint.key().as_ref(), get_base_key().as_ref()
+            VAULT_PREFIX.as_ref(), token_mint.key().as_ref(), get_base_key().as_ref()
         ],
         bump,
         payer = payer,
@@ -34,7 +33,7 @@ pub struct Initialize<'info> {
     /// Token vault account
     #[account(
         init,
-        seeds = [seed::TOKEN_VAULT_PREFIX.as_ref(), vault.key().as_ref()],
+        seeds = [TOKEN_VAULT_PREFIX.as_ref(), vault.key().as_ref()],
         bump,
         payer = payer,
         token::mint = token_mint,
@@ -45,7 +44,7 @@ pub struct Initialize<'info> {
     pub token_mint: Box<Account<'info, Mint>>, // allocate some accounts in heap to avoid stack frame size limit
     #[account(
         init,
-        seeds = [seed::LP_MINT_PREFIX.as_ref(), vault.key().as_ref()],
+        seeds = [LP_MINT_PREFIX.as_ref(), vault.key().as_ref()],
         bump,
         payer = payer,
         mint::decimals = token_mint.decimals,
@@ -60,6 +59,7 @@ pub struct Initialize<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn handle(ctx: Context<Initialize>) -> Result<()> {
+#[allow(unused_variables)]
+pub fn handle(ctx: Context<MeteoraInitialize>) -> Result<()> {
     Ok(())
 }

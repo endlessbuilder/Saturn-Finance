@@ -1,15 +1,11 @@
 use anchor_lang::prelude::*;
-use context::*;
-use anchor_spl::token::{Mint, Token, TokenAccount};
-use std::convert::TryFrom;
-use std::str::FromStr;
+use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 
 use crate::meteora_utils::*;
-use crate::constants::{VAULT_PREFIX, TOKEN_VAULT_PREFIX, LP_MINT_PREFIX};
-use crate::account::*;
+use crate::account::meteora_account::Vault;
 
 #[derive(Accounts)]
-pub struct DepositLiquidity<'info> {
+pub struct MeteoraDeposit<'info> {
     #[account(
         mut,
         has_one = token_vault,
@@ -28,8 +24,9 @@ pub struct DepositLiquidity<'info> {
     pub token_program: Program<'info, Token>,
 }
 
+#[allow(unused_variables)]
 pub fn handle(
-    ctx: Context<DepositLiquidity>,
+    ctx: Context<MeteoraDeposit>,
     token_amount: u64,
     minimum_lp_token_amount: u64,
 ) -> Result<()> {
