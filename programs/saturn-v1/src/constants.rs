@@ -10,3 +10,13 @@ pub const SOL_PRICE_ID: &str = "0xef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7
 pub const STF_MINT: &str = "3HWcdN9fxD3ytB7L2FG5c3WJXQin3QFUNZoESCQriLD7";
 pub const PERSONAL_SEED: &str = "personal-saturn";
 pub const ESCROW: &str = "escrow";
+
+// Meteora
+pub const  VAULT_PREFIX: &str = "vault";
+pub const TOKEN_VAULT_PREFIX: &str = "token_vault";
+pub const LP_MINT_PREFIX: &str = "lp_mint";
+pub const COLLATERAL_VAULT_PREFIX: &str = "collateral_vault";
+pub const FEE_VAULT_PREFIX: &str = "fee_vault";
+pub const SOLEND_OBLIGATION_PREFIX: &str = "solend_obligation";
+pub const SOLEND_OBLIGATION_OWNER_PREFIX: &str = "solend_obligation_owner";
+pub const APRICOT_USER_INFO_SIGNER_PREFIX: &str = "apricot_user_info_signer";
