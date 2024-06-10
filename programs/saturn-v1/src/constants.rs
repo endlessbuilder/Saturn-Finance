@@ -20,3 +20,7 @@ pub const FEE_VAULT_PREFIX: &str = "fee_vault";
 pub const SOLEND_OBLIGATION_PREFIX: &str = "solend_obligation";
 pub const SOLEND_OBLIGATION_OWNER_PREFIX: &str = "solend_obligation_owner";
 pub const APRICOT_USER_INFO_SIGNER_PREFIX: &str = "apricot_user_info_signer";
+
+/// Fee denominator
+pub const FEE_DENOMINATOR: u128 = 10_000;
+pub const DEFAULT_FEE_RATIO: u64 = 5_000; // 50%

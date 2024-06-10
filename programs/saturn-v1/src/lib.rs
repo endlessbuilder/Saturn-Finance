@@ -7,13 +7,11 @@ mod error;
 mod instructions;
 mod constants;
 mod jupiter_utils;
-// mod meteora_utils;
-// mod meteora_context;
+mod meteora_utils;
 
 use account::*;
 use instructions::*;
-// use meteora_utils::*;
-// use meteora_context::*;
+use meteora_utils::*;
 use meteora::cpi::accounts::DepositWithdrawLiquidity;
 
 declare_id!("6y1CpFjLdNfs5KUh1PfkjS11FiwH5ZrxmeMtJm9yLdJF");
