@@ -1,13 +1,17 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount};
+use meteora::context::DepositWithdrawLiquidity;
 use std::convert::TryFrom;
 use std::str::FromStr;
 
-use crate::meteora_utils::*;
+// use crate::meteora_utils::*;
 use crate::constants::{VAULT_PREFIX, TOKEN_VAULT_PREFIX, LP_MINT_PREFIX};
-use crate::account::meteora_account::*;
+// use crate::account::meteora_account::*;
+// use crate::meteora_context::DepositWithdrawLiquidity;
+use meteora::state::Vault;
 
 #[derive(Accounts)]
+
 pub struct MeteoraWithdraw<'info> {
     #[account(
         mut,

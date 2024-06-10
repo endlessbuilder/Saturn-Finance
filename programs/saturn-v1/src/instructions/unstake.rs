@@ -5,7 +5,7 @@ use crate::{
     account::{Escrow, Treasury, UserStakeAccount},
     constants::*,
     error::*,
-    utils::*
+    jupiter_utils::*
 };
 use anchor_spl::{token::{Mint, Token, TokenAccount}, token_interface::{transfer_checked, TransferChecked}};
 

@@ -6,18 +6,20 @@ mod account;
 mod error;
 mod instructions;
 mod constants;
-mod utils;
-mod meteora_utils;
+mod jupiter_utils;
+// mod meteora_utils;
+// mod meteora_context;
 
 use account::*;
 use instructions::*;
-use meteora_utils::*;
+// use meteora_utils::*;
+// use meteora_context::*;
+use meteora::cpi::accounts::DepositWithdrawLiquidity;
 
 declare_id!("6y1CpFjLdNfs5KUh1PfkjS11FiwH5ZrxmeMtJm9yLdJF");
 
 #[program]
 pub mod saturn_v_1 {
-    use instruction::{MeteoraDeposit, MeteoraWithdraw};
 
     use super::*;
 
@@ -63,3 +65,13 @@ pub mod saturn_v_1 {
 
 }
 
+
+/// MeteoraProgram struct
+#[derive(Clone)]
+pub struct MeteoraProgram;
+
+impl anchor_lang::Id for MeteoraProgram {
+    fn id() -> Pubkey {
+        meteora::id()
+    }
+}

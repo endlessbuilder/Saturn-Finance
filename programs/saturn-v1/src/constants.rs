@@ -12,7 +12,7 @@ pub const PERSONAL_SEED: &str = "personal-saturn";
 pub const ESCROW: &str = "escrow";
 
 // Meteora
-pub const  VAULT_PREFIX: &str = "vault";
+pub const VAULT_PREFIX: &str = "vault";
 pub const TOKEN_VAULT_PREFIX: &str = "token_vault";
 pub const LP_MINT_PREFIX: &str = "lp_mint";
 pub const COLLATERAL_VAULT_PREFIX: &str = "collateral_vault";

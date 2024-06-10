@@ -1,5 +1,2 @@
-pub mod vault;
-pub use vault::*;
-
-pub mod strategy;
-pub use strategy::*;
+pub mod partner;
+pub use partner::*;

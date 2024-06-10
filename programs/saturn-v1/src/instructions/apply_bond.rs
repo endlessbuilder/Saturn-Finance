@@ -7,7 +7,7 @@ use crate::{
     account::{Escrow, Treasury},
     constants::*,
     error::*,
-    utils::*,
+    jupiter_utils::*,
 };
 use std::mem;
 

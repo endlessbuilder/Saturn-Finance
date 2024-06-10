@@ -1,7 +1,9 @@
 [workspace]
 members = [
-    "programs/*"
+    "programs/saturn-v1", "programs/meteora"
 ]
+
+resolver = "2"
 
 [profile.release]
 overflow-checks = true

@@ -3,7 +3,7 @@ use crate::{
     account::{Escrow, Treasury, UserStakeAccount},
     constants::*,
     error::*,
-    utils::*
+    jupiter_utils::*
 };
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 use solana_program::pubkey::Pubkey;
