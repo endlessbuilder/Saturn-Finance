@@ -1,20 +1,18 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
-use meteora::{accounts::DepositWithdrawLiquidity, cpi::deposit};
 
-// use crate::meteora_utils::{self, *};
-use crate::account::meteora_account::Partner;
+use crate::account::meteora_account::{Partner, User};
 use crate::constants::{TOKEN_VAULT_PREFIX, VAULT_PREFIX};
 // use crate::meteora_context::DepositWithdrawLiquidity;
-use crate::MeteoraProgram;
+use crate::meteora_utils::{MeteoraProgram, MeteoraUtils, update_liquidity_wrapper};
 use meteora::state::Vault;
 
 /// Need to check whether we can convert to unchecked account
 #[derive(Accounts)]
 pub struct MeteoraDeposit<'info> {
-    // /// CHECK:
-    // #[account(mut, has_one = vault)]
-    // pub partner: Box<Account<'info, Partner>>,
+    /// CHECK:
+    #[account(mut, has_one = vault)]
+    pub partner: Box<Account<'info, Partner>>,
     /// CHECK:
     #[account(mut, has_one = partner, has_one = owner)]
     pub user: Box<Account<'info, User>>,
@@ -47,18 +45,38 @@ pub fn handle(
     token_amount: u64,
     minimum_lp_token_amount: u64,
 ) -> Result<()> {
-    let accounts = DepositWithdrawLiquidity {
-        vault: ctx.accounts.vault.to_account_info().key(),
-        lp_mint: ctx.accounts.vault_lp_mint.to_account_info().key(),
-        user_token: ctx.accounts.user_token.to_account_info().key(),
-        user_lp: ctx.accounts.user_lp.to_account_info().key(),
-        user: ctx.accounts.user.to_account_info().key(),
-        token_vault: ctx.accounts.token_vault.to_account_info().key(),
-        token_program: ctx.accounts.token_program.to_account_info().key(),
-    };
+    let vault = &ctx.accounts.vault.to_account_info();
+    let vault_lp_mint = &ctx.accounts.vault_lp_mint.to_account_info();
+    let user_lp = &ctx.accounts.user_lp.to_account_info();
 
-    let vault_program = ctx.accounts.vault_program.to_account_info();
+    let user_token = &ctx.accounts.user_token.to_account_info();
+    let token_vault = &ctx.accounts.token_vault.to_account_info();
+    let token_program = &ctx.accounts.token_program.to_account_info();
+    let vault_program = &ctx.accounts.vault_program.to_account_info();
+    let owner = &ctx.accounts.owner.to_account_info();
 
-    let cpi_ctx = CpiContext::new(vault_program.to_account_info(), accounts);
-    deposit(cpi_ctx, token_amount, minimum_lp_amount)
+    update_liquidity_wrapper(
+        move || {
+            MeteoraUtils::deposit(
+                vault,
+                vault_lp_mint,
+                user_token,
+                user_lp, // mint vault lp token to pool lp token account
+                owner,
+                token_vault,
+                token_program,
+                vault_program,
+                token_amount,
+                minimum_lp_token_amount,
+            )?;
+
+            Ok(())
+        },
+        &mut ctx.accounts.vault,
+        &mut ctx.accounts.vault_lp_mint,
+        &mut ctx.accounts.user_lp,
+        &mut ctx.accounts.partner,
+        &mut ctx.accounts.user,
+    )?;
+    Ok(())
 }

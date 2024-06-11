@@ -26,13 +26,13 @@ pub struct MeteoraInitialize<'info> {
             space = 200 // data + buffer,
         )]
     pub partner: Box<Account<'info, Partner>>,
-    /// CHECK:
+    /// CHECK: vault account that partner integrates to
     pub vault: Box<Account<'info, Vault>>,
-    /// CHECK: partner_token mint must be same as native token in vault
+    /// CHECK: partner token account that is integrated to dynamic vault  partner_token mint must be same as native token in vault
     #[account(constraint = vault.token_mint == partner_token.mint)]
     pub partner_token: Box<Account<'info, TokenAccount>>,
 
-    /// Admin address
+    /// dynamic vault Admin address
     #[account(mut, constraint = admin.key() == get_admin_address())]
     pub admin: Signer<'info>,
 

@@ -64,12 +64,4 @@ pub mod saturn_v_1 {
 }
 
 
-/// MeteoraProgram struct
-#[derive(Clone)]
-pub struct MeteoraProgram;
 
-impl anchor_lang::Id for MeteoraProgram {
-    fn id() -> Pubkey {
-        meteora::id()
-    }
-}

@@ -24,3 +24,6 @@ pub const APRICOT_USER_INFO_SIGNER_PREFIX: &str = "apricot_user_info_signer";
 /// Fee denominator
 pub const FEE_DENOMINATOR: u128 = 10_000;
 pub const DEFAULT_FEE_RATIO: u64 = 5_000; // 50%
+
+/// Virtual price precision
+pub const PRICE_PRECISION: u128 = 1_000_000_000_000u128;
