@@ -11,6 +11,7 @@ use std::str::FromStr;
 use crate::account::meteora_account::Partner;
 use crate::constants::DEFAULT_FEE_RATIO;
 use crate::meteora_utils::get_admin_address;
+use crate::error::VaultError;
 
 /// MeteoraInitialize struct
 #[derive(Accounts)]
@@ -50,5 +51,6 @@ pub fn handle(ctx: Context<MeteoraInitialize>) -> Result<()> {
     partner.vault = ctx.accounts.vault.key();
     partner.partner_token = ctx.accounts.partner_token.key();
     partner.fee_ratio = DEFAULT_FEE_RATIO;
+    partner.bump = ctx.bumps.partner;
     Ok(())
 }

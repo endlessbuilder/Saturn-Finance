@@ -6,7 +6,7 @@ use meteora::state::Vault;
 use meteora::cpi::accounts::{DepositWithdrawLiquidity, WithdrawDirectlyFromStrategy};
 use meteora::cpi::*;
 
-use crate::meteora_account::{Partner, User};
+use crate::meteora_account::Partner;
 use crate::error::*;
 use crate::constants::PRICE_PRECISION;
 
@@ -136,7 +136,7 @@ pub fn update_liquidity_wrapper<'info>(
     vault_lp_mint: &mut Account<'info, Mint>,
     user_lp: &mut Account<'info, TokenAccount>,
     partner: &mut Account<'info, Partner>,
-    user: &mut Account<'info, User>,
+    // user: &mut Account<'info, User>,
 ) -> Result<()> {
     // accrue fee
     let current_time = u64::try_from(Clock::get()?.unix_timestamp)
@@ -146,8 +146,10 @@ pub fn update_liquidity_wrapper<'info>(
         .get_virtual_price(current_time, vault_lp_mint.supply)
         .ok_or(VaultError::MathOverflow)?;
 
-    let fee = user
-        .get_fee(virtual_price, partner.fee_ratio)
+    let fee_ratio = partner.fee_ratio;
+
+    let fee = partner
+        .get_fee(virtual_price, fee_ratio)
         .ok_or(VaultError::MathOverflow)?;
 
     msg!("fee: {}", fee);
@@ -159,7 +161,7 @@ pub fn update_liquidity_wrapper<'info>(
 
     // save new user state
     user_lp.reload()?;
-    user.set_new_state(virtual_price, user_lp.amount);
+    partner.set_new_state(virtual_price, user_lp.amount);
 
     Ok(())
 }
