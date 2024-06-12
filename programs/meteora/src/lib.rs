@@ -39,7 +39,7 @@ pub fn get_base_address_for_idle_vault() -> Pubkey {
 }
 
 #[program]
-pub mod vault {
+pub mod meteora {
     use super::*;
 
     #[allow(unused_variables)]

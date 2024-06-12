@@ -49,10 +49,6 @@ pub mod saturn_v_1 {
         instructions::swap::handle(ctx, data/*, from_amount*/)
     }
 
-    pub fn meteora_initialize(ctx: Context<MeteoraInitialize>) -> Result<()> {
-        instructions::meteora_initialize::handle(ctx)
-    }
-
     pub fn meteora_deposit(ctx: Context<MeteoraDeposit>, token_amount: u64, minimum_lp_token_amount: u64) -> Result<()> {
         instructions::meteora_deposit::handle(ctx, token_amount, minimum_lp_token_amount)
     }

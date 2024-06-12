@@ -686,6 +686,38 @@ describe("# test scenario - jupiter swap", () => {
 });
 
 
+// ### jupiter swap test scenario ###
+describe("# test scenario - Meteora", () => {
+  //test jupiter swap
+  it("meteora initialize", async () => {
+    const ix = await program.methods.meteoraInitialize()
+      .accounts({
+        partner: ,
+        vault: ,
+        partnerToken: ,
+        admin: ,
+        rent: ,
+        tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId
+      }).instruction();
+
+    let tx = new Transaction();
+    tx.add(ix);
+    // console.log(">>> meteora initialize tx : \n", tx);
+
+    try {
+      const txId = await provider.sendAndConfirm(tx, [user], {
+        commitment: "confirmed",
+        skipPreflight: true
+      });
+
+      console.log(">>> meteora initialize transaction = ", txId);
+    } catch (error) {
+      console.log(error);
+    };
+  });
+});
+
 
 const findTreasuryAuthority = (): PublicKey => {
   return PublicKey.findProgramAddressSync([Buffer.from(TREASURY_AUTHORITY_SEED)], programId)[0];

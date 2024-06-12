@@ -9,6 +9,7 @@ saturn_v_1 = "6y1CpFjLdNfs5KUh1PfkjS11FiwH5ZrxmeMtJm9yLdJF"
 
 [programs.localnet]
 saturn_v_1 = "6y1CpFjLdNfs5KUh1PfkjS11FiwH5ZrxmeMtJm9yLdJF"
+meteora = "24Uqj9JCLxUeoC3hGfh5W3s9FM9uCHDS2SG3LYwBpyTi"
 
 [test.validator]
 url = "https://api.mainnet-beta.solana.com" 
