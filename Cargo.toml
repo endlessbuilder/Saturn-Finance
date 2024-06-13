@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "programs/saturn-v1", "programs/meteora"
+    "programs/saturn-v1", "programs/meteora", "programs/klend"
 ]
 
 resolver = "2"
@@ -9,7 +9,15 @@ resolver = "2"
 overflow-checks = true
 lto = "fat"
 codegen-units = 1
+
 [profile.release.build-override]
 opt-level = 3
 incremental = false
 codegen-units = 1
+
+# [workspace.dependencies]
+# anchor-lang = { version = "0.29.0", features = ["init-if-needed"] }
+# anchor-spl = "0.29.0"
+# serde = "1.0.136"
+# solana-program = "1.18.10"
+

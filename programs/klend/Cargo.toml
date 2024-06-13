@@ -1,0 +1,78 @@
+[package]
+name = "kamino_lending"
+version = "0.1.0"
+description = "Kamino lending Solana program"
+edition = "2021"
+license = "Apache-2.0"
+publish = false
+
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "kamino_lending"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+serde = ["dep:serde", "fixed/serde-str"]
+staging = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+tracing = ["dep:tracing"]
+
+
+[dependencies]
+anchor-lang = { version = "0.29.0", features = ["init-if-needed"] }
+anchor-spl = "0.29.0"
+# serde = "1.0.136"
+solana-program = "1.18.10"
+# anchor-lang = { workspace = true, features = ["init-if-needed"] }
+# anchor-spl = { workspace = true, features = ["dex", "token"] }
+# solana-program = { workspace = true } #"~1.17.18"
+solana-security-txt = "1.1.1"
+
+# Override anchor to use borsh with the const-generics feature
+# Allows to borsh serialize arrays of any length
+borsh = { version = "0.10.3", features = ["const-generics"] }
+bytemuck = { version = "1.4.0", features = ["min_const_generics", "derive"] }
+
+switchboard-itf = { git = "https://github.com/Kamino-Finance/scope.git", branch = "anchor_0.29_idl", features = [
+    "no-entrypoint",
+] }
+scope = { git = "https://github.com/Kamino-Finance/scope.git", package = "scope-types", branch = "anchor_0.29_idl" }
+pyth-sdk-solana = "0.9.0"
+
+farms = { git = "https://github.com/Kamino-Finance/kfarms.git", features = [
+    "no-entrypoint",
+] }
+
+
+derivative = "2.2.0"
+num_enum = "0.7.0"
+strum = { git = "https://github.com/hubbleprotocol/strum", features = [
+    "derive",
+], branch = "checked_arithmetics" }
+
+static_assertions = "1.1.0"
+
+derive_builder = "0.13.0"
+
+fixed = { version = "1.23.1" }
+fixed-macro = "1.1"
+uint = "0.9.5"
+
+# Only required when serializing to market config to JSON and in tests
+serde = { version = "1.0.136", features = ["derive"], optional = true }
+
+# Test dependencies
+# solana-program-test = "=1.17.18"
+# spl-associated-token-account = { version = "1.1.3", features = [
+#     "no-entrypoint",
+# ] }
+# solana-sdk = "~1.17.18"
+# arrayref = { version = "0.3.6", optional = true }
+bitflags = "2.4.1"
+tracing = { version = "0.1.40", optional = true }
+
