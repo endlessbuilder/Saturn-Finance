@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "programs/saturn-v1", "programs/meteora", "programs/klend"
+    "programs/saturn-v1", "programs/meteora", "programs/klend", "programs/marginfi-v2/*"
 ]
 
 resolver = "2"

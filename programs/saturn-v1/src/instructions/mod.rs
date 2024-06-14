@@ -25,8 +25,16 @@ pub use meteora_withdraw::*;
 pub mod init_lending_account;
 pub use init_lending_account::*;
 
-pub mod handle_klend_lend;
-pub use handle_klend_lend::*;
+pub mod klend_lend;
+pub use klend_lend::*;
 
-pub mod handle_klend_withdraw;
-pub use handle_klend_withdraw::*;
+pub mod klend_withdraw;
+pub use klend_withdraw::*;
+
+pub mod marginfi_lend;
+pub use marginfi_lend::*;
+
+
+pub mod marginfi_withdraw;
+pub use marginfi_withdraw::*;
+

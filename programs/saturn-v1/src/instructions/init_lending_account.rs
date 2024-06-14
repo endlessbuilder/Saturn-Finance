@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::Token;
-// use marginfi::{
-//     cpi::accounts::MarginfiAccountInitialize, program::Marginfi,
-//     state::marginfi_group::MarginfiGroup,
-// };
+use marginfi::{
+    cpi::accounts::MarginfiAccountInitialize, program::Marginfi,
+    state::marginfi_group::MarginfiGroup,
+};
 use kamino_lending::{
     cpi::accounts::{InitObligation, InitUserMetadata},
     program::KaminoLending,
@@ -60,18 +60,18 @@ pub fn handle(ctx: Context<InitLendingAccount>) -> Result<()> {
         InitObligationArgs { tag: 0, id: 0 },
     )?;
 
-    //  // init marginfi account
-    //  marginfi::cpi::marginfi_account_initialize(CpiContext::new_with_signer(
-    //     ctx.accounts.marginfi_program.to_account_info(),
-    //     MarginfiAccountInitialize {
-    //         marginfi_group: ctx.accounts.marginfi_group.to_account_info(),
-    //         marginfi_account: ctx.accounts.marginfi_account.to_account_info(),
-    //         authority: ctx.accounts.saturn_lending.to_account_info(),
-    //         fee_payer: ctx.accounts.owner.to_account_info(),
-    //         system_program: ctx.accounts.system_program.to_account_info(),
-    //     },
-    //     &[signer_seeds],
-    // ))?;
+     // init marginfi account
+     marginfi::cpi::marginfi_account_initialize(CpiContext::new_with_signer(
+        ctx.accounts.marginfi_program.to_account_info(),
+        MarginfiAccountInitialize {
+            marginfi_group: ctx.accounts.marginfi_group.to_account_info(),
+            marginfi_account: ctx.accounts.marginfi_account.to_account_info(),
+            authority: ctx.accounts.saturn_lending.to_account_info(),
+            fee_payer: ctx.accounts.owner.to_account_info(),
+            system_program: ctx.accounts.system_program.to_account_info(),
+        },
+        &[signer_seeds],
+    ))?;
     Ok(())
 }
 
@@ -94,8 +94,8 @@ pub struct InitLendingAccount<'info> {
     /*
      * marginfi accounts
      */
-    // pub marginfi_program: Program<'info, Marginfi>,
-    // pub marginfi_group: AccountLoader<'info, MarginfiGroup>,
+    pub marginfi_program: Program<'info, Marginfi>,
+    pub marginfi_group: AccountLoader<'info, MarginfiGroup>,
    
 
     /*

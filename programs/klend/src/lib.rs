@@ -2,15 +2,13 @@
 
 use anchor_lang::prelude::*;
 
-mod handlers;
 pub mod lending_market;
 pub mod state;
 pub mod utils;
+pub mod context;
 
-pub use lending_market::lending_operations::utils::validate_reserve_config;
 use utils::constraints::emergency_mode_disabled;
-
-use crate::handlers::*;
+use context::*;
 pub use crate::{state::*, utils::fraction};
 
 #[cfg(feature = "staging")]
@@ -35,137 +33,17 @@ pub mod kamino_lending {
 
     use super::*;
 
-    pub fn init_lending_market(
-        ctx: Context<InitLendingMarket>,
-        quote_currency: [u8; 32],
+    pub fn init_user_metadata(
+        ctx: Context<InitUserMetadata>,
+        user_lookup_table: Pubkey,
     ) -> Result<()> {
-        handler_init_lending_market::process(ctx, quote_currency)
-    }
-
-    pub fn update_lending_market(
-        ctx: Context<UpdateLendingMarket>,
-        mode: u64,
-        value: [u8; VALUE_BYTE_MAX_ARRAY_LEN_MARKET_UPDATE],
-    ) -> Result<()> {
-        handler_update_lending_market::process(ctx, mode, value)
-    }
-
-    pub fn update_lending_market_owner(ctx: Context<UpdateLendingMarketOwner>) -> Result<()> {
-        handler_update_lending_market_owner::process(ctx)
-    }
-
-    pub fn init_reserve<'info>(ctx: Context<'_, '_, '_, 'info, InitReserve<'info>>) -> Result<()> {
-        handler_init_reserve::process(ctx)
-    }
-
-    pub fn init_farms_for_reserve(ctx: Context<InitFarmsForReserve>, mode: u8) -> Result<()> {
-        handler_init_farms_for_reserve::process(ctx, mode)
-    }
-
-    pub fn update_single_reserve_config(
-        ctx: Context<UpdateReserveConfig>,
-        mode: u64,
-        value: [u8; 32],
-        skip_validation: bool,
-    ) -> Result<()> {
-        handler_update_reserve_config::process(ctx, mode, &value, skip_validation)
-    }
-
-    pub fn update_entire_reserve_config(
-        ctx: Context<UpdateReserveConfig>,
-        mode: u64,
-        value: [u8; VALUE_BYTE_ARRAY_LEN_RESERVE],
-    ) -> Result<()> {
-        handler_update_reserve_config::process(ctx, mode, &value, false)
-    }
-
-    pub fn redeem_fees(ctx: Context<RedeemFees>) -> Result<()> {
-        handler_redeem_fees::process(ctx)
-    }
-
-    pub fn socialize_loss(ctx: Context<SocializeLoss>, liquidity_amount: u64) -> Result<()> {
-        handler_socialize_loss::process(ctx, liquidity_amount)
-    }
-
-    pub fn withdraw_protocol_fee(ctx: Context<WithdrawProtocolFees>, amount: u64) -> Result<()> {
-        handler_withdraw_protocol_fees::process(ctx, amount)
-    }
-
-    #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
-    pub fn refresh_reserve(ctx: Context<RefreshReserve>) -> Result<()> {
-        handler_refresh_reserve::process(ctx)
-    }
-
-    #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
-    pub fn deposit_reserve_liquidity(
-        ctx: Context<DepositReserveLiquidity>,
-        liquidity_amount: u64,
-    ) -> Result<()> {
-        handler_deposit_reserve_liquidity::process(ctx, liquidity_amount)
-    }
-
-    #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
-    pub fn redeem_reserve_collateral(
-        ctx: Context<RedeemReserveCollateral>,
-        collateral_amount: u64,
-    ) -> Result<()> {
-        handler_redeem_reserve_collateral::process(ctx, collateral_amount)
+        // handler_init_user_metadata::process(ctx, user_lookup_table)
+        Ok(())
     }
 
     pub fn init_obligation(ctx: Context<InitObligation>, args: InitObligationArgs) -> Result<()> {
-        handler_init_obligation::process(ctx, args)
-    }
-
-    pub fn init_obligation_farms_for_reserve(
-        ctx: Context<InitObligationFarmsForReserve>,
-        mode: u8,
-    ) -> Result<()> {
-        handler_init_obligation_farms_for_reserve::process(ctx, mode)
-    }
-
-    #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
-    pub fn refresh_obligation_farms_for_reserve(
-        ctx: Context<RefreshObligationFarmsForReserve>,
-        mode: u8,
-    ) -> Result<()> {
-        handler_refresh_obligation_farms_for_reserve::process(ctx, mode)
-    }
-
-    #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
-    pub fn refresh_obligation(ctx: Context<RefreshObligation>) -> Result<()> {
-        handler_refresh_obligation::process(ctx)
-    }
-
-    #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
-    pub fn deposit_obligation_collateral(
-        ctx: Context<DepositObligationCollateral>,
-        collateral_amount: u64,
-    ) -> Result<()> {
-        handler_deposit_obligation_collateral::process(ctx, collateral_amount)
-    }
-
-    #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
-    pub fn withdraw_obligation_collateral(
-        ctx: Context<WithdrawObligationCollateral>,
-        collateral_amount: u64,
-    ) -> Result<()> {
-        handler_withdraw_obligation_collateral::process(ctx, collateral_amount)
-    }
-
-    #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
-    pub fn borrow_obligation_liquidity<'info>(
-        ctx: Context<'_, '_, '_, 'info, BorrowObligationLiquidity<'info>>,
-        liquidity_amount: u64,
-    ) -> Result<()> {
-        handler_borrow_obligation_liquidity::process(ctx, liquidity_amount)
-    }
-
-    #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
-    pub fn repay_obligation_liquidity(
-        ctx: Context<RepayObligationLiquidity>,
-        liquidity_amount: u64,
-    ) -> Result<()> {
-        handler_repay_obligation_liquidity::process(ctx, liquidity_amount)
+        // handler_init_obligation::process(ctx, args)
+        Ok(())
     }
 
     #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
@@ -173,7 +51,8 @@ pub mod kamino_lending {
         ctx: Context<DepositReserveLiquidityAndObligationCollateral>,
         liquidity_amount: u64,
     ) -> Result<()> {
-        handler_deposit_reserve_liquidity_and_obligation_collateral::process(ctx, liquidity_amount)
+        // handler_deposit_reserve_liquidity_and_obligation_collateral::process(ctx, liquidity_amount)
+        Ok(())
     }
 
     #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
@@ -181,101 +60,13 @@ pub mod kamino_lending {
         ctx: Context<WithdrawObligationCollateralAndRedeemReserveCollateral>,
         collateral_amount: u64,
     ) -> Result<()> {
-        handler_withdraw_obligation_collateral_and_redeem_reserve_collateral::process(
-            ctx,
-            collateral_amount,
-        )
+        // handler_withdraw_obligation_collateral_and_redeem_reserve_collateral::process(
+        //     ctx,
+        //     collateral_amount,
+        // )
+        Ok(())
     }
-
-    #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
-    pub fn liquidate_obligation_and_redeem_reserve_collateral(
-        ctx: Context<LiquidateObligationAndRedeemReserveCollateral>,
-        liquidity_amount: u64,
-        min_acceptable_received_collateral_amount: u64,
-        max_allowed_ltv_override_percent: u64,
-    ) -> Result<()> {
-        handler_liquidate_obligation_and_redeem_reserve_collateral::process(
-            ctx,
-            liquidity_amount,
-            min_acceptable_received_collateral_amount,
-            max_allowed_ltv_override_percent,
-        )
-    }
-
-    #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
-    pub fn flash_repay_reserve_liquidity(
-        ctx: Context<FlashRepayReserveLiquidity>,
-        liquidity_amount: u64,
-        borrow_instruction_index: u8,
-    ) -> Result<()> {
-        handler_flash_repay_reserve_liquidity::process(
-            ctx,
-            liquidity_amount,
-            borrow_instruction_index,
-        )
-    }
-
-    #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
-    pub fn flash_borrow_reserve_liquidity(
-        ctx: Context<FlashBorrowReserveLiquidity>,
-        liquidity_amount: u64,
-    ) -> Result<()> {
-        handler_flash_borrow_reserve_liquidity::process(ctx, liquidity_amount)
-    }
-
-    #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
-    pub fn request_elevation_group(
-        ctx: Context<RequestElevationGroup>,
-        elevation_group: u8,
-    ) -> Result<()> {
-        handler_request_elevation_group::process(ctx, elevation_group)
-    }
-
-    pub fn init_referrer_token_state(
-        ctx: Context<InitReferrerTokenState>,
-        referrer: Pubkey,
-    ) -> Result<()> {
-        handler_init_referrer_token_state::process(ctx, referrer)
-    }
-
-    pub fn init_user_metadata(
-        ctx: Context<InitUserMetadata>,
-        user_lookup_table: Pubkey,
-    ) -> Result<()> {
-        handler_init_user_metadata::process(ctx, user_lookup_table)
-    }
-
-    #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
-    pub fn withdraw_referrer_fees(ctx: Context<WithdrawReferrerFees>) -> Result<()> {
-        handler_withdraw_referrer_fees::process(ctx)
-    }
-
-    pub fn init_referrer_state_and_short_url(
-        ctx: Context<InitReferrerStateAndShortUrl>,
-        short_url: String,
-    ) -> Result<()> {
-        handler_init_referrer_state_and_short_url::process(ctx, short_url)
-    }
-
-    pub fn delete_referrer_state_and_short_url(
-        ctx: Context<DeleteReferrerStateAndShortUrl>,
-    ) -> Result<()> {
-        handler_delete_referrer_state_and_short_url::process(ctx)
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub fn idl_missing_types(
-        _ctx: Context<UpdateReserveConfig>,
-        _reserve_farm_kind: ReserveFarmKind,
-        _asset_tier: AssetTier,
-        _fee_calculation: FeeCalculation,
-        _reserve_status: ReserveStatus,
-        _update_config_mode: UpdateConfigMode,
-        _update_lending_market_config_value: UpdateLendingMarketConfigValue,
-        _update_lending_market_config_mode: UpdateLendingMarketMode,
-    ) -> Result<()> {
-        unreachable!("This should never be called")
-    }
+    
 }
 
 #[error_code]
