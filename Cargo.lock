@@ -1888,7 +1888,7 @@ checksum = "0206175f82b8d6bf6652ff7d71a1e27fd2e4efde587fd368662814d6ec1d9ce0"
 [[package]]
 name = "farms"
 version = "0.1.0"
-source = "git+https://github.com/Kamino-Finance/kfarms.git#e74f8f0f8032140ee4f067b15d06a1999326d5c4"
+source = "git+https://github.com/toniandsol/kfarms.git#e74f8f0f8032140ee4f067b15d06a1999326d5c4"
 dependencies = [
  "anchor-lang 0.29.0",
  "anchor-spl 0.29.0",
@@ -2854,27 +2854,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78b3ae25bc7c8c38cec158d1f2757ee79e9b3740fbc7ccf0e59e4b08d793fa89"
 
 [[package]]
-name = "liquidity-incentive-program"
-version = "0.1.0"
-dependencies = [
- "anchor-lang 0.29.0",
- "anchor-spl 0.29.0",
- "anyhow",
- "assert_matches",
- "bincode",
- "cfg-if",
- "fixed",
- "futures",
- "marginfi",
- "pretty_assertions",
- "solana-logger",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "test-utilities",
-]
-
-[[package]]
 name = "litemap"
 version = "0.7.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2956,7 +2935,6 @@ dependencies = [
  "solana-security-txt",
  "static_assertions",
  "switchboard-v2",
- "test-utilities",
  "type-layout",
 ]
 
@@ -6566,33 +6544,6 @@ dependencies = [
  "quote",
  "syn 2.0.63",
  "test-case-core",
-]
-
-[[package]]
-name = "test-utilities"
-version = "0.1.0"
-dependencies = [
- "anchor-lang 0.29.0",
- "anchor-spl 0.29.0",
- "anyhow",
- "assert_matches",
- "bincode",
- "bytemuck",
- "fixed",
- "fixed-macro",
- "futures",
- "lazy_static",
- "liquidity-incentive-program",
- "marginfi",
- "pretty_assertions",
- "pyth-sdk-solana",
- "solana-logger",
- "solana-program",
- "solana-program-test",
- "solana-sdk",
- "static_assertions",
- "switchboard-v2",
- "type-layout",
 ]
 
 [[package]]

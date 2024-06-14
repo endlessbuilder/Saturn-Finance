@@ -7,6 +7,7 @@ use anchor_lang::{
 use crate::{
     gen_signer_seeds,
     Reserve, ReserveFarmKind,
+    context::*,
 };
 
 pub fn cpi_initialize_farm_delegated(ctx: &Context<InitFarmsForReserve>) -> Result<()> {
