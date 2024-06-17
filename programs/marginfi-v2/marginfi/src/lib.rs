@@ -29,11 +29,13 @@ pub mod marginfi {
     // User instructions
 
     /// Initialize a marginfi account for a given group
+    #[allow(unused_variables)]
     pub fn marginfi_account_initialize(ctx: Context<MarginfiAccountInitialize>) -> MarginfiResult {
         // marginfi_account::initialize_account(ctx)
         Ok(())
     }
 
+    #[allow(unused_variables)]
     pub fn lending_account_deposit(
         ctx: Context<LendingAccountDeposit>,
         amount: u64,
@@ -42,6 +44,7 @@ pub mod marginfi {
         Ok(())
     }
 
+    #[allow(unused_variables)]
     pub fn lending_account_withdraw(
         ctx: Context<LendingAccountWithdraw>,
         amount: u64,

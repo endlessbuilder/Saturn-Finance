@@ -2,7 +2,6 @@
 
 use anchor_lang::prelude::*;
 
-pub mod lending_market;
 pub mod state;
 pub mod utils;
 pub mod context;
@@ -33,6 +32,7 @@ pub mod kamino_lending {
 
     use super::*;
 
+    #[allow(unused_variables)]
     pub fn init_user_metadata(
         ctx: Context<InitUserMetadata>,
         user_lookup_table: Pubkey,
@@ -41,11 +41,13 @@ pub mod kamino_lending {
         Ok(())
     }
 
+    #[allow(unused_variables)]
     pub fn init_obligation(ctx: Context<InitObligation>, args: InitObligationArgs) -> Result<()> {
         // handler_init_obligation::process(ctx, args)
         Ok(())
     }
 
+    #[allow(unused_variables)]
     #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
     pub fn deposit_reserve_liquidity_and_obligation_collateral(
         ctx: Context<DepositReserveLiquidityAndObligationCollateral>,
@@ -55,6 +57,7 @@ pub mod kamino_lending {
         Ok(())
     }
 
+    #[allow(unused_variables)]
     #[access_control(emergency_mode_disabled(&ctx.accounts.lending_market))]
     pub fn withdraw_obligation_collateral_and_redeem_reserve_collateral(
         ctx: Context<WithdrawObligationCollateralAndRedeemReserveCollateral>,
