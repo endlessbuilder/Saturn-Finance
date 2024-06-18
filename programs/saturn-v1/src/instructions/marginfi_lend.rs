@@ -15,12 +15,13 @@ pub struct MarginfiLend<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
 
+    /// CHECK:
     #[account(
         mut,
-        seeds = [b"global-treasury", saturn_lending.treasury_admin.key().as_ref()],
+        seeds = [TREASURY_AUTHORITY_SEED.as_ref()],
         bump,
     )]
-    pub saturn_lending: Account<'info, Treasury>,
+    pub treasury_authority: UncheckedAccount<'info>,
 
     /// CHECK: this is pda
     #[account(
@@ -60,11 +61,10 @@ pub struct MarginfiLend<'info> {
 }
 
 pub fn handle(ctx: Context<MarginfiLend>, amount: u64) -> Result<()> {
-    let owner_key = ctx.accounts.saturn_lending.treasury_admin;
+    // let owner_key = ctx.accounts.treasury_authority.to_account_info();
     let signer_seeds: &[&[u8]] = &[
-        b"global-treasury",
-        owner_key.as_ref(),
-        &[ctx.bumps.saturn_lending],
+        TREASURY_AUTHORITY_SEED.as_ref(),
+        &[ctx.bumps.treasury_authority],
     ];
 
     marginfi::cpi::lending_account_deposit(
@@ -73,7 +73,7 @@ pub fn handle(ctx: Context<MarginfiLend>, amount: u64) -> Result<()> {
             LendingAccountDeposit {
                 marginfi_group: ctx.accounts.marginfi_group.to_account_info(),
                 marginfi_account: ctx.accounts.marginfi_account.to_account_info(),
-                signer: ctx.accounts.saturn_lending.to_account_info(),
+                signer: ctx.accounts.treasury_authority.to_account_info(),
                 bank: ctx.accounts.bank.to_account_info(),
                 signer_token_account: ctx
                     .accounts
@@ -85,7 +85,7 @@ pub fn handle(ctx: Context<MarginfiLend>, amount: u64) -> Result<()> {
             &[signer_seeds],
         ),
         amount,
-    )
+    );
 
     let treasury = &mut ctx.accounts.treasury;
     treasury.marginfi_lend_amount += amount;

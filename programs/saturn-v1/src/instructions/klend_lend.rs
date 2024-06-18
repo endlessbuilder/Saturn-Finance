@@ -15,12 +15,13 @@ pub struct KaminoLend<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
 
+    /// CHECK:
     #[account(
         mut,
-        seeds = [b"global_treasury", saturn_lending.treasury_admin.key().as_ref()],
+        seeds = [TREASURY_AUTHORITY_SEED.as_ref()],
         bump,
     )]
-    pub saturn_lending: Account<'info, Treasury>,
+    pub treasury_authority: UncheckedAccount<'info>,
     /// CHECK: this is pda
     #[account(
         mut,
@@ -67,18 +68,17 @@ pub struct KaminoLend<'info> {
 
 
 pub fn handle(ctx: Context<KaminoLend>, amount: u64) -> Result<()> {
-    let owner_key = ctx.accounts.saturn_lending.treasury_admin;
+    // let owner_key = ctx.accounts.saturn_lending.treasury_admin;
     let signer_seeds: &[&[u8]] = &[
-        b"global-treasury",
-        owner_key.as_ref(),
-        &[ctx.bumps.saturn_lending],
+        TREASURY_AUTHORITY_SEED.as_ref(),
+        &[ctx.bumps.treasury_authority],
     ];
 
     kamino_lending::cpi::deposit_reserve_liquidity_and_obligation_collateral(
         CpiContext::new_with_signer(
             ctx.accounts.klend_program.to_account_info(),
             DepositReserveLiquidityAndObligationCollateral {
-                owner: ctx.accounts.saturn_lending.to_account_info(),
+                owner: ctx.accounts.treasury_authority.to_account_info(),
                 obligation: ctx.accounts.obligation.to_account_info(),
                 lending_market: ctx.accounts.lending_market.to_account_info(),
                 lending_market_authority: ctx.accounts.lending_market_authority.to_account_info(),
