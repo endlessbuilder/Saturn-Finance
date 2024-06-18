@@ -6,7 +6,7 @@ use kamino_lending::{
 };
 use crate::{
     account::{Escrow, Treasury},
-    constants::*,
+    constants::*, treasury,
 };
 
 
@@ -21,6 +21,13 @@ pub struct KaminoLend<'info> {
         bump,
     )]
     pub saturn_lending: Account<'info, Treasury>,
+    /// CHECK: this is pda
+    #[account(
+        mut,
+        seeds = [TREASURY_SEED.as_ref()],
+        bump,
+    )]
+    pub treasury: Account<'info, Treasury>,
 
     #[account(
         mut,        
@@ -86,21 +93,25 @@ pub fn handle(ctx: Context<KaminoLend>, amount: u64) -> Result<()> {
                     .accounts
                     .saturn_user_source_liquidity
                     .to_account_info(),
-                // user_destination_collateral: ctx
-                //     .accounts
-                //     .user_destination_collateral
-                //     .to_account_info(),
-                placeholder_user_destination_collateral: Some(ctx.accounts.user_destination_collateral.clone().expect("REASON").to_account_info()),
+                user_destination_collateral: ctx
+                    .accounts
+                    .user_destination_collateral
+                    .to_account_info(),
+                // placeholder_user_destination_collateral: Some(ctx.accounts.user_destination_collateral.clone().expect("REASON").to_account_info()),
                 token_program: ctx.accounts.token_program.to_account_info(),
                 instruction_sysvar_account: ctx
                     .accounts
                     .instruction_sysvar_account
                     .to_account_info(),
+                user_destination_collateral: todo!(),
             },
             &[signer_seeds],
         ),
         amount,
     )?;
+
+    let treasury = &mut ctx.accounts.treasury;
+    treasury.kamino_lend_amount += amount;
 
     Ok(())
 

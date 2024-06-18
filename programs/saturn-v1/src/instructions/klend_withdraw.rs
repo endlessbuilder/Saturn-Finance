@@ -78,11 +78,11 @@ pub fn handle(ctx: Context<KlendWithdraw>, amount: u64) -> Result<()> {
                 withdraw_reserve: ctx.accounts.reserve.to_account_info(),
                 reserve_liquidity_supply: ctx.accounts.reserve_liquidity_supply.to_account_info(),
                 reserve_collateral_mint: ctx.accounts.reserve_collateral_mint.to_account_info(),
-                // user_destination_collateral: ctx
-                //     .accounts
-                //     .user_destination_collateral
-                //     .to_account_info(),
-                placeholder_user_destination_collateral: Some(ctx.accounts.user_destination_collateral.clone().expect("REASON").to_account_info()),
+                user_destination_collateral: ctx
+                    .accounts
+                    .user_destination_collateral
+                    .to_account_info(),
+                // placeholder_user_destination_collateral: Some(ctx.accounts.user_destination_collateral.clone().expect("REASON").to_account_info()),
                 token_program: ctx.accounts.token_program.to_account_info(),
                 instruction_sysvar_account: ctx.accounts.instructions.to_account_info(),
                 user_destination_liquidity: ctx

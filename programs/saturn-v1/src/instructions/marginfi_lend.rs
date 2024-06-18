@@ -6,7 +6,7 @@ use marginfi::{
 };
 use crate::{
     account::{Escrow, Treasury},
-    constants::*,
+    constants::*, treasury,
 };
 
 
@@ -21,6 +21,14 @@ pub struct MarginfiLend<'info> {
         bump,
     )]
     pub saturn_lending: Account<'info, Treasury>,
+
+    /// CHECK: this is pda
+    #[account(
+        mut,
+        seeds = [TREASURY_SEED.as_ref()],
+        bump,
+    )]
+    pub treasury: Account<'info, Treasury>,
 
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
@@ -79,5 +87,9 @@ pub fn handle(ctx: Context<MarginfiLend>, amount: u64) -> Result<()> {
         amount,
     )
 
+    let treasury = &mut ctx.accounts.treasury;
+    treasury.marginfi_lend_amount += amount;
+
+    Ok(())
 }
 

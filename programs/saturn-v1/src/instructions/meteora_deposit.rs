@@ -1,8 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 
+use crate::account::Treasury;
 use crate::account::meteora_account::Partner;
-use crate::constants::{TOKEN_VAULT_PREFIX, TREASURY_AUTHORITY_SEED, VAULT_PREFIX};
+use crate::constants::{TOKEN_VAULT_PREFIX, TREASURY_AUTHORITY_SEED, VAULT_PREFIX, TREASURY_SEED};
 // use crate::meteora_context::DepositWithdrawLiquidity;
 use crate::meteora_utils::{MeteoraProgram, MeteoraUtils, update_liquidity_wrapper};
 use meteora::state::Vault;
@@ -20,6 +21,13 @@ pub struct MeteoraDeposit<'info> {
         bump,
     )]
     pub treasury_authority: UncheckedAccount<'info>,
+    /// CHECK: this is pda
+    #[account(
+        mut,
+        seeds = [TREASURY_SEED.as_ref()],
+        bump,
+    )]
+    pub treasury: Account<'info, Treasury>,
     /// CHECK:
     pub vault_program: Program<'info, MeteoraProgram>,
     /// CHECK:
@@ -82,5 +90,9 @@ pub fn handle(
         &mut ctx.accounts.partner,
         // &mut ctx.accounts.user,
     )?;
+
+    let treasury = &mut ctx.accounts.treasury;
+    treasury.meteora_deposit_amount += token_amount;
+
     Ok(())
 }
