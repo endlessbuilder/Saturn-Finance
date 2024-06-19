@@ -58,9 +58,9 @@ pub fn handle(ctx: Context<FinishBond>) -> Result<()> {
     let dest_stf_account = &mut &ctx.accounts.dest_stf_account;
     let token_program = &mut &ctx.accounts.token_program;
 
-    // if timestamp < escrow.end_timestamp {
-    //     return Err(BondError::BondNotFinished.into());
-    // }
+    if timestamp < escrow.end_timestamp {
+        return Err(BondError::BondNotFinished.into());
+    }
     if escrow.creator != ctx.accounts.user.key() {
         return Err(BondError::CreatorError.into());
     }

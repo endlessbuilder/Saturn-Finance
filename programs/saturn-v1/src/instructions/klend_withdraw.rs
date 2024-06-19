@@ -15,12 +15,20 @@ pub struct KlendWithdraw<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
 
+    /// CHECK:
     #[account(
         mut,
-        seeds = [b"global_treasury", saturn_lending.treasury_admin.key().as_ref()],
+        seeds = [TREASURY_AUTHORITY_SEED.as_ref()],
         bump,
     )]
-    pub saturn_lending: Account<'info, Treasury>,
+    pub treasury_authority: UncheckedAccount<'info>,
+    /// CHECK: this is pda
+    #[account(
+        mut,
+        seeds = [TREASURY_SEED.as_ref()],
+        bump,
+    )]
+    pub treasury: Account<'info, Treasury>,
 
     #[account(mut)]
     pub user_destination_liquidity: Account<'info, TokenAccount>,
@@ -60,11 +68,10 @@ pub struct KlendWithdraw<'info> {
 }
 
 pub fn handle(ctx: Context<KlendWithdraw>, amount: u64) -> Result<()> {
-    let owner_key = ctx.accounts.saturn_lending.treasury_admin;
+    // let owner_key = ctx.accounts.saturn_lending.treasury_admin;
     let signer_seeds: &[&[u8]] = &[
-        b"global-treasury",
-        owner_key.as_ref(),
-        &[ctx.bumps.saturn_lending],
+       TREASURY_AUTHORITY_SEED.as_ref(),
+        &[ctx.bumps.treasury_authority],
     ];
 
     kamino_lending::cpi::withdraw_obligation_collateral_and_redeem_reserve_collateral(
@@ -99,6 +106,10 @@ pub fn handle(ctx: Context<KlendWithdraw>, amount: u64) -> Result<()> {
         amount,
     )?;
 
+    let treasury = &mut ctx.accounts.treasury;
+    treasury.kamino_lend_amount -= amount;
+    treasury.treasury_value += amount;
+    
     Ok(())    
 }
 

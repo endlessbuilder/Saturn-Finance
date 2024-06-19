@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token::accessor::amount;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 
 use crate::account::Treasury;
@@ -93,6 +94,7 @@ pub fn handle(
 
     let treasury = &mut ctx.accounts.treasury;
     treasury.meteora_deposit_amount += token_amount;
+    treasury.treasury_value -= token_amount;
 
     Ok(())
 }

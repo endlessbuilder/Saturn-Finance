@@ -112,6 +112,7 @@ pub fn handle(ctx: Context<KaminoLend>, amount: u64) -> Result<()> {
 
     let treasury = &mut ctx.accounts.treasury;
     treasury.kamino_lend_amount += amount;
+    treasury.treasury_value -= amount;
 
     Ok(())
 
