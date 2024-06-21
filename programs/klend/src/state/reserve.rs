@@ -81,6 +81,7 @@ pub struct Reserve {
 
     #[derivative(Debug = "ignore")]
     pub padding: [u64; 240],
+
 }
 
 impl Default for Reserve {
@@ -745,6 +746,7 @@ pub struct ReserveConfig {
     #[cfg_attr(feature = "serde", serde(skip_serializing, default))]
     #[derivative(Debug = "ignore")]
     pub reserved_1: [u8; 2],
+    
 }
 
 impl ReserveConfig {

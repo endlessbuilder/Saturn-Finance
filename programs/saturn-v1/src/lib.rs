@@ -85,6 +85,8 @@ pub mod saturn_v_1 {
         instructions::marginfi_withdraw::handle(ctx, amount)
     }
 
-
+    pub fn get_state(ctx:Context<GetState>) -> Result<()> {
+        instructions::get_state::handle(ctx)
+    }
     
 }
