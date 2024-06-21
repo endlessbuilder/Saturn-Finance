@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 
-use crate::error::*;
+use crate::{error::*, kamino_utils};
 use crate::account::Treasury;
 use crate::constants::{TREASURY_AUTHORITY_SEED, TREASURY_METEORA_LP};
 use meteora::state::Vault;
@@ -34,6 +34,7 @@ pub struct GetState {
 }
 
 pub fn handle(ctx: Context<GetState>) -> Result<()> {
+    // # get meteora vault value
    let treasury_authority = &mut ctx.accounts.treasury_authority;
    let treasury_lp = &mut ctx.accounts.treasury_lp;
    let meteora_vault = &mut ctx.accounts.meteora_vault;
@@ -49,8 +50,23 @@ pub fn handle(ctx: Context<GetState>) -> Result<()> {
 
     let value_in_meteora = treasury_lp.amount * virtual_meteora_price;
 
+    // # get kamino value
+    let clock = Clock::get();
     
-
+    let withdraw_obligation_amount = kamino_utils::withdraw_obligation_collateral(
+        lending_market,
+        reserve,
+        obligation,
+        collateral_amount,
+        clock.slot,
+        ctx.accounts.withdraw_reserve.key(),
+    )?;
+    let withdraw_liquidity_amount = kamino_utils::redeem_reserve_collateral(
+        reserve,
+        withdraw_obligation_amount,
+        clock,
+        true,
+    )?;
 
    Ok(())
 }
