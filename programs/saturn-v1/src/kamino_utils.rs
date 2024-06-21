@@ -4,7 +4,7 @@ use anchor_spl::token::{self, Mint, Token, TokenAccount};
 use kamino_lending::state::{LendingMarket, Reserve, Obligation};
 use kamino_lending::LendingError;
 
-pub fn withdraw_obligation_collateral(
+pub fn calcu_obligation_collateral(
     lending_market: &LendingMarket,
     withdraw_reserve: &mut Reserve,
     obligation: &mut Obligation,

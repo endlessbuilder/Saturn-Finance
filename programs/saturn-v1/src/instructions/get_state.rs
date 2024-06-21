@@ -31,6 +31,16 @@ pub struct GetState {
     #[account(mut)]
     pub meteora_vault: Box<Account<'info, Vault>>,
 
+    pub lending_market: AccountLoader<'info, LendingMarket>,
+    #[account(mut, has_one = lending_market)]
+    pub withdraw_reserve: AccountLoader<'info, Reserve>,
+    #[account(mut,
+        has_one = lending_market,
+        has_one = owner
+    )]
+    pub obligation: AccountLoader<'info, Obligation>,
+
+
 }
 
 pub fn handle(ctx: Context<GetState>) -> Result<()> {
@@ -52,8 +62,8 @@ pub fn handle(ctx: Context<GetState>) -> Result<()> {
 
     // # get kamino value
     let clock = Clock::get();
-    
-    let withdraw_obligation_amount = kamino_utils::withdraw_obligation_collateral(
+
+    let obligation_amount = kamino_utils::calcu_obligation_collateral(
         lending_market,
         reserve,
         obligation,
@@ -61,12 +71,15 @@ pub fn handle(ctx: Context<GetState>) -> Result<()> {
         clock.slot,
         ctx.accounts.withdraw_reserve.key(),
     )?;
-    let withdraw_liquidity_amount = kamino_utils::redeem_reserve_collateral(
+    let liquidity_amount = kamino_utils::redeem_reserve_collateral(
         reserve,
-        withdraw_obligation_amount,
+        obligation_amount,
         clock,
         true,
     )?;
+
+    // # get marginfi value
+    
 
    Ok(())
 }

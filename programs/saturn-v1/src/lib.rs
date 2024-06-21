@@ -9,6 +9,7 @@ mod instructions;
 mod jupiter_utils;
 mod meteora_utils;
 mod kamino_utils;
+mod marginfi_utils;
 
 use account::*;
 use instructions::*;
