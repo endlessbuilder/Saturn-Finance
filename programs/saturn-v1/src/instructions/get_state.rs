@@ -1,10 +1,13 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 
-use crate::{error::*, kamino_utils};
+use crate::marginfi_utils::cal_user_total_asset_in_marginfi;
+use crate::{error::*, kamino_utils, marginfi_utils};
 use crate::account::Treasury;
 use crate::constants::{TREASURY_AUTHORITY_SEED, TREASURY_METEORA_LP};
 use meteora::state::Vault;
+use marginfi::state::marginfi_account::MarginfiAccount;
+use marginfi::state::marginfi_group::Bank;
 
 
 #[derive(Accounts)]
@@ -40,6 +43,19 @@ pub struct GetState {
     )]
     pub obligation: AccountLoader<'info, Obligation>,
 
+    // MarginFi
+    pub marginfi_group: AccountLoader<'info, MarginfiGroup>,
+
+    #[account(
+        mut,
+        constraint = marginfi_account.load()?.group == marginfi_group.key(),
+    )]
+    pub marginfi_account: AccountLoader<'info, MarginfiAccount>,
+    #[account(
+        mut,
+        constraint = bank.load()?.group == marginfi_group.key(),
+    )]
+    pub bank: AccountLoader<'info, Bank>,
 
 }
 
@@ -79,7 +95,18 @@ pub fn handle(ctx: Context<GetState>) -> Result<()> {
     )?;
 
     // # get marginfi value
-    
+    let marginfi_account = ctx.accounts.marginfi_account.load_mut();
+    let bank = ctx.accounts.bank.load_mut();
+    let current_timestap = Clock::get()?.unix_timestamp;
+
+    let marginfi_value = cal_user_total_asset_in_marginfi(
+        current_timestap, 
+        bank.total_asset_shares,
+        bank.total_liability_shares,
+        bank.asset_share_value,
+        bank.liability_share_value,
+        user_asset_shares
+    ).unwrap();
 
    Ok(())
 }

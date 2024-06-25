@@ -4221,6 +4221,8 @@ dependencies = [
  "blake3",
  "bytemuck",
  "constant_time_eq",
+ "fixed",
+ "fixed-macro",
  "kamino_lending",
  "marginfi",
  "meteora",

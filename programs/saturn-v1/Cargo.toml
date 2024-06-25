@@ -31,6 +31,8 @@ pyth-solana-receiver-sdk = "0.1.0"
 blake3 = "1.5.1"
 bytemuck = "1.15.0"
 constant_time_eq = "0.3.0"
+fixed = "1.12.0"
+fixed-macro = "1.2.0"
 
 toml_datetime = "0.6.5"
 winnow = "0.6.5"
