@@ -25,6 +25,7 @@ pub fn cal_user_total_asset_in_marginfi(
 
     get_asset_amount(changed_asset_share_value, user_asset_shares)
 }
+
 /// We use a simple interest rate model that auto settles the accrued interest into the lending account balances.
 /// The plan is to move to a compound interest model in the future.
 ///

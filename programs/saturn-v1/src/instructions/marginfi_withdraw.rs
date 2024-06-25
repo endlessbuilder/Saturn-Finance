@@ -82,7 +82,7 @@ pub fn handle(ctx: Context<MarginfiWithdraw>, amount: u64) -> Result<()> {
         ),
         amount,
         None,
-    )
+    );
 
     let treasury = &mut ctx.accounts.treasury;
     treasury.marginfi_lend_amount -= amount;
