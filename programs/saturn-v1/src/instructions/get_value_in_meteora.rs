@@ -32,7 +32,7 @@ pub struct GetValueInMeteora {
 
 }
 
-pub fn handle(ctx: Context<GetValueInMeteora>) -> Result<()> {
+pub fn handle(ctx: Context<GetValueInMeteora>) -> Result<(u64)> {
     // # get meteora vault value
    let treasury_authority = &mut ctx.accounts.treasury_authority;
    let treasury_lp = &mut ctx.accounts.treasury_lp;
@@ -47,7 +47,7 @@ pub fn handle(ctx: Context<GetValueInMeteora>) -> Result<()> {
         .get_virtual_price(current_time, vault_lp_mint.supply)
         .ok_or(VaultError::MathOverflow)?;
 
-    let value_in_meteora = treasury_lp.amount * virtual_meteora_price;
+    let value_in_meteora: u64 = treasury_lp.amount * virtual_meteora_price.into();
 
-   Ok(())
+   Ok((value_in_meteora))
 }

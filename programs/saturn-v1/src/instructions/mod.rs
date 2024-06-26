@@ -37,9 +37,6 @@ pub use marginfi_lend::*;
 pub mod marginfi_withdraw;
 pub use marginfi_withdraw::*;
 
-pub mod get_state;
-pub use get_state::*;
-
 pub mod get_value_in_kamino;
 pub use get_value_in_kamino::*;
 

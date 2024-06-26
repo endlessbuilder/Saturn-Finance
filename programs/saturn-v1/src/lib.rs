@@ -87,8 +87,16 @@ pub mod saturn_v_1 {
         instructions::marginfi_withdraw::handle(ctx, amount)
     }
 
-    pub fn get_state(ctx:Context<GetState>) -> Result<()> {
-        instructions::get_state::handle(ctx)
+    pub fn get_value_in_meteora(ctx: Context<GetValueInMeteora>) -> Result<(u64)> {
+        instructions::get_value_in_meteora::handle(ctx)
+    }
+
+    pub fn get_value_in_kamino(ctx: Context<GetValueInKamino>) -> Result<([u64; 3])> {
+        instructions::get_value_in_kamino::handle(ctx)
+    }
+
+    pub fn get_value_in_marginfi(ctx: Context<GetValueInMarginFi>) -> Result<([u64; 3])> {
+        instructions::get_value_in_marginfi::handle(ctx)
     }
     
 }
