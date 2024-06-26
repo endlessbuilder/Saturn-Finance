@@ -4,7 +4,9 @@ use derivative::Derivative;
 use super::LastUpdate;
 use crate::{
     utils::ELEVATION_GROUP_NONE, utils::OBLIGATION_SIZE,
-    BigFractionBytes
+    BigFractionBytes,
+    LendingError,
+    xmsg
 };
 
 static_assertions::const_assert_eq!(OBLIGATION_SIZE, std::mem::size_of::<Obligation>());
@@ -76,6 +78,30 @@ impl Default for Obligation {
     }
 }
 
+impl Obligation {
+    pub fn borrows_empty(&self) -> bool {
+        self.borrows
+            .iter()
+            .all(|l| l.borrow_reserve == Pubkey::default())
+    }
+    
+    pub fn deposits_empty(&self) -> bool {
+        self.deposits
+            .iter()
+            .all(|c| c.deposit_reserve == Pubkey::default())
+    }
+    
+    pub fn position_of_collateral_in_deposits(&self, deposit_reserve: Pubkey) -> Result<usize> {
+        if self.deposits_empty() {
+            xmsg!("Obligation has no deposits");
+            return err!(LendingError::ObligationDepositsEmpty);
+        }
+        self.deposits
+            .iter()
+            .position(|collateral| collateral.deposit_reserve == deposit_reserve)
+            .ok_or(error!(LendingError::InvalidObligationCollateral))
+    }
+}
 pub struct InitObligationParams {
     pub current_slot: Slot,
     pub lending_market: Pubkey,

@@ -15,11 +15,10 @@ use crate::{
 };
 
 pub fn handle(ctx: Context<InitLendingAccount>) -> Result<()> {
-    let owner_key = ctx.accounts.saturn_lending.treasury_admin;
+    let owner_key = ctx.accounts.treasury_authority.key();
     let signer_seeds: &[&[u8]] = &[
-        b"global-treasury",
-        owner_key.as_ref(),
-        &[ctx.bumps.saturn_lending],
+        TREASURY_AUTHORITY_SEED.as_ref(),
+        &[ctx.bumps.treasury_authority],
     ];
 
 
@@ -28,7 +27,7 @@ pub fn handle(ctx: Context<InitLendingAccount>) -> Result<()> {
         CpiContext::new_with_signer(
             ctx.accounts.klend_program.to_account_info(),
             InitUserMetadata {
-                owner: ctx.accounts.saturn_lending.to_account_info(),
+                owner: ctx.accounts.treasury_authority.to_account_info(),
                 fee_payer: ctx.accounts.owner.to_account_info(),
                 user_metadata: ctx.accounts.user_metadata.to_account_info(),
                 referrer_user_metadata: Option::None,
@@ -44,7 +43,7 @@ pub fn handle(ctx: Context<InitLendingAccount>) -> Result<()> {
         CpiContext::new_with_signer(
             ctx.accounts.klend_program.to_account_info(),
             InitObligation {
-                obligation_owner: ctx.accounts.saturn_lending.to_account_info(),
+                obligation_owner: ctx.accounts.treasury_authority.to_account_info(),
                 fee_payer: ctx.accounts.owner.to_account_info(),
                 obligation: ctx.accounts.obligation.to_account_info(),
                 lending_market: ctx.accounts.lending_market.to_account_info(),
@@ -80,12 +79,13 @@ pub struct InitLendingAccount<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
 
+    /// CHECK:
     #[account(
         mut,
-        seeds = [b"global-treasury", saturn_lending.treasury_admin.key().as_ref()],
+        seeds = [TREASURY_AUTHORITY_SEED.as_ref()],
         bump,
     )]
-    pub saturn_lending: Account<'info, Treasury>,
+    pub treasury_authority: UncheckedAccount<'info>,
 
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
