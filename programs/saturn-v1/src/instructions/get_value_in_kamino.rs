@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
+use kamino_lending::obligation;
 use serde::de::value;
 
 use crate::{error::*, kamino_utils};
@@ -45,7 +46,15 @@ pub struct GetValueInKamino {
 pub fn handle(ctx: Context<GetValueInKamino>) -> Result<([u64; 3])> {
     // # get kamino value
     let clock = Clock::get();
+    let obligation = &mut ctx.accounts.obligation.load_mut().unwrap();
+
     let sol_reserve = &mut ctx.accounts.sol_reserve.load_mut().unwrap();
+    let collateral_amount1 = obligation
+    .deposits
+    .iter()
+    .find(|obligation_coll| obligation_coll.deposit_reserve.eq(sol_reserve.key()))
+    .unwrap()
+    .deposited_amount;
     let obligation_amount1 = kamino_utils::calcu_obligation_collateral(
         lending_market,
         sol_reserve,
@@ -62,6 +71,12 @@ pub fn handle(ctx: Context<GetValueInKamino>) -> Result<([u64; 3])> {
     )?;
 
     let usdc_reserve = &mut ctx.accounts.usdc_reserve.load_mut().unwrap();
+    let collateral_amount2 = obligation
+    .deposits
+    .iter()
+    .find(|obligation_coll| obligation_coll.deposit_reserve.eq(usdc_reserve.key()))
+    .unwrap()
+    .deposited_amount;
     let obligation_amount2 = kamino_utils::calcu_obligation_collateral(
         lending_market,
         usdc_reserve,
@@ -78,6 +93,12 @@ pub fn handle(ctx: Context<GetValueInKamino>) -> Result<([u64; 3])> {
     )?;
 
     let bonk_reserve = &mut ctx.accounts.bonk_reserve.load_mut().unwrap();
+    let collateral_amount3 = obligation
+    .deposits
+    .iter()
+    .find(|obligation_coll| obligation_coll.deposit_reserve.eq(bonk_reserve.key()))
+    .unwrap()
+    .deposited_amount;
     let obligation_amount3 = kamino_utils::calcu_obligation_collateral(
         lending_market,
         bonk_reserve,
