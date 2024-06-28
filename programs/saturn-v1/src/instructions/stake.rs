@@ -15,7 +15,6 @@ pub struct StakeSTF<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
 
-
     #[account(
         init_if_needed,
         space = mem::size_of::<UserStakeAccount>() as usize + 8,
