@@ -1,20 +1,19 @@
+use crate::{
+    account::{Escrow, Treasury},
+    constants::*,
+    treasury,
+};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 use marginfi::{
-    cpi::accounts::LendingAccountDeposit, program::Marginfi,
-    state::marginfi_group::{MarginfiGroup, Bank},
+    cpi::accounts::LendingAccountDeposit,
+    program::Marginfi,
+    state::marginfi_group::{Bank, MarginfiGroup},
+    state::marginfi_account::MarginfiAccount,
 };
-use crate::{
-    account::{Escrow, Treasury},
-    constants::*, treasury,
-};
-
 
 #[derive(Accounts)]
 pub struct MarginfiLend<'info> {
-    #[account(mut)]
-    pub owner: Signer<'info>,
-
     /// CHECK:
     #[account(
         mut,
@@ -39,10 +38,15 @@ pub struct MarginfiLend<'info> {
      * marginfi accounts
      */
     pub marginfi_program: Program<'info, Marginfi>,
+
     pub marginfi_group: AccountLoader<'info, MarginfiGroup>,
-    #[account(mut)]
-    /// CHECK: passed to marginfi
-    pub marginfi_account: Signer<'info>,
+
+    #[account(
+        mut,
+        constraint = marginfi_account.load()?.group == marginfi_group.key(),
+        constraint = marginfi_account.load()?.authority == treasury_authority.key(),
+    )]
+    pub marginfi_account: AccountLoader<'info, MarginfiAccount>,
 
     #[account(
         mut,
@@ -50,9 +54,7 @@ pub struct MarginfiLend<'info> {
     )]
     pub bank: AccountLoader<'info, Bank>,
 
-    #[account(
-        mut
-    )]
+    #[account(mut)]
     pub saturn_liquidity: Account<'info, TokenAccount>,
 
     /// CHECK: marginfi account
@@ -75,10 +77,7 @@ pub fn handle(ctx: Context<MarginfiLend>, amount: u64) -> Result<()> {
                 marginfi_account: ctx.accounts.marginfi_account.to_account_info(),
                 signer: ctx.accounts.treasury_authority.to_account_info(),
                 bank: ctx.accounts.bank.to_account_info(),
-                signer_token_account: ctx
-                    .accounts
-                    .saturn_liquidity
-                    .to_account_info(),
+                signer_token_account: ctx.accounts.saturn_liquidity.to_account_info(),
                 bank_liquidity_vault: ctx.accounts.bank_liquidity_vault.to_account_info(),
                 token_program: ctx.accounts.token_program.to_account_info(),
             },
@@ -93,4 +92,3 @@ pub fn handle(ctx: Context<MarginfiLend>, amount: u64) -> Result<()> {
 
     Ok(())
 }
-

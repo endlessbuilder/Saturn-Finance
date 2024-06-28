@@ -1,8 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 use kamino_lending::{
-    cpi::accounts::DepositReserveLiquidityAndObligationCollateral, program::KaminoLending,
-    Obligation,
+    cpi::accounts::DepositReserveLiquidityAndObligationCollateral, 
+    program::KaminoLending,
+    state::{Obligation, Reserve, LendingMarket},
 };
 use crate::{
     account::{Escrow, Treasury},
@@ -12,9 +13,6 @@ use crate::{
 
 #[derive(Accounts)]
 pub struct KaminoLend<'info> {
-    #[account(mut)]
-    pub owner: Signer<'info>,
-
     /// CHECK:
     #[account(
         mut,
@@ -30,40 +28,52 @@ pub struct KaminoLend<'info> {
     )]
     pub treasury: Account<'info, Treasury>,
 
-    #[account(
-        mut,        
+    #[account(mut,
+        has_one = lending_market,
+        constraint = obligation.load()?.owner == treasury_authority.key(),
     )]
-    pub saturn_user_source_liquidity: Account<'info, TokenAccount>,
+    pub obligation: AccountLoader<'info, Obligation>,
+
+    pub lending_market: AccountLoader<'info, LendingMarket>,
+
+    /// CHECK: just authority
+    pub lending_market_authority: AccountInfo<'info>,
+
+    #[account(mut,
+        has_one = lending_market
+    )]
+    pub reserve: AccountLoader<'info, Reserve>,
+
+    #[account(mut,
+        address = reserve.load()?.liquidity.supply_vault
+    )]
+    pub reserve_liquidity_supply: Box<Account<'info, TokenAccount>>,
+    #[account(mut,
+        address = reserve.load()?.collateral.mint_pubkey
+    )]
+    pub reserve_collateral_mint: Box<Account<'info, Mint>>,
+
+    #[account(mut,
+        address = reserve.load()?.collateral.supply_vault
+    )]
+    pub reserve_destination_deposit_collateral: Box<Account<'info, TokenAccount>>,
+
+    #[account(mut,
+        token::mint = reserve.load()?.liquidity.mint_pubkey
+    )]
+    pub user_source_liquidity: Account<'info, TokenAccount>,
+
+    #[account(mut,
+        token::mint = reserve_collateral_mint.key()
+    )]
+    pub user_destination_collateral: Box<Account<'info, TokenAccount>>,
 
     pub token_program: Program<'info, Token>,
 
-    /*
-     * klend accounts
-     */
-    pub klend_program: Program<'info, KaminoLending>,
-    #[account(mut)]
-    pub obligation: AccountLoader<'info, Obligation>,
-    /// CHECK: devnet demo
-    pub lending_market: AccountInfo<'info>,
-    #[account(mut)]
-    /// CHECK: devnet demo
-    pub reserve: AccountInfo<'info>,
-    #[account(mut)]
-    /// CHECK: devnet demo
-    pub reserve_liquidity_supply: AccountInfo<'info>,
-    #[account(mut)]
-    /// CHECK: devnet demo
-    pub reserve_collateral_mint: AccountInfo<'info>,
-    #[account(mut)]
-    /// CHECK: devnet demo
-    pub reserve_destination_deposit_collateral: AccountInfo<'info>,
-    /// CHECK: just authority
-    pub lending_market_authority: AccountInfo<'info>,
-    #[account(mut)]
-    /// CHECK: devnet demo
-    pub user_destination_collateral: Option<AccountInfo<'info>>,
-    /// CHECK: devnet demo
+    #[account(address = SysInstructions::id())]
+    /// CHECK:address checked
     pub instruction_sysvar_account: AccountInfo<'info>,
+
 }
 
 
@@ -91,7 +101,7 @@ pub fn handle(ctx: Context<KaminoLend>, amount: u64) -> Result<()> {
                     .to_account_info(),
                 user_source_liquidity: ctx
                     .accounts
-                    .saturn_user_source_liquidity
+                    .user_source_liquidity
                     .to_account_info(),
                 user_destination_collateral: ctx
                     .accounts

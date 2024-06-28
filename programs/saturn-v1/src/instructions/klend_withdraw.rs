@@ -2,7 +2,7 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Token, TokenAccount};
 use kamino_lending::{
     cpi::accounts::WithdrawObligationCollateralAndRedeemReserveCollateral, program::KaminoLending,
-    Obligation,
+    state::{Reserve, Obligation},
 };
 use crate::{
     account::{Escrow, Treasury},
@@ -12,9 +12,6 @@ use anchor_lang::solana_program::sysvar;
 
 #[derive(Accounts)]
 pub struct KlendWithdraw<'info> {
-    #[account(mut)]
-    pub owner: Signer<'info>,
-
     /// CHECK:
     #[account(
         mut,
@@ -22,6 +19,7 @@ pub struct KlendWithdraw<'info> {
         bump,
     )]
     pub treasury_authority: UncheckedAccount<'info>,
+
     /// CHECK: this is pda
     #[account(
         mut,
@@ -30,8 +28,10 @@ pub struct KlendWithdraw<'info> {
     )]
     pub treasury: Account<'info, Treasury>,
 
-    #[account(mut)]
-    pub user_destination_liquidity: Account<'info, TokenAccount>,
+    #[account(mut,
+        token::mint = withdraw_reserve.load()?.liquidity.mint_pubkey
+    )]
+    pub user_destination_liquidity: Box<Account<'info, TokenAccount>>,
 
     pub token_program: Program<'info, Token>,
 
@@ -44,27 +44,32 @@ pub struct KlendWithdraw<'info> {
      */
     pub klend_program: Program<'info, KaminoLending>,
     /// CHECK: devnet demo
-    #[account(mut)]
+    #[account(
+        mut,
+        has_one = lending_market,
+        constraint = obligation.load()?.owner == treasury_authority.key(),
+    )]
     pub obligation: AccountLoader<'info, Obligation>,
     /// CHECK: devnet demo
     pub lending_market: AccountInfo<'info>,
-    #[account(mut)]
-    /// CHECK: devnet demo
-    pub reserve: AccountInfo<'info>,
-    #[account(mut)]
-    /// CHECK: devnet demo
-    pub reserve_liquidity_supply: AccountInfo<'info>,
-    #[account(mut)]
-    /// CHECK: devnet demo
-    pub reserve_collateral_mint: AccountInfo<'info>,
-    #[account(mut)]
-    /// CHECK: devnet demo
-    pub reserve_source_deposit_collateral: AccountInfo<'info>,
+    #[account(mut,
+        has_one = lending_market
+    )]
+    pub withdraw_reserve: AccountLoader<'info, Reserve>,
+    
+    #[account(mut, address = withdraw_reserve.load()?.collateral.supply_vault)]
+    pub reserve_source_collateral: Box<Account<'info, TokenAccount>>,
+    #[account(mut, address = withdraw_reserve.load()?.collateral.mint_pubkey)]
+    pub reserve_collateral_mint: Box<Account<'info, Mint>>,
+    #[account(mut, address = withdraw_reserve.load()?.liquidity.supply_vault)]
+    pub reserve_liquidity_supply: Box<Account<'info, TokenAccount>>,
+    
     /// CHECK: just authority
     pub lending_market_authority: AccountInfo<'info>,
-    #[account(mut)]
-    /// CHECK: devnet demo
-    pub user_destination_collateral: Option<AccountInfo<'info>>,
+    #[account(mut,
+        token::mint = reserve_collateral_mint.key()
+    )]
+    pub user_destination_collateral: Box<Account<'info, TokenAccount>>,
 }
 
 pub fn handle(ctx: Context<KlendWithdraw>, amount: u64) -> Result<()> {
@@ -82,7 +87,7 @@ pub fn handle(ctx: Context<KlendWithdraw>, amount: u64) -> Result<()> {
                 obligation: ctx.accounts.obligation.to_account_info(),
                 lending_market: ctx.accounts.lending_market.to_account_info(),
                 lending_market_authority: ctx.accounts.lending_market_authority.to_account_info(),
-                withdraw_reserve: ctx.accounts.reserve.to_account_info(),
+                withdraw_reserve: ctx.accounts.withdraw_reserve.to_account_info(),
                 reserve_liquidity_supply: ctx.accounts.reserve_liquidity_supply.to_account_info(),
                 reserve_collateral_mint: ctx.accounts.reserve_collateral_mint.to_account_info(),
                 user_destination_collateral: ctx
@@ -98,7 +103,7 @@ pub fn handle(ctx: Context<KlendWithdraw>, amount: u64) -> Result<()> {
                     .to_account_info(),
                 reserve_source_collateral: ctx
                     .accounts
-                    .reserve_source_deposit_collateral
+                    .reserve_source_collateral
                     .to_account_info(),
             },
             &[signer_seeds],

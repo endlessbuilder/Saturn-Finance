@@ -7,13 +7,12 @@ use anchor_spl::token::{Token, TokenAccount};
 use marginfi::{
     cpi::accounts::LendingAccountWithdraw,
     program::Marginfi,
+    state::marginfi_account::MarginfiAccount,
     state::marginfi_group::{Bank, MarginfiGroup},
 };
 
 #[derive(Accounts)]
 pub struct MarginfiWithdraw<'info> {
-    #[account(mut)]
-    pub owner: Signer<'info>,
 
     /// CHECK:
     #[account(
@@ -39,10 +38,15 @@ pub struct MarginfiWithdraw<'info> {
      * marginfi accounts
      */
     pub marginfi_program: Program<'info, Marginfi>,
+
     pub marginfi_group: AccountLoader<'info, MarginfiGroup>,
-    #[account(mut)]
-    /// CHECK: passed to marginfi
-    pub marginfi_account: Signer<'info>,
+
+    #[account(
+        mut,
+        constraint = marginfi_account.load()?.group == marginfi_group.key(),
+        constraint = marginfi_account.load()?.authority == treasury_authority.key(),
+    )]
+    pub marginfi_account: AccountLoader<'info, MarginfiAccount>,
 
     #[account(
         mut,
@@ -55,11 +59,14 @@ pub struct MarginfiWithdraw<'info> {
 
     /// CHECK: marginfi account
     #[account(mut)]
-    pub bank_liquidity_vault: AccountInfo<'info>,
+    pub bank_liquidity_vault: Account<'info, TokenAccount>,
+    /// CHECK: Seed constraint check
+    #[account(mut)]
+    pub bank_liquidity_vault_authority: AccountInfo<'info>,
 }
 
 pub fn handle(ctx: Context<MarginfiWithdraw>, amount: u64) -> Result<()> {
-    let owner_key = ctx.accounts.treasury.treasury_admin;
+    // let owner_key = ctx.accounts.treasury_authority;
     let signer_seeds: &[&[u8]] = &[
         TREASURY_AUTHORITY_SEED.as_ref(),
         &[ctx.bumps.treasury_authority],
@@ -74,7 +81,7 @@ pub fn handle(ctx: Context<MarginfiWithdraw>, amount: u64) -> Result<()> {
                 signer: ctx.accounts.treasury_authority.to_account_info(),
                 bank: ctx.accounts.bank.to_account_info(),
                 destination_token_account: ctx.accounts.saturn_liquidity.to_account_info(),
-                bank_liquidity_vault_authority: ctx.accounts.bank_liquidity_vault.to_account_info(),
+                bank_liquidity_vault_authority: ctx.accounts.bank_liquidity_vault_authority.to_account_info(),
                 bank_liquidity_vault: ctx.accounts.bank_liquidity_vault.to_account_info(),
                 token_program: ctx.accounts.token_program.to_account_info(),
             },
