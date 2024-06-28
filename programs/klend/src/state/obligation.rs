@@ -21,7 +21,7 @@ pub struct Obligation {
     pub lending_market: Pubkey,
     pub owner: Pubkey,
     pub deposits: [ObligationCollateral; 8],
-    pub lowest_reserve_deposit_ltv: u64,
+    pub lowest_reserve_deposit_liquidation_ltv: u64,
     pub deposited_value_sf: u128,
 
     pub borrows: [ObligationLiquidity; 5],
@@ -46,8 +46,10 @@ pub struct Obligation {
     #[derivative(Debug = "ignore")]
     pub reserved: [u8; 7],
 
+    pub highest_borrow_factor_pct: u64,
+
     #[derivative(Debug = "ignore")]
-    pub padding_3: [u64; 127],
+    pub padding_3: [u64; 126],
 }
 
 impl Default for Obligation {
@@ -63,7 +65,7 @@ impl Default for Obligation {
             borrowed_assets_market_value_sf: 0,
             allowed_borrow_value_sf: 0,
             unhealthy_borrow_value_sf: 0,
-            lowest_reserve_deposit_ltv: 0,
+            lowest_reserve_deposit_liquidation_ltv: 0,
             borrow_factor_adjusted_debt_value_sf: 0,
             deposits_asset_tiers: [u8::MAX; 8],
             borrows_asset_tiers: [u8::MAX; 5],
@@ -71,8 +73,9 @@ impl Default for Obligation {
             num_of_obsolete_reserves: 0,
             has_debt: 0,
             borrowing_disabled: 0,
+            highest_borrow_factor_pct: 0,
             reserved: [0; 7],
-            padding_3: [0; 127],
+            padding_3: [0; 126],
             referrer: Pubkey::default(),
         }
     }
@@ -125,7 +128,8 @@ pub struct ObligationCollateral {
     pub deposit_reserve: Pubkey,
     pub deposited_amount: u64,
     pub market_value_sf: u128,
-    pub padding: [u64; 10],
+    pub borrowed_amount_against_this_collateral_in_elevation_group: u64,
+    pub padding: [u64; 9],
 }
 
 #[derive(Debug, Default, PartialEq, Eq)]
@@ -139,5 +143,7 @@ pub struct ObligationLiquidity {
     pub market_value_sf: u128,
     pub borrow_factor_adjusted_market_value_sf: u128,
 
-    pub padding2: [u64; 8],
+    pub borrowed_amount_outside_elevation_groups: u64,
+
+    pub padding2: [u64; 7],
 }

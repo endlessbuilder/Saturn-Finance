@@ -2660,6 +2660,7 @@ version = "0.1.0"
 dependencies = [
  "anchor-lang 0.29.0",
  "anchor-spl 0.29.0",
+ "arrayref",
  "bitflags 2.5.0",
  "borsh 0.10.3",
  "bytemuck",
@@ -2673,6 +2674,7 @@ dependencies = [
  "serde",
  "solana-program",
  "solana-security-txt",
+ "spl-associated-token-account 1.1.3",
  "static_assertions",
  "strum 0.24.0",
  "switchboard-itf",

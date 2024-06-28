@@ -77,11 +77,14 @@ pub struct Reserve {
     pub config: ReserveConfig,
 
     #[derivative(Debug = "ignore")]
-    pub config_padding: [u64; 150],
+    pub config_padding: [u64; 117],
+
+    pub borrowed_amount_outside_elevation_group: u64,
+
+    pub borrowed_amounts_against_this_reserve_in_elevation_groups: [u64; 32],
 
     #[derivative(Debug = "ignore")]
-    pub padding: [u64; 240],
-
+    pub padding: [u64; 207],
 }
 
 impl Default for Reserve {
@@ -97,8 +100,10 @@ impl Default for Reserve {
             farm_debt: Pubkey::default(),
             reserve_liquidity_padding: [0; 150],
             reserve_collateral_padding: [0; 150],
-            config_padding: [0; 150],
-            padding: [0; 240],
+            config_padding: [0; 117],
+            borrowed_amount_outside_elevation_group: 0,
+            borrowed_amounts_against_this_reserve_in_elevation_groups: [0; 32],
+            padding: [0; 207],
         }
     }
 }
