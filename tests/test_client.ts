@@ -209,16 +209,16 @@ export class TestClient {
             this.admin,
             this.stfTokenMint.publicKey,
             this.treasury_authority.publicKey
-          );
+        );
 
         await this.mintTokens(
             1000,
             2,
             this.stfTokenMint.publicKey,
             tokenAccount
-          );
+        );
 
-          
+        
 
     }
 }
