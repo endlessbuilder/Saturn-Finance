@@ -26,6 +26,9 @@ const TREASURY_AUTHORITY_SEED = "treasury-authority";
 const TREASURY_SEED = "global-treasury-2";
 const PERSONAL_SEED = "personal-saturn";
 
+const USDC_TOKEN_MINT = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v";
+const BONK_TOKEN_MINT = "DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263";
+
 export class TestClient {
     provider: anchor.AnchorProvider;
     program: anchor.Program<SaturnV1>;
@@ -36,8 +39,16 @@ export class TestClient {
     stfTokenMint: Keypair;
 
     // pdas
-    treasury_authority: { publicKey: PublicKey; bump: number };
+    treasuryAuthority: { publicKey: PublicKey; bump: number };
     treasury: { publicKey: PublicKey; bump: number };
+
+    //token accounts
+    treasuryAuthorityStfTokenAccount: PublicKey;
+    treasuryAuthorityUsdcTokenAccount: PublicKey;
+    treasuryAuthorityBonkTokenAccount: PublicKey;
+    userStfTokenAccount: PublicKey;
+    userUsdcTokenAccount: PublicKey;
+    userBonkTokenAccount: PublicKey;
 
     constructor() {
         this.provider = anchor.AnchorProvider.env();
@@ -188,13 +199,14 @@ export class TestClient {
 
         //pdas
         this.treasury = this.findProgramAddress(TREASURY_SEED);
-        this.treasury_authority = this.findProgramAddress(TREASURY_AUTHORITY_SEED);
+        this.treasuryAuthority = this.findProgramAddress(TREASURY_AUTHORITY_SEED);
 
         // airdrop funds
         await this.confirmTx(await this.requestAirdrop(this.admin.publicKey));
         await this.confirmTx(await this.requestAirdrop(this.user.publicKey));
-        await this.confirmTx(await this.requestAirdrop(this.treasury.publicKey));
+        await this.confirmTx(await this.requestAirdrop(this.treasuryAuthority.publicKey));
 
+        // stf token mint
         await spl.createMint(
             this.provider.connection,
             this.admin,
@@ -204,21 +216,50 @@ export class TestClient {
             this.stfTokenMint
         );
 
-        let tokenAccount = await spl.createAssociatedTokenAccount(
+        this.treasuryAuthorityStfTokenAccount = await spl.createAssociatedTokenAccount(
             this.provider.connection,
             this.admin,
             this.stfTokenMint.publicKey,
-            this.treasury_authority.publicKey
+            this.treasuryAuthority.publicKey
+        );
+        this.userStfTokenAccount = await spl.createAssociatedTokenAccount(
+            this.provider.connection,
+            this.admin,
+            this.stfTokenMint.publicKey,
+            this.user.publicKey
         );
 
         await this.mintTokens(
             1000,
             2,
             this.stfTokenMint.publicKey,
-            tokenAccount
+            this.treasuryAuthorityStfTokenAccount
+        );
+        await this.mintTokens(
+            1000,
+            2,
+            this.stfTokenMint.publicKey,
+            this.userStfTokenAccount
         );
 
-        
+        this.treasuryAuthorityUsdcTokenAccount = await spl.createAssociatedTokenAccount(
+            this.provider.connection,
+            this.admin,
+            new PublicKey(USDC_TOKEN_MINT),
+            this.treasuryAuthority.publicKey
+        );
+        this.treasuryAuthorityBonkTokenAccount = await spl.createAssociatedTokenAccount(
+            this.provider.connection,
+            this.admin,
+            new PublicKey(BONK_TOKEN_MINT),
+            this.treasuryAuthority.publicKey
+        );
+
+        let response = await this.provider.connection.getParsedTokenAccountsByOwner( this.user.publicKey, { mint: new PublicKey(USDC_TOKEN_MINT) });
+        this.userUsdcTokenAccount = response.value[0].pubkey;
+        response = await this.provider.connection.getParsedTokenAccountsByOwner( this.user.publicKey, { mint: new PublicKey(BONK_TOKEN_MINT) });
+        this.userBonkTokenAccount = response.value[0].pubkey;
+
 
     }
 }
