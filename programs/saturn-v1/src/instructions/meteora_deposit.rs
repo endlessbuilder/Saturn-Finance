@@ -30,7 +30,7 @@ pub struct MeteoraDeposit<'info> {
     )]
     pub treasury: Account<'info, Treasury>,
     /// CHECK:
-    pub vault_program: Program<'info, MeteoraProgram>,
+    pub meteora_vault_program: Program<'info, MeteoraProgram>,
     /// CHECK:
     #[account(mut)]
     pub vault: Box<Account<'info, Vault>>,
@@ -65,7 +65,7 @@ pub fn handle(
     let treasury_token = &ctx.accounts.treasury_token.to_account_info();
     let token_vault = &ctx.accounts.token_vault.to_account_info();
     let token_program = &ctx.accounts.token_program.to_account_info();
-    let vault_program = &ctx.accounts.vault_program.to_account_info();
+    let meteora_vault_program = &ctx.accounts.meteora_vault_program.to_account_info();
     let user = &&ctx.accounts.treasury_authority.to_account_info();
 
     update_liquidity_wrapper(
@@ -78,7 +78,7 @@ pub fn handle(
                 user,
                 token_vault,
                 token_program,
-                vault_program,
+                meteora_vault_program,
                 token_amount,
                 minimum_lp_token_amount,
             )?;

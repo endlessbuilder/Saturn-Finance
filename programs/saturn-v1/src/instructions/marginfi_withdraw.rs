@@ -55,7 +55,7 @@ pub struct MarginfiWithdraw<'info> {
     pub bank: AccountLoader<'info, Bank>,
 
     #[account(mut)]
-    pub saturn_liquidity: Account<'info, TokenAccount>,
+    pub user_liquidity: Account<'info, TokenAccount>,
 
     /// CHECK: marginfi account
     #[account(mut)]
@@ -80,7 +80,7 @@ pub fn handle(ctx: Context<MarginfiWithdraw>, amount: u64) -> Result<()> {
                 marginfi_account: ctx.accounts.marginfi_account.to_account_info(),
                 signer: ctx.accounts.treasury_authority.to_account_info(),
                 bank: ctx.accounts.bank.to_account_info(),
-                destination_token_account: ctx.accounts.saturn_liquidity.to_account_info(),
+                destination_token_account: ctx.accounts.user_liquidity.to_account_info(),
                 bank_liquidity_vault_authority: ctx.accounts.bank_liquidity_vault_authority.to_account_info(),
                 bank_liquidity_vault: ctx.accounts.bank_liquidity_vault.to_account_info(),
                 token_program: ctx.accounts.token_program.to_account_info(),

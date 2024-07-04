@@ -8,6 +8,9 @@ use marginfi::state::{
     marginfi_account::MarginfiAccount,
     marginfi_group::{Bank, MarginfiGroup},
 };
+use crate::account::meteora_account::Partner;
+use crate::meteora_utils::{MeteoraProgram, MeteoraUtils};
+use meteora::state::Vault;
 
 use crate::utils::*;
 use crate::{account::*, constants::*};
@@ -15,9 +18,6 @@ use crate::{account::*, constants::*};
 /// Need to check whether we can convert to unchecked account
 #[derive(Accounts)]
 pub struct ReAllocate<'info> {
-    /// partner info CHECK:
-    #[account(mut, has_one = vault)]
-    pub partner: Box<Account<'info, Partner>>,
     /// user CHECK: this is pda
     #[account(
         mut,
@@ -71,7 +71,7 @@ pub struct ReAllocate<'info> {
     pub instruction_sysvar_account: AccountInfo<'info>,
     pub kamino_program: Program<'info, KaminoLending>,
 
-    //****** marginfi accounts ******
+    //****** marginfi accounts *******
     pub marginfi_group: AccountLoader<'info, MarginfiGroup>,
     #[account(
         mut,
@@ -84,11 +84,38 @@ pub struct ReAllocate<'info> {
         constraint = marginfi_bank.load()?.group == marginfi_group.key(),
     )]
     pub marginfi_bank: AccountLoader<'info, Bank>,
+    /// CHECK: marginfi account
+    #[account(mut)]
+    pub marginfi_bank_liquidity_vault: Account<'info, TokenAccount>,
+    /// CHECK: Seed constraint check
+    #[account(mut)]
+    pub marginfi_bank_liquidity_vault_authority: AccountInfo<'info>,
     #[account(mut)]
     pub marginfi_user_liquidity: Account<'info, TokenAccount>,
     pub rent: Sysvar<'info, Rent>,
     pub marginfi_program: Program<'info, Marginfi>,
 
+    //******** meteora accounts *********
+    /// partner info CHECK:
+    #[account(mut, has_one = vault)]
+    pub meteora_partner: Box<Account<'info, Partner>>,
+    /// CHECK:
+    #[account(mut)]
+    pub meteora_vault: Box<Account<'info, Vault>>,
+    /// CHECK:
+    #[account(mut)]
+    pub meteora_token_vault: UncheckedAccount<'info>,
+    /// CHECK:
+    #[account(mut)]
+    pub meteora_vault_lp_mint: Box<Account<'info, Mint>>,
+    /// treasury token CHECK:
+    #[account(mut)]
+    pub meteora_treasury_token: UncheckedAccount<'info>,
+    /// treasury lp CHECK:
+    #[account(mut, constraint = treasury_lp.owner == treasury_authority.key())] //mint to account of treasury PDA
+    pub meteora_treasury_lp: Box<Account<'info, TokenAccount>>,
+    /// CHECK:
+    pub meteora_vault_program: Program<'info, MeteoraProgram>,
 
 
     pub token_program: Program<'info, Token>,
