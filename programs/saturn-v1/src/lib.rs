@@ -10,10 +10,10 @@ mod jupiter_utils;
 mod meteora_utils;
 mod kamino_utils;
 mod marginfi_utils;
+mod utils;
 
 use account::*;
 use instructions::*;
-use meteora_utils::*;
 
 declare_id!("6y1CpFjLdNfs5KUh1PfkjS11FiwH5ZrxmeMtJm9yLdJF");
 
