@@ -7,7 +7,7 @@ use kamino_lending::{
 };
 use crate::{
     account::{Escrow, Treasury},
-    constants::*, treasury,
+    constants::*,
 };
 
 
