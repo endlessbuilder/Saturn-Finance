@@ -154,7 +154,7 @@ pub fn handle(
     let backing_price = treasury.treasury_value / treasury.token_minted; // this is per lamport stf
     let spot_price = spot_price;
 
-    let diff = (spot_price - backing_price) * 100 / backing_price;
+    let diff: u64 = (spot_price - backing_price) * 100 / backing_price;
     let deduction;
     if diff < 25 {
         deduction = 20;

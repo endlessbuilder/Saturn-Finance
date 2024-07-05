@@ -2,17 +2,17 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct Platform {
-    id: i32,
+    id: u8,
     return_rate: f64,
     risk_rating: f64,
     allocation: f64,
-    platform_type: i32,
+    platform_type: u8,
 }
 
 pub fn re_allocate(treasur: &Vec<Platform>, platform_allocation: &Vec<f64>) -> Vec<Platform> {
-    let mut platform_type_ratings: std::collections::HashMap<i32, f64> = std::collections::HashMap::new();
-    let mut platform_type_allocations: std::collections::HashMap<i32, f64> = std::collections::HashMap::new();
-    let mut platform_type_counts: std::collections::HashMap<i32, i32> = std::collections::HashMap::new();
+    let mut platform_type_ratings: std::collections::HashMap<u8, f64> = std::collections::HashMap::new();
+    let mut platform_type_allocations: std::collections::HashMap<u8, f64> = std::collections::HashMap::new();
+    let mut platform_type_counts: std::collections::HashMap<u8, u8> = std::collections::HashMap::new();
 
     for platform in treasur.iter() {
         let platform_type = platform.platform_type;

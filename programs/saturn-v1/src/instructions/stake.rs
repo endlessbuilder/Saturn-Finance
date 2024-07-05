@@ -65,7 +65,7 @@ pub fn handle(ctx: Context<StakeSTF>, amount_to_stake: u64) -> Result<()> {
     let dest_stf_account = &mut &ctx.accounts.treasury_token_account;
     let stf_token_mint = &mut &ctx.accounts.stf_token_mint;
     let user = &mut ctx.accounts.user;
-    let personal_stake_account = &mut ctx.accounts.user_stake_account;
+    let user_stake_account = &mut ctx.accounts.user_stake_account;
 
     // assert!(
     //     stf_token_mint.key().to_string().as_str() == STF_MINT,
@@ -87,7 +87,7 @@ pub fn handle(ctx: Context<StakeSTF>, amount_to_stake: u64) -> Result<()> {
 
     // Add STF
     let amount_to_transfer = amount_to_stake / treasury.staking_index;
-    personal_stake_account.total_staked_index  += amount_to_transfer;
+    user_stake_account.total_staked_index  += amount_to_transfer;
     treasury.token_staked += amount_to_transfer;
 
     Ok(())
