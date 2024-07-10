@@ -72,7 +72,7 @@ pub fn handle(ctx: Context<MarginfiWithdraw>, amount: u64) -> Result<()> {
         &[ctx.bumps.treasury_authority],
     ];
 
-    marginfi::cpi::lending_account_withdraw(
+    let _ = marginfi::cpi::lending_account_withdraw(
         CpiContext::new_with_signer(
             ctx.accounts.marginfi_program.to_account_info(),
             LendingAccountWithdraw {
@@ -92,8 +92,8 @@ pub fn handle(ctx: Context<MarginfiWithdraw>, amount: u64) -> Result<()> {
     );
 
     let treasury = &mut ctx.accounts.treasury;
-    treasury.marginfi_lend_amount -= amount;
-    treasury.treasury_value += amount;
+    treasury.marginfi_lend_amount -= amount as i64;
+    treasury.treasury_value += amount as u64;
 
     Ok(())
 }

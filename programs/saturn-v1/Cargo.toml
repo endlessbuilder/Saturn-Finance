@@ -16,12 +16,12 @@ cpi = ["no-entrypoint"]
 default = []
 
 [dependencies]
-anchor-lang = { version = "0.29.0", features = ["init-if-needed"] }
+anchor-lang = { version = "0.29.0" }
 anchor-spl = "0.29.0"
 serde = "1.0.136"
 solana-program = "1.18.10"
 
-# anchor-lang = { workspace = true, features = ["init-if-needed"] }
+# anchor-lang = { workspace = true }
 # anchor-spl = { workspace = true }
 # solana-program = { workspace = true }
 # serde = { workspace = true }
@@ -39,7 +39,7 @@ winnow = "0.6.5"
 
 meteora = {path = "../meteora", features = ["cpi"]}
 kamino_lending = {path = "../klend", features=["cpi", "no-entrypoint"]}
-marginfi = {path ="../marginfi-v2/marginfi", features=["cpi","devnet", "no-entrypoint"]}
+marginfi = {path ="../marginfi-v2", features=["cpi","devnet", "no-entrypoint"]}
 
 
 

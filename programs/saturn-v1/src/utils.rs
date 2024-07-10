@@ -1,5 +1,8 @@
 use std::collections::HashMap;
 
+pub const PLATFORM_ALLOCATION: [f64; 4] = [35.0, 25.0, 10.0, 30.0];
+
+#[allow(unused_variables)]
 #[derive(Debug, Clone)]
 pub struct Platform {
     id: u8,
@@ -9,7 +12,7 @@ pub struct Platform {
     platform_type: u8,
 }
 
-pub fn re_allocate(treasur: &Vec<Platform>, platform_allocation: &Vec<f64>) -> Vec<Platform> {
+pub fn re_allocate(treasur: &Vec<Platform>, platform_allocation: [f64; 4]) -> Vec<Platform> {
     let mut platform_type_ratings: std::collections::HashMap<u8, f64> = std::collections::HashMap::new();
     let mut platform_type_allocations: std::collections::HashMap<u8, f64> = std::collections::HashMap::new();
     let mut platform_type_counts: std::collections::HashMap<u8, u8> = std::collections::HashMap::new();

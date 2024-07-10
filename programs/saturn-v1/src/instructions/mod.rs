@@ -25,11 +25,11 @@ pub use meteora_withdraw::*;
 pub mod init_lending_account;
 pub use init_lending_account::*;
 
-pub mod klend_lend;
-pub use klend_lend::*;
+// pub mod klend_lend;
+// pub use klend_lend::*;
 
-pub mod klend_withdraw;
-pub use klend_withdraw::*;
+// pub mod klend_withdraw;
+// pub use klend_withdraw::*;
 
 pub mod marginfi_lend;
 pub use marginfi_lend::*;
@@ -46,8 +46,8 @@ pub use get_value_in_marginfi::*;
 pub mod get_value_in_meteora;
 pub use get_value_in_meteora::*;
 
-pub mod reallocate;
-pub use reallocate::*;
+// pub mod reallocate;
+// pub use reallocate::*;
 
 pub mod cashingout_reedem;
 pub use cashingout_reedem::*;

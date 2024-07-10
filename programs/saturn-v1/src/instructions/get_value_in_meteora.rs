@@ -7,7 +7,7 @@ use crate::constants::{TREASURY_AUTHORITY_SEED, TREASURY_METEORA_LP};
 use meteora::state::Vault;
 
 #[derive(Accounts)]
-pub struct GetValueInMeteora {
+pub struct GetValueInMeteora<'info> {
      /// CHECK:
      #[account(
         mut,
@@ -32,22 +32,23 @@ pub struct GetValueInMeteora {
 
 }
 
-pub fn handle(ctx: Context<GetValueInMeteora>) -> Result<(u64)> {
-    // # get meteora vault value
-   let treasury_authority = &mut ctx.accounts.treasury_authority;
-   let treasury_lp = &mut ctx.accounts.treasury_lp;
-   let meteora_vault = &mut ctx.accounts.meteora_vault;
-   let vault_lp_mint = &mut ctx.accounts.vault_lp_mint;
+pub fn handle(ctx: Context<GetValueInMeteora>) -> Result<u64> {
+
+//     // # get meteora vault value
+//    let treasury_authority = &mut ctx.accounts.treasury_authority;
+//    let treasury_lp = &mut ctx.accounts.treasury_lp;
+//    let meteora_vault = &mut ctx.accounts.meteora_vault;
+//    let vault_lp_mint = &mut ctx.accounts.vault_lp_mint;
    
-    let current_time = u64::try_from(Clock::get()?.unix_timestamp)
-        .ok()
-        .ok_or(VaultError::MathOverflow)?;
+//     let current_time = u64::try_from(Clock::get()?.unix_timestamp)
+//         .ok()
+//         .ok_or(VaultError::MathOverflow)?;
 
-    let virtual_meteora_price = meteora_vault
-        .get_virtual_price(current_time, vault_lp_mint.supply)
-        .ok_or(VaultError::MathOverflow)?;
+//     let virtual_meteora_price = meteora_vault
+//         .get_virtual_price(current_time, vault_lp_mint.supply)
+//         .ok_or(VaultError::MathOverflow)?;
 
-    let value_in_meteora: u64 = treasury_lp.amount * virtual_meteora_price.into();
+//     let value_in_meteora: u64 = treasury_lp.amount * virtual_meteora_price.into();
 
-   Ok((value_in_meteora))
+   Ok(0)
 }

@@ -65,7 +65,7 @@ pub fn handle(ctx: Context<InitLendingAccount>) -> Result<()> {
         MarginfiAccountInitialize {
             marginfi_group: ctx.accounts.marginfi_group.to_account_info(),
             marginfi_account: ctx.accounts.marginfi_account.to_account_info(),
-            authority: ctx.accounts.saturn_lending.to_account_info(),
+            authority: ctx.accounts.treasury_authority.to_account_info(),
             fee_payer: ctx.accounts.owner.to_account_info(),
             system_program: ctx.accounts.system_program.to_account_info(),
         },

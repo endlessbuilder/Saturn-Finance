@@ -1,3 +1,6 @@
+#[allow(unused_variables)]
+#[allow(dead_code)]
+
 pub const TREASURY_SEED: &str = "global-treasury-2";
 pub const TREASURY_AUTHORITY_SEED: &str = "treasury-authority";
 pub const USDC_MINT: &str = "9cmYPgxT1wGP6ySgSDHCmTrLYzeDp1iVssy4grjdjDyQ";
@@ -18,12 +21,12 @@ pub const ESCROW: &str = "escrow";
 pub const VAULT_PREFIX: &str = "vault";
 pub const TOKEN_VAULT_PREFIX: &str = "token_vault";
 pub const TREASURY_METEORA_LP: &str = "treasury_meteora_lp";
-pub const LP_MINT_PREFIX: &str = "lp_mint";
-pub const COLLATERAL_VAULT_PREFIX: &str = "collateral_vault";
+// pub const LP_MINT_PREFIX: &str = "lp_mint";
+// pub const COLLATERAL_VAULT_PREFIX: &str = "collateral_vault";
 pub const FEE_VAULT_PREFIX: &str = "fee_vault";
-pub const SOLEND_OBLIGATION_PREFIX: &str = "solend_obligation";
-pub const SOLEND_OBLIGATION_OWNER_PREFIX: &str = "solend_obligation_owner";
-pub const APRICOT_USER_INFO_SIGNER_PREFIX: &str = "apricot_user_info_signer";
+// pub const SOLEND_OBLIGATION_PREFIX: &str = "solend_obligation";
+// pub const SOLEND_OBLIGATION_OWNER_PREFIX: &str = "solend_obligation_owner";
+// pub const APRICOT_USER_INFO_SIGNER_PREFIX: &str = "apricot_user_info_signer";
 
 /// Fee denominator
 pub const FEE_DENOMINATOR: u128 = 10_000;

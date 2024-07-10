@@ -69,7 +69,7 @@ pub fn handle(ctx: Context<MarginfiLend>, amount: u64) -> Result<()> {
         &[ctx.bumps.treasury_authority],
     ];
 
-    marginfi::cpi::lending_account_deposit(
+    let _ = marginfi::cpi::lending_account_deposit(
         CpiContext::new_with_signer(
             ctx.accounts.marginfi_program.to_account_info(),
             LendingAccountDeposit {
@@ -87,8 +87,8 @@ pub fn handle(ctx: Context<MarginfiLend>, amount: u64) -> Result<()> {
     );
 
     let treasury = &mut ctx.accounts.treasury;
-    treasury.marginfi_lend_amount += amount;
-    treasury.treasury_value -= amount;
+    // treasury.marginfi_lend_amount += amount.into();
+    treasury.treasury_value -= amount as u64;
 
     Ok(())
 }

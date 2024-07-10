@@ -24,8 +24,8 @@ pub fn redeem_reserve_collateral(
     }
 
     let liquidity_amount = redeem_collateral(reserve, collateral_amount)?;
-    refresh_reserve_limit_timestamps(reserve, clock.slot)?;
-    reserve.last_update.mark_stale();
+    // refresh_reserve_limit_timestamps(reserve, clock.slot)?;
+    // reserve.last_update.mark_stale();
 
     Ok(liquidity_amount)
 }
@@ -37,4 +37,3 @@ pub fn redeem_collateral(reserve: &mut Reserve, collateral_amount: u64) -> Resul
 
     Ok(liquidity_amount)
 }
-

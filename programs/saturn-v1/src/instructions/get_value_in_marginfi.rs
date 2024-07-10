@@ -5,10 +5,10 @@ use fixed::types::I80F48;
 use crate::account::Treasury;
 use crate::{constants::*, error::*, marginfi_utils::*};
 use marginfi::state::marginfi_account::MarginfiAccount;
-use marginfi::state::marginfi_group::{Bank, WrappedI80F48};
+use marginfi::state::marginfi_group::{MarginfiGroup, Bank, WrappedI80F48};
 
 #[derive(Accounts)]
-pub struct GetValueInMarginFi {
+pub struct GetValueInMarginFi<'info> {
     /// CHECK: this is pda
     #[account(
         mut,
@@ -70,27 +70,33 @@ pub struct GetValueInMarginFi {
     pub bonk_bank: AccountLoader<'info, Bank>,
 }
 
-pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<([u64; 6])> {
+pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<[u64; 6]> {
+
     // # get marginfi value
     let marginfi_account = &mut ctx.accounts.marginfi_account.load_mut().unwrap();
     let sol_bank = &mut ctx.accounts.sol_bank.load_mut().unwrap();
+    let sol_bank_pubkey = *ctx.accounts.sol_bank.to_account_info().key;
     let usdc_bank = &mut ctx.accounts.usdc_bank.load_mut().unwrap();
+    let usdc_bank_pubkey = *ctx.accounts.usdc_bank.to_account_info().key;
     let usdt_bank = &mut ctx.accounts.usdt_bank.load_mut().unwrap();
+    let usdt_bank_pubkey = *ctx.accounts.usdt_bank.to_account_info().key;
     let wbtc_bank = &mut ctx.accounts.wbtc_bank.load_mut().unwrap();
+    let wbtc_bank_pubkey = *ctx.accounts.wbtc_bank.to_account_info().key;
     let weth_bank = &mut ctx.accounts.weth_bank.load_mut().unwrap();
+    let weth_bank_pubkey = *ctx.accounts.weth_bank.to_account_info().key;
     let bonk_bank = &mut ctx.accounts.bonk_bank.load_mut().unwrap();
+    let bonk_bank_pubkey = *ctx.accounts.bonk_bank.to_account_info().key;
     let current_timestap = Clock::get()?.unix_timestamp;
 
     let lending_account = &mut marginfi_account.lending_account;
 
     // get sol balance
-    let sol_asset_shares = lending_account
+    let sol_asset_balance = lending_account
         .balances
         .iter_mut()
-        .find(|balance| balance.active && balance.bank_pk.eq(sol_bank.key()))
+        .find(|balance| balance.active && balance.bank_pk.eq(&sol_bank_pubkey))
         .ok_or_else(|| error!(MarginfiError::BankAccoutNotFound))
-        .unwrap()
-        .asset_shares;
+        .unwrap();
 
     let sol_value_in_marginfi = cal_user_total_asset_in_marginfi(
         current_timestap,
@@ -98,18 +104,18 @@ pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<([u64; 6])> {
         sol_bank.total_liability_shares,
         sol_bank.asset_share_value,
         sol_bank.liability_share_value,
-        I80F48::from(sol_asset_shares),
+        I80F48::from(sol_asset_balance.asset_shares),
+        sol_asset_balance.last_update,
     )
     .unwrap();
 
     // get usdc balance
-    let usdc_asset_shares = lending_account
+    let usdc_asset_balance = lending_account
         .balances
         .iter_mut()
-        .find(|balance| balance.active && balance.bank_pk.eq(usdc_bank.key()))
+        .find(|balance| balance.active && balance.bank_pk.eq(&usdc_bank_pubkey))
         .ok_or_else(|| error!(MarginfiError::BankAccoutNotFound))
-        .unwrap()
-        .asset_shares;
+        .unwrap();
 
     let usdc_value_in_marginfi = cal_user_total_asset_in_marginfi(
         current_timestap,
@@ -117,18 +123,18 @@ pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<([u64; 6])> {
         usdc_bank.total_liability_shares,
         usdc_bank.asset_share_value,
         usdc_bank.liability_share_value,
-        I80F48::from(usdc_asset_shares),
+        I80F48::from(usdc_asset_balance.asset_shares),
+        usdc_asset_balance.last_update,
     )
     .unwrap();
 
     // get usdt balance
-    let usdt_asset_shares = lending_account
+    let usdt_asset_balance = lending_account
         .balances
         .iter_mut()
-        .find(|balance| balance.active && balance.bank_pk.eq(usdt_bank.key()))
+        .find(|balance| balance.active && balance.bank_pk.eq(&usdt_bank_pubkey))
         .ok_or_else(|| error!(MarginfiError::BankAccoutNotFound))
-        .unwrap()
-        .asset_shares;
+        .unwrap();
 
     let usdt_value_in_marginfi = cal_user_total_asset_in_marginfi(
         current_timestap,
@@ -136,18 +142,18 @@ pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<([u64; 6])> {
         usdt_bank.total_liability_shares,
         usdt_bank.asset_share_value,
         usdt_bank.liability_share_value,
-        I80F48::from(usdt_asset_shares),
+        I80F48::from(usdt_asset_balance.asset_shares),
+        usdt_asset_balance.last_update,
     )
     .unwrap();
 
     // get wbtc balance
-    let wbtc_asset_shares = lending_account
+    let wbtc_asset_balance = lending_account
         .balances
         .iter_mut()
-        .find(|balance| balance.active && balance.bank_pk.eq(wbtc_bank.key()))
+        .find(|balance| balance.active && balance.bank_pk.eq(&wbtc_bank_pubkey))
         .ok_or_else(|| error!(MarginfiError::BankAccoutNotFound))
-        .unwrap()
-        .asset_shares;
+        .unwrap();
 
     let wbtc_value_in_marginfi = cal_user_total_asset_in_marginfi(
         current_timestap,
@@ -155,18 +161,18 @@ pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<([u64; 6])> {
         wbtc_bank.total_liability_shares,
         wbtc_bank.asset_share_value,
         wbtc_bank.liability_share_value,
-        I80F48::from(wbtc_asset_shares),
+        I80F48::from(wbtc_asset_balance.asset_shares),
+        wbtc_asset_balance.last_update,
     )
     .unwrap();
 
     // get weth balance
-    let weth_asset_shares = lending_account
+    let weth_asset_balance = lending_account
         .balances
         .iter_mut()
-        .find(|balance| balance.active && balance.bank_pk.eq(weth_bank.key()))
+        .find(|balance| balance.active && balance.bank_pk.eq(&weth_bank_pubkey))
         .ok_or_else(|| error!(MarginfiError::BankAccoutNotFound))
-        .unwrap()
-        .asset_shares;
+        .unwrap();
 
     let weth_value_in_marginfi = cal_user_total_asset_in_marginfi(
         current_timestap,
@@ -174,18 +180,18 @@ pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<([u64; 6])> {
         weth_bank.total_liability_shares,
         weth_bank.asset_share_value,
         weth_bank.liability_share_value,
-        I80F48::from(weth_asset_shares),
+        I80F48::from(weth_asset_balance.asset_shares),
+        weth_asset_balance.last_update,
     )
     .unwrap();
 
     // get bonk balance
-    let bonk_asset_shares = lending_account
+    let bonk_asset_balance = lending_account
         .balances
         .iter_mut()
-        .find(|balance| balance.active && balance.bank_pk.eq(bonk_bank.key()))
+        .find(|balance| balance.active && balance.bank_pk.eq(&bonk_bank_pubkey))
         .ok_or_else(|| error!(MarginfiError::BankAccoutNotFound))
-        .unwrap()
-        .asset_shares;
+        .unwrap();
 
     let bonk_value_in_marginfi = cal_user_total_asset_in_marginfi(
         current_timestap,
@@ -193,17 +199,18 @@ pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<([u64; 6])> {
         bonk_bank.total_liability_shares,
         bonk_bank.asset_share_value,
         bonk_bank.liability_share_value,
-        I80F48::from(bonk_asset_shares),
+        I80F48::from(bonk_asset_balance.asset_shares),
+        bonk_asset_balance.last_update,
     )
     .unwrap();
 
-    let values: [u64; 6] = [0, 0, 0, 0, 0, 0];
-    values[0] = sol_value_in_marginfi.into(); // sol
-    values[1] = usdc_value_in_marginfi.into(); // usdc
-    values[2] = usdt_value_in_marginfi.into(); // usdt
-    values[3] = wbtc_value_in_marginfi.into(); // wbtc
-    values[4] = weth_value_in_marginfi.into(); // weth
-    values[5] = bonk_value_in_marginfi.into(); // bonk
+    let mut values: [u64; 6] = [0, 0, 0, 0, 0, 0];
+    values[0] = sol_value_in_marginfi.to_num::<u64>(); // sol
+    // values[1] = usdc_value_in_marginfi.into(); // usdc
+    // values[2] = usdt_value_in_marginfi.into(); // usdt
+    // values[3] = wbtc_value_in_marginfi.into(); // wbtc
+    // values[4] = weth_value_in_marginfi.into(); // weth
+    // values[5] = bonk_value_in_marginfi.into(); // bonk
 
-    Ok((values))
+    Ok(values)
 }
