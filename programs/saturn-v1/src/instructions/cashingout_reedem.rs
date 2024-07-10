@@ -72,49 +72,49 @@ pub fn handle(
     ctx: Context<CashingoutReedem>,
     amount: u64,
 ) -> Result<()> {
-    // let escrow = &mut ctx.accounts.escrow.load_mut().unwrap();
-    // let user = &mut &ctx.accounts.user;
-    // let treasury = &mut ctx.accounts.treasury;
-    // let treasury_authority = &mut ctx.accounts.treasury_authority;
-    // let user_token_account = &mut &ctx.accounts.user_token_account;
-    // let treasury_token_account = &mut &ctx.accounts.treasury_token_account;
-    // let fee_wallet = &mut &ctx.accounts.fee_wallet_token_account;
-    // let treasury_stf_token_account = &mut &ctx.accounts.treasury_stf_token_account;
-    // let token_program = &mut &ctx.accounts.token_program;
-    // let stf_token_mint = &mut &ctx.accounts.stf_token_mint;
+    let escrow = &mut ctx.accounts.escrow.load_mut().unwrap();
+    let user = &mut &ctx.accounts.user;
+    let treasury = &mut ctx.accounts.treasury;
+    let treasury_authority = &mut ctx.accounts.treasury_authority;
+    let user_token_account = &mut &ctx.accounts.user_token_account;
+    let treasury_token_account = &mut &ctx.accounts.treasury_token_account;
+    let fee_wallet = &mut &ctx.accounts.fee_wallet_token_account;
+    let treasury_stf_token_account = &mut &ctx.accounts.treasury_stf_token_account;
+    let token_program = &mut &ctx.accounts.token_program;
+    let stf_token_mint = &mut &ctx.accounts.stf_token_mint;
 
-    // if amount < escrow.num_token_to_redeem {
-    //     return Err(BondError::InsufficientFundsError.into());
-    // }
+    if amount < escrow.num_token_to_redeem {
+        return Err(BondError::InsufficientFundsError.into());
+    }
 
-    // let backing_price = treasury.treasury_value / treasury.token_minted * 100;
-    // let cashingout_value = amount * backing_price;
+    let backing_price = treasury.treasury_value / treasury.token_minted * 100;
+    let cashingout_value = amount * backing_price;
 
-    // let reedem = cashingout_value * 0.99;
-    // let fee = cashingout_value * 0.05;
+    let reedem = ( cashingout_value as f64 * 0.99 ) as u64;
+    let fee = ( cashingout_value as f64 * 0.05 ) as u64;
 
-    // let cpi_accounts = Transfer {
-    //     from: treasury_token_account.to_account_info().clone(),
-    //     to: user_token_account.to_account_info().clone(),
-    //     authority: ctx.accounts.treasury_authority.to_account_info().clone(),
-    // };
-    // token::transfer(
-    //     CpiContext::new(token_program.clone().to_account_info(), cpi_accounts),
-    //     reedem
-    // )?;
+    let cpi_accounts = Transfer {
+        from: treasury_token_account.to_account_info().clone(),
+        to: user_token_account.to_account_info().clone(),
+        authority: ctx.accounts.treasury_authority.to_account_info().clone(),
+    };
+    token::transfer(
+        CpiContext::new(token_program.clone().to_account_info(), cpi_accounts),
+        reedem
+    )?;
 
-    // let cpi_accounts = Transfer {
-    //     from: treasury_token_account.to_account_info().clone(),
-    //     to: fee_wallet.to_account_info().clone(),
-    //     authority: ctx.accounts.treasury_authority.to_account_info().clone(),
-    // };
-    // token::transfer(
-    //     CpiContext::new(token_program.clone().to_account_info(), cpi_accounts),
-    //     fee
-    // )?;
+    let cpi_accounts = Transfer {
+        from: treasury_token_account.to_account_info().clone(),
+        to: fee_wallet.to_account_info().clone(),
+        authority: ctx.accounts.treasury_authority.to_account_info().clone(),
+    };
+    token::transfer(
+        CpiContext::new(token_program.clone().to_account_info(), cpi_accounts),
+        fee
+    )?;
 
-    // treasury.token_minted -= amount;
-    // treasury.treasury_value = treasury.treasury_value - reedem - fee;
+    treasury.token_minted -= amount;
+    treasury.treasury_value = treasury.treasury_value - reedem - fee;
     
 
     Ok(())

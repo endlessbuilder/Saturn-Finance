@@ -70,13 +70,13 @@ pub mod saturn_v_1 {
         instructions::init_lending_account::handle(ctx)
     }
 
-    // pub fn klend_lend(ctx: Context<KaminoLend>, amount: u64) -> Result<()> {
-    //     instructions::klend_lend::handle(ctx, amount)
-    // }
+    pub fn klend_lend(ctx: Context<KaminoLend>, amount: u64) -> Result<()> {
+        instructions::klend_lend::handle(ctx, amount)
+    }
 
-    // pub fn klend_withdraw(ctx: Context<KlendWithdraw>, amount: u64) -> Result<()> {
-    //     instructions::klend_withdraw::handle(ctx, amount)
-    // }
+    pub fn klend_withdraw(ctx: Context<KlendWithdraw>, amount: u64) -> Result<()> {
+        instructions::klend_withdraw::handle(ctx, amount)
+    }
 
     pub fn marginfi_lend(ctx: Context<MarginfiLend>, amount: u64) -> Result<()> {
         instructions::marginfi_lend::handle(ctx, amount)
