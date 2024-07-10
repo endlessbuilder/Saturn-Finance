@@ -2,7 +2,8 @@
     "scripts": {
         "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
         "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
-        "test": "export ANCHOR_WALLET=/root/saturn-v1/cli/keypair.json && ts-node ./cli/scripts.ts"
+        "test": "export ANCHOR_WALLET=/root/saturn-v1/cli/keypair.json && ts-node ./cli/scripts.ts",
+        "build": "anchor build -p saturn_v_1"
     },
     "dependencies": {
         "@coral-xyz/anchor": "^0.29.0",

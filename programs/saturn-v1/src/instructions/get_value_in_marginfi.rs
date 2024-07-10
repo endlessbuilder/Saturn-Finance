@@ -206,11 +206,11 @@ pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<[u64; 6]> {
 
     let mut values: [u64; 6] = [0, 0, 0, 0, 0, 0];
     values[0] = sol_value_in_marginfi.to_num::<u64>(); // sol
-    // values[1] = usdc_value_in_marginfi.into(); // usdc
-    // values[2] = usdt_value_in_marginfi.into(); // usdt
-    // values[3] = wbtc_value_in_marginfi.into(); // wbtc
-    // values[4] = weth_value_in_marginfi.into(); // weth
-    // values[5] = bonk_value_in_marginfi.into(); // bonk
+    values[1] = usdc_value_in_marginfi.to_num::<u64>(); // usdc
+    values[2] = usdt_value_in_marginfi.to_num::<u64>(); // usdt
+    values[3] = wbtc_value_in_marginfi.to_num::<u64>(); // wbtc
+    values[4] = weth_value_in_marginfi.to_num::<u64>(); // weth
+    values[5] = bonk_value_in_marginfi.to_num::<u64>(); // bonk
 
     Ok(values)
 }
