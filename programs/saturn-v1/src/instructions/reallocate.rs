@@ -1,9 +1,8 @@
-use std::alloc::realloc;
-
 use anchor_lang::{
     prelude::*,
     solana_program::sysvar::{instructions::Instructions as SysInstructions, SysvarId},
 };
+use std::str::FromStr;
 use anchor_spl::token::accessor::amount;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 use solana_program::{
@@ -18,7 +17,7 @@ use solana_program::{
 use crate::utils::*;
 use crate::{
     account::*,
-    constants::{USDC_MINT, WBTC_MINT},
+    constants::{TREASURY_AUTHORITY_SEED, TREASURY_SEED, USDC_MINT, WBTC_MINT},
 };
 
 /// Need to check whether we can convert to unchecked account
@@ -41,9 +40,16 @@ pub struct ReAllocate<'info> {
 
     #[account(
         mut,
-        token::mint = Pubkey::from_str(USDC_MINT),
+        token::mint = Pubkey::from_str(USDC_MINT).unwrap(),
     )]
     pub usdc_token_account: Account<'info, TokenAccount>,
+
+    #[account(
+        mut,
+        token::mint = Pubkey::from_str(WBTC_MINT).unwrap(),
+    )]
+    pub wbtc_token_account: Account<'info, TokenAccount>,
+
 }
 
 #[allow(unused_variables)]
@@ -53,8 +59,8 @@ pub fn handle(ctx: Context<ReAllocate>) -> Result<()> {
     let marignfi_balance = treasury.marginfi_lend_amount;
     let meteora_balance = treasury.meteora_deposit_amount;
     let usdc_balance: u64 = ctx.accounts.usdc_token_account.amount;
-    // let wbtc_balance: u64 = ctx.accounts.wtbc_token_account.amount;
-    // let sol_balance: u64 = ctx.accounts.treasury_authority.amount;
+    let wbtc_balance: u64 = ctx.accounts.wbtc_token_account.amount;
+    let sol_balance: u64 = ctx.accounts.treasury_authority.get_lamports();
 
 
     let total_value = treasury.treasury_value;
@@ -62,6 +68,9 @@ pub fn handle(ctx: Context<ReAllocate>) -> Result<()> {
     let kamino_allocation: f64 = kamino_balance as f64 / total_value as f64;
     let marginfi_allocation: f64 = marignfi_balance as f64 / total_value as f64;
     let meteora_allocation: f64 = meteora_balance as f64 / total_value as f64;
+    let usdc_allocation: f64 = usdc_balance as f64 / total_value as f64;
+    let wbtc_allocation: f64 = wbtc_balance as f64 / total_value as f64;
+    let sol_allocation: f64 = sol_balance as f64 / total_value as f64;
 
     let marginfi = Platform {
         id: 1,
@@ -95,26 +104,30 @@ pub fn handle(ctx: Context<ReAllocate>) -> Result<()> {
         id: 5,
         return_rate: 1.0,
         risk_rating: 1.0,
-        allocation: usdc_balance,
+        allocation: usdc_allocation,
         platform_type: 4,
     };
     let btc = Platform {
         id: 6,
         return_rate: 1.0,
         risk_rating: 2.0,
-        allocation: 15.0,
+        allocation: wbtc_allocation,
         platform_type: 4,
     };
     let sol = Platform {
         id: 7,
         return_rate: 1.0,
         risk_rating: 4.0,
-        allocation: 10.0,
+        allocation: sol_allocation,
         platform_type: 4,
     };
 
     let treasur = vec![marginfi, kamino, meteora, jupiterperps, usdcoin, btc, sol];
     let new_allocation = re_allocate(&treasur, PLATFORM_ALLOCATION);
     
+    treasury.marginfi_allocation = new_allocation[0].allocation;
+    treasury.kamino_allocation = new_allocation[1].allocation;
+    
+
     Ok(())
 }

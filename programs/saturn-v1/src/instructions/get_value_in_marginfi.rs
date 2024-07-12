@@ -124,6 +124,8 @@ pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<[u64; 6]> {
         .ok_or_else(|| error!(MarginfiError::BankAccoutNotFound))
         .unwrap();
 
+    ctx.accounts.treasury.marginfi_lend_assets = usdc_asset_balance.asset_shares.into();
+
     let usdc_value_in_marginfi = cal_user_total_asset_in_marginfi(
         current_timestap,
         usdc_bank.total_asset_shares,
@@ -219,7 +221,7 @@ pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<[u64; 6]> {
     values[4] = weth_value_in_marginfi.to_num::<u64>(); // weth
     values[5] = bonk_value_in_marginfi.to_num::<u64>(); // bonk
 
-    ctx.accounts.treasury.marginfi_lend_amount = values.iter().sum();
+    ctx.accounts.treasury.marginfi_lend_value = values.iter().sum();
 
     Ok(values)
 }

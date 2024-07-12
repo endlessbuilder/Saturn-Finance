@@ -48,6 +48,7 @@ pub fn handle(ctx: Context<GetValueInMeteora>) -> Result<u64> {
    let treasury_lp = &mut ctx.accounts.treasury_lp;
    let meteora_vault = &mut ctx.accounts.meteora_vault;
    let vault_lp_mint = &mut ctx.accounts.vault_lp_mint;
+   ctx.accounts.treasury.meteora_deposit_assets = treasury_lp.amount;
    
     let current_time = u64::try_from(Clock::get()?.unix_timestamp)
         .ok()
@@ -58,7 +59,7 @@ pub fn handle(ctx: Context<GetValueInMeteora>) -> Result<u64> {
         .ok_or(VaultError::MathOverflow)?;
 
     let value_in_meteora: u64 = treasury_lp.amount * virtual_meteora_price as u64;
-    ctx.accounts.treasury.meteora_deposit_amount = value_in_meteora;
+    ctx.accounts.treasury.meteora_deposit_value = value_in_meteora;
 
    Ok(value_in_meteora)
 }

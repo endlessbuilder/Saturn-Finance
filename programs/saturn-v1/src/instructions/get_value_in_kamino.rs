@@ -111,6 +111,8 @@ pub fn handle(ctx: Context<GetValueInKamino>) -> Result<[u64; 6]> {
         collateral_amount2,
         &clock,
     )?;
+    ctx.accounts.treasury.kamino_lend_assets = collateral_amount2;
+
     // usdt
     let usdt_reserve = &mut ctx.accounts.usdt_reserve.load_mut().unwrap();
     let usdt_reserve_pubkey = *ctx.accounts.usdt_reserve.to_account_info().key;
@@ -176,7 +178,7 @@ pub fn handle(ctx: Context<GetValueInKamino>) -> Result<[u64; 6]> {
     values[4] = liquidity_amount5.into(); // weth
     values[5] = liquidity_amount6.into(); // bonk
 
-    ctx.accounts.treasury.kamino_lend_amount = values.iter().sum();
+    ctx.accounts.treasury.kamino_lend_value = values.iter().sum();
 
    Ok(values)
 }
