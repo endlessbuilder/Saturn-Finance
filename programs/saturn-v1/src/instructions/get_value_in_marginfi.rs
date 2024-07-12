@@ -16,6 +16,13 @@ pub struct GetValueInMarginFi<'info> {
         bump,
     )]
     pub treasury_authority: UncheckedAccount<'info>,
+
+    #[account(
+        mut,
+        seeds = [TREASURY_SEED.as_ref()],
+        bump,
+    )]
+    pub treasury: Account<'info, Treasury>,
     
     // MarginFi
     pub marginfi_group: AccountLoader<'info, MarginfiGroup>,
@@ -211,6 +218,8 @@ pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<[u64; 6]> {
     values[3] = wbtc_value_in_marginfi.to_num::<u64>(); // wbtc
     values[4] = weth_value_in_marginfi.to_num::<u64>(); // weth
     values[5] = bonk_value_in_marginfi.to_num::<u64>(); // bonk
+
+    ctx.accounts.treasury.marginfi_lend_amount = values.iter().sum();
 
     Ok(values)
 }

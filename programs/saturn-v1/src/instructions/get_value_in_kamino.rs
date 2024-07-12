@@ -3,7 +3,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 use kamino_lending::obligation;
 use serde::de::value;
 
-use crate::{error::*, kamino_utils};
+use crate::{error::*, kamino_utils, treasury};
 use crate::account::Treasury;
 use crate::constants::*;
 use kamino_lending::state::{LendingMarket, Reserve, Obligation};
@@ -18,6 +18,13 @@ pub struct GetValueInKamino<'info> {
         bump,
     )]
     pub treasury_authority: UncheckedAccount<'info>,
+
+    #[account(
+        mut,
+        seeds = [TREASURY_SEED.as_ref()],
+        bump,
+    )]
+    pub treasury: Account<'info, Treasury>,
 
     pub lending_market: AccountLoader<'info, LendingMarket>,
 
@@ -168,6 +175,8 @@ pub fn handle(ctx: Context<GetValueInKamino>) -> Result<[u64; 6]> {
     values[3] = liquidity_amount4.into(); // wbtc
     values[4] = liquidity_amount5.into(); // weth
     values[5] = liquidity_amount6.into(); // bonk
+
+    ctx.accounts.treasury.kamino_lend_amount = values.iter().sum();
 
    Ok(values)
 }
