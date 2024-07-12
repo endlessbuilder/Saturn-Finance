@@ -24,6 +24,11 @@ use crate::{
 /// Need to check whether we can convert to unchecked account
 #[derive(Accounts)]
 pub struct ReAllocate<'info> {
+    #[account(
+        mut,
+        constraint = signer.key() == treasury_authority.key()
+    )]
+    signer: Signer<'info>,
     /// user CHECK: this is pda
     #[account(
         mut,

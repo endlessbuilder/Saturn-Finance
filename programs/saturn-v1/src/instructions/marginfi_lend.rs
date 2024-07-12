@@ -14,6 +14,11 @@ use marginfi::{
 
 #[derive(Accounts)]
 pub struct MarginfiLend<'info> {
+    #[account(
+        mut,
+        constraint = signer.key() == treasury_authority.key()
+    )]
+    signer: Signer<'info>,
     /// CHECK:
     #[account(
         mut,

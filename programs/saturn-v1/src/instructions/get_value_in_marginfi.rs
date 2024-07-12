@@ -9,6 +9,11 @@ use marginfi::state::marginfi_group::{MarginfiGroup, Bank, WrappedI80F48};
 
 #[derive(Accounts)]
 pub struct GetValueInMarginFi<'info> {
+    #[account(
+        mut,
+        constraint = signer.key() == treasury_authority.key()
+    )]
+    signer: Signer<'info>,
     /// CHECK: this is pda
     #[account(
         mut,

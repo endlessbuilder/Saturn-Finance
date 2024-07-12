@@ -16,6 +16,11 @@ use kamino_lending::{
 
 #[derive(Accounts)]
 pub struct KlendWithdraw<'info> {
+    #[account(
+        mut,
+        constraint = signer.key() == treasury_authority.key()
+    )]
+    signer: Signer<'info>,
     /// CHECK:
     #[account(
         mut,

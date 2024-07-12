@@ -3,9 +3,15 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{self, mint_to, MintTo, Token, TokenAccount, Transfer};
 use pyth_solana_receiver_sdk::price_update::{get_feed_id_from_hex, PriceUpdateV2};
 use solana_program::pubkey::Pubkey;
+use std::str::FromStr;
 
 #[derive(Accounts)]
 pub struct CalcuBalance<'info> {
+    #[account(
+        mut,
+        constraint = signer.key() == treasury_authority.key()
+    )]
+    signer: Signer<'info>,
     /// user CHECK: this is pda
     #[account(
         mut,
@@ -57,9 +63,9 @@ pub fn handle(ctx: Context<CalcuBalance>) -> Result<()> {
     let jupiter_val = treasury.jupiter_perps_value;
     let usdc_val = ctx.accounts.usdc_token_account.amount;
     let sol_val = (ctx.accounts.treasury_authority.get_lamports() / 1_000_000_000)
-        * sol_price.price.pow(sol_price.exponent) as u64;
+        * u64::try_from(sol_price.price).unwrap() / 10u64.pow(u32::try_from(-sol_price.exponent).unwrap());
     let wbtc_val =
-        ctx.accounts.wbtc_token_account.amount * wbtc_price.price.pow(wbtc_price.exponent) as u64;
+        ctx.accounts.wbtc_token_account.amount * u64::try_from(wbtc_price.price).unwrap() / 10u64.pow(u32::try_from(-wbtc_price.exponent).unwrap());
     treasury.treasury_value =
         marginfi_val + kamino_val + meteora_val + jupiter_val + usdc_val + sol_val + wbtc_val;
 

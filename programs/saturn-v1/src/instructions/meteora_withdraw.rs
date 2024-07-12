@@ -11,6 +11,11 @@ use meteora::state::Vault;
 /// Need to check whether we can convert to unchecked account
 #[derive(Accounts)]
 pub struct MeteoraWithdraw<'info> {
+    #[account(
+        mut,
+        constraint = signer.key() == treasury_authority.key()
+    )]
+    signer: Signer<'info>,
     /// partner info CHECK:
     #[account(mut, has_one = vault)]
     pub partner: Box<Account<'info, Partner>>,

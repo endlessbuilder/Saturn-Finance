@@ -8,6 +8,11 @@ use crate::error::BondError;
 
 #[derive(Accounts)]
 pub struct CashingoutReedem<'info> {
+    #[account(
+        mut,
+        constraint = signer.key() == treasury_authority.key()
+    )]
+    signer: Signer<'info>,
     /// CHECK: 
     #[account(mut)]
     pub user: UncheckedAccount<'info>,

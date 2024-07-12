@@ -9,6 +9,11 @@ use crate::meteora_utils::VirtualPrice;
 
 #[derive(Accounts)]
 pub struct GetValueInMeteora<'info> {
+    #[account(
+        mut,
+        constraint = signer.key() == treasury_authority.key()
+    )]
+    signer: Signer<'info>,
      /// CHECK:
      #[account(
         mut,

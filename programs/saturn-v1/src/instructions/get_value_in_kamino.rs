@@ -11,6 +11,11 @@ use kamino_lending::state::{LendingMarket, Reserve, Obligation};
 
 #[derive(Accounts)]
 pub struct GetValueInKamino<'info> {
+    #[account(
+        mut,
+        constraint = signer.key() == treasury_authority.key()
+    )]
+    signer: Signer<'info>,
     /// CHECK: this is pda
     #[account(
         mut,
