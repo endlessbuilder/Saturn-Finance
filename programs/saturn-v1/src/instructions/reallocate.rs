@@ -74,7 +74,7 @@ pub struct ReAllocate<'info> {
 }
 
 #[allow(unused_variables)]
-pub fn handle(ctx: Context<ReAllocate>) -> Result<()> {
+pub fn handle(ctx: Context<ReAllocate>, return_rate: [f64; 7], risk_rating: [f64; 7]) -> Result<()> {
     let treasury = &mut ctx.accounts.treasury;
     let kamino_balance = treasury.kamino_lend_value;
     let marignfi_balance = treasury.marginfi_lend_value;
@@ -106,50 +106,50 @@ pub fn handle(ctx: Context<ReAllocate>) -> Result<()> {
 
     let marginfi = Platform {
         id: 1,
-        return_rate: 52.0,
-        risk_rating: 5.0,
+        return_rate: return_rate[0],
+        risk_rating: risk_rating[0],
         allocation: marginfi_allocation,
         platform_type: 1,
     };
     let kamino = Platform {
         id: 2,
-        return_rate: 32.0,
-        risk_rating: 7.0,
+        return_rate: return_rate[1],
+        risk_rating: risk_rating[1],
         allocation: kamino_allocation,
         platform_type: 1,
     };
     let meteora = Platform {
         id: 3,
-        return_rate: 72.0,
-        risk_rating: 3.0,
+        return_rate: return_rate[2],
+        risk_rating: risk_rating[2],
         allocation: meteora_allocation,
         platform_type: 2,
     };
     let jupiterperps = Platform {
         id: 4,
-        return_rate: 152.0,
-        risk_rating: 8.0,
+        return_rate: return_rate[3],
+        risk_rating: risk_rating[3],
         allocation: 0.0,
         platform_type: 3,
     };
     let usdcoin = Platform {
         id: 5,
-        return_rate: 1.0,
-        risk_rating: 1.0,
+        return_rate: return_rate[4],
+        risk_rating: risk_rating[4],
         allocation: usdc_allocation,
         platform_type: 4,
     };
     let btc = Platform {
         id: 6,
-        return_rate: 1.0,
-        risk_rating: 2.0,
+        return_rate: return_rate[5],
+        risk_rating: risk_rating[5],
         allocation: wbtc_allocation,
         platform_type: 4,
     };
     let sol = Platform {
         id: 7,
-        return_rate: 1.0,
-        risk_rating: 4.0,
+        return_rate: return_rate[6],
+        risk_rating: risk_rating[6],
         allocation: sol_allocation,
         platform_type: 4,
     };

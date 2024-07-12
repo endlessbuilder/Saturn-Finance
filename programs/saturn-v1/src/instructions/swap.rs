@@ -50,7 +50,6 @@ pub fn handle(ctx: Context<Swap>, data: Vec<u8>, from_amount: u64) -> Result<()>
     let from_treasury_token_account_bump = ctx.bumps.from_treasury_token_account;
     let wsol_mint = Pubkey::from_str(WSOL_MINT).unwrap();
     // let from_amount = 1000000;
-
     
 
     if ctx.accounts.from_mint.key() == wsol_mint {

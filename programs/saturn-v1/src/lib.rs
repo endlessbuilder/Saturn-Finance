@@ -103,8 +103,8 @@ pub mod saturn_v_1 {
         instructions::calcu_balance::handle(ctx)
     }
 
-    pub fn reallocate(ctx: Context<ReAllocate>) -> Result<()> {
-        instructions::reallocate::handle(ctx)
+    pub fn reallocate(ctx: Context<ReAllocate>, return_rate: [f64; 7], risk_rating: [f64; 7]) -> Result<()> {
+        instructions::reallocate::handle(ctx, return_rate, risk_rating)
     }
 
     pub fn cashingout_reedem(ctx: Context<CashingoutReedem>, amount: u64) -> Result<()> {
