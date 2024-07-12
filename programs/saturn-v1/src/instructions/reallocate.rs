@@ -13,8 +13,9 @@ use solana_program::{
     program::invoke,
     pubkey::Pubkey,
 };
+use pyth_solana_receiver_sdk::price_update::{get_feed_id_from_hex, PriceUpdateV2};
 
-use crate::utils::*;
+use crate::{constants::{SOL_PRICE_ID, WBTC_PRICE_ID}, utils::*};
 use crate::{
     account::*,
     constants::{TREASURY_AUTHORITY_SEED, TREASURY_SEED, USDC_MINT, WBTC_MINT},
@@ -50,18 +51,29 @@ pub struct ReAllocate<'info> {
     )]
     pub wbtc_token_account: Account<'info, TokenAccount>,
 
+    pub price_update: Account<'info, PriceUpdateV2>,
+
 }
 
 #[allow(unused_variables)]
 pub fn handle(ctx: Context<ReAllocate>) -> Result<()> {
     let mut treasury = &mut ctx.accounts.treasury;
-    let kamino_balance = treasury.kamino_lend_amount;
-    let marignfi_balance = treasury.marginfi_lend_amount;
-    let meteora_balance = treasury.meteora_deposit_amount;
+    let kamino_balance = treasury.kamino_lend_value;
+    let marignfi_balance = treasury.marginfi_lend_value;
+    let meteora_balance = treasury.meteora_deposit_value;
     let usdc_balance: u64 = ctx.accounts.usdc_token_account.amount;
     let wbtc_balance: u64 = ctx.accounts.wbtc_token_account.amount;
     let sol_balance: u64 = ctx.accounts.treasury_authority.get_lamports();
 
+    let price_update = &mut ctx.accounts.price_update;
+    // get_price_no_older_than will fail if the price update is more than 30 seconds old
+    let maximum_age: u64 = 30;
+    // get_price_no_older_than will fail if the price update is for a different price feed.
+    // This string is the id of the BTC/USD feed. See https://pyth.network/developers/price-feed-ids for all available IDs.
+    let sol_feed_id: [u8; 32] = get_feed_id_from_hex(SOL_PRICE_ID)?;
+    let sol_price = price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &sol_feed_id)?;
+    let wbtc_feed_id: [u8; 32] = get_feed_id_from_hex(WBTC_PRICE_ID)?;
+    let wbtc_price = price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &wbtc_feed_id)?;
 
     let total_value = treasury.treasury_value;
 
@@ -127,7 +139,12 @@ pub fn handle(ctx: Context<ReAllocate>) -> Result<()> {
     
     treasury.marginfi_allocation = new_allocation[0].allocation;
     treasury.kamino_allocation = new_allocation[1].allocation;
-    
+    treasury.meteora_allocation = new_allocation[2].allocation;
+    treasury.jupiter_allocation = new_allocation[3].allocation;
+    treasury.usdc_allocation = new_allocation[4].allocation;
+    treasury.wbtc_allocation = new_allocation[5].allocation;
+    treasury.sol_allocation = new_allocation[6].allocation;
+
 
     Ok(())
 }
