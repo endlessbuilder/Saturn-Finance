@@ -1,5 +1,5 @@
 use crate::{
-    account::{Escrow, Treasury},
+    account::{Treasury, SequenceFlag},
     constants::*,
 };
 use anchor_lang::solana_program::sysvar;
@@ -36,6 +36,17 @@ pub struct KlendWithdraw<'info> {
         bump,
     )]
     pub treasury: Account<'info, Treasury>,
+
+    /// CHECK: this is pda
+    #[account(
+        mut,
+        seeds = [SEQUENCE_FLAG_SEED.as_ref()],
+        bump,
+        constraint = sequence_flag.flag_calcu_balance == true,
+        constraint = sequence_flag.flag_reallocate == true,
+        constraint = sequence_flag.flag_kamino == false,
+    )]
+    pub sequence_flag: Account<'info, SequenceFlag>,
 
     #[account(mut,
         token::mint = withdraw_reserve.load()?.liquidity.mint_pubkey
@@ -120,6 +131,8 @@ pub fn handle(ctx: Context<KlendWithdraw>, amount: u64) -> Result<()> {
 
     let treasury = &mut ctx.accounts.treasury;
     treasury.treasury_value += amount as u64;
+
+    ctx.accounts.sequence_flag.flag_kamino = true;
 
     Ok(())
 }

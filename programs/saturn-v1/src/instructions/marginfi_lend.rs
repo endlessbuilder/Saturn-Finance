@@ -1,5 +1,5 @@
 use crate::{
-    account::{Escrow, Treasury},
+    account::{Treasury, SequenceFlag},
     constants::*,
     treasury,
 };
@@ -34,6 +34,17 @@ pub struct MarginfiLend<'info> {
         bump,
     )]
     pub treasury: Account<'info, Treasury>,
+
+    /// CHECK: this is pda
+    #[account(
+        mut,
+        seeds = [SEQUENCE_FLAG_SEED.as_ref()],
+        bump,
+        constraint = sequence_flag.flag_calcu_balance == true,
+        constraint = sequence_flag.flag_reallocate == true,
+        constraint = sequence_flag.flag_kamino && sequence_flag.flag_marginfi && sequence_flag.flag_meteora  == true,
+    )]
+    pub sequence_flag: Account<'info, SequenceFlag>,
 
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,

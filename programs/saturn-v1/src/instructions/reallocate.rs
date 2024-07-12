@@ -2,9 +2,9 @@ use anchor_lang::{
     prelude::*,
     solana_program::sysvar::{instructions::Instructions as SysInstructions, SysvarId},
 };
-use std::str::FromStr;
 use anchor_spl::token::accessor::amount;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
+use pyth_solana_receiver_sdk::price_update::{get_feed_id_from_hex, PriceUpdateV2};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint,
@@ -13,12 +13,15 @@ use solana_program::{
     program::invoke,
     pubkey::Pubkey,
 };
-use pyth_solana_receiver_sdk::price_update::{get_feed_id_from_hex, PriceUpdateV2};
+use std::str::FromStr;
 
-use crate::{constants::{SOL_PRICE_ID, WBTC_PRICE_ID}, utils::*};
+use crate::utils::*;
 use crate::{
     account::*,
-    constants::{TREASURY_AUTHORITY_SEED, TREASURY_SEED, USDC_MINT, WBTC_MINT},
+    constants::{
+        SEQUENCE_FLAG_SEED, SOL_PRICE_ID, TREASURY_AUTHORITY_SEED, TREASURY_SEED, USDC_MINT,
+        WBTC_MINT, WBTC_PRICE_ID,
+    },
 };
 
 /// Need to check whether we can convert to unchecked account
@@ -36,6 +39,7 @@ pub struct ReAllocate<'info> {
         bump,
     )]
     pub treasury_authority: UncheckedAccount<'info>,
+
     /// CHECK: this is pda
     #[account(
         mut,
@@ -43,6 +47,16 @@ pub struct ReAllocate<'info> {
         bump,
     )]
     pub treasury: Account<'info, Treasury>,
+
+    /// CHECK: this is pda
+    #[account(
+        mut,
+        seeds = [SEQUENCE_FLAG_SEED.as_ref()],
+        bump,
+        constraint = sequence_flag.flag_calcu_balance == true,
+        constraint = sequence_flag.flag_reallocate == false,
+    )]
+    pub sequence_flag: Account<'info, SequenceFlag>,
 
     #[account(
         mut,
@@ -57,12 +71,11 @@ pub struct ReAllocate<'info> {
     pub wbtc_token_account: Account<'info, TokenAccount>,
 
     pub price_update: Account<'info, PriceUpdateV2>,
-
 }
 
 #[allow(unused_variables)]
 pub fn handle(ctx: Context<ReAllocate>) -> Result<()> {
-    let mut treasury = &mut ctx.accounts.treasury;
+    let treasury = &mut ctx.accounts.treasury;
     let kamino_balance = treasury.kamino_lend_value;
     let marignfi_balance = treasury.marginfi_lend_value;
     let meteora_balance = treasury.meteora_deposit_value;
@@ -76,9 +89,11 @@ pub fn handle(ctx: Context<ReAllocate>) -> Result<()> {
     // get_price_no_older_than will fail if the price update is for a different price feed.
     // This string is the id of the BTC/USD feed. See https://pyth.network/developers/price-feed-ids for all available IDs.
     let sol_feed_id: [u8; 32] = get_feed_id_from_hex(SOL_PRICE_ID)?;
-    let sol_price = price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &sol_feed_id)?;
+    let sol_price =
+        price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &sol_feed_id)?;
     let wbtc_feed_id: [u8; 32] = get_feed_id_from_hex(WBTC_PRICE_ID)?;
-    let wbtc_price = price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &wbtc_feed_id)?;
+    let wbtc_price =
+        price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &wbtc_feed_id)?;
 
     let total_value = treasury.treasury_value;
 
@@ -141,7 +156,7 @@ pub fn handle(ctx: Context<ReAllocate>) -> Result<()> {
 
     let treasur = vec![marginfi, kamino, meteora, jupiterperps, usdcoin, btc, sol];
     let new_allocation = re_allocate(&treasur, PLATFORM_ALLOCATION);
-    
+
     treasury.marginfi_allocation = new_allocation[0].allocation;
     treasury.kamino_allocation = new_allocation[1].allocation;
     treasury.meteora_allocation = new_allocation[2].allocation;
@@ -150,6 +165,7 @@ pub fn handle(ctx: Context<ReAllocate>) -> Result<()> {
     treasury.wbtc_allocation = new_allocation[5].allocation;
     treasury.sol_allocation = new_allocation[6].allocation;
 
+    ctx.accounts.sequence_flag.flag_reallocate = true;
 
     Ok(())
 }

@@ -13,9 +13,12 @@ pub struct Platform {
 }
 
 pub fn re_allocate(treasur: &Vec<Platform>, platform_allocation: [f64; 4]) -> Vec<Platform> {
-    let mut platform_type_ratings: std::collections::HashMap<u8, f64> = std::collections::HashMap::new();
-    let mut platform_type_allocations: std::collections::HashMap<u8, f64> = std::collections::HashMap::new();
-    let mut platform_type_counts: std::collections::HashMap<u8, u8> = std::collections::HashMap::new();
+    let mut platform_type_ratings: std::collections::HashMap<u8, f64> =
+        std::collections::HashMap::new();
+    let mut platform_type_allocations: std::collections::HashMap<u8, f64> =
+        std::collections::HashMap::new();
+    let mut platform_type_counts: std::collections::HashMap<u8, u8> =
+        std::collections::HashMap::new();
 
     for platform in treasur.iter() {
         let platform_type = platform.platform_type;
@@ -23,10 +26,16 @@ pub fn re_allocate(treasur: &Vec<Platform>, platform_allocation: [f64; 4]) -> Ve
         let risk_rating = platform.risk_rating;
         let allocation = platform.allocation;
 
-        let rating = if risk_rating != 0.0 { return_rate / risk_rating } else { 0.0 };
+        let rating = if risk_rating != 0.0 {
+            return_rate / risk_rating
+        } else {
+            0.0
+        };
 
         *platform_type_ratings.entry(platform_type).or_insert(0.0) += rating;
-        *platform_type_allocations.entry(platform_type).or_insert(0.0) += allocation;
+        *platform_type_allocations
+            .entry(platform_type)
+            .or_insert(0.0) += allocation;
         *platform_type_counts.entry(platform_type).or_insert(0) += 1;
     }
 
@@ -34,11 +43,19 @@ pub fn re_allocate(treasur: &Vec<Platform>, platform_allocation: [f64; 4]) -> Ve
 
     for platform in treasur.iter() {
         let platform_type = platform.platform_type;
-        let rating = if platform.risk_rating != 0.0 { platform.return_rate / platform.risk_rating } else { 0.0 };
+        let rating = if platform.risk_rating != 0.0 {
+            platform.return_rate / platform.risk_rating
+        } else {
+            0.0
+        };
         let total_rating = platform_type_ratings.get(&platform_type).unwrap_or(&0.0);
         let total_allocation = platform_allocation[(platform_type - 1) as usize];
 
-        let new_allocation = if *total_rating != 0.0 { (rating / total_rating) * total_allocation } else { 0.0 };
+        let new_allocation = if *total_rating != 0.0 {
+            (rating / total_rating) * total_allocation
+        } else {
+            0.0
+        };
 
         let new_platform = Platform {
             id: platform.id,
@@ -54,8 +71,8 @@ pub fn re_allocate(treasur: &Vec<Platform>, platform_allocation: [f64; 4]) -> Ve
     new_allocations
 }
 
-/***** 
-    fn main() {
+/*****
+
         let marginfi = Platform { id: 1, return_rate: 52.0, risk_rating: 5.0, allocation: 15.0, platform_type: 1 };
         let kamino = Platform { id: 2, return_rate: 32.0, risk_rating: 7.0, allocation: 10.0, platform_type: 1 };
         let meteora = Platform { id: 3, return_rate: 72.0, risk_rating: 3.0, allocation: 17.5, platform_type: 2 };
@@ -73,5 +90,5 @@ pub fn re_allocate(treasur: &Vec<Platform>, platform_allocation: [f64; 4]) -> Ve
         for allocation in new_allocations.iter() {
             println!("Platform ID: {}, New Allocation: {}", allocation.id, allocation.allocation);
         }
-    }
+
 ******/

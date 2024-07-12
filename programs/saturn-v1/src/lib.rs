@@ -17,6 +17,7 @@ use instructions::*;
 
 declare_id!("6y1CpFjLdNfs5KUh1PfkjS11FiwH5ZrxmeMtJm9yLdJF");
 
+#[allow(unused_variables)]
 #[program]
 pub mod saturn_v_1 {
 
@@ -96,6 +97,18 @@ pub mod saturn_v_1 {
 
     pub fn get_value_in_marginfi(ctx: Context<GetValueInMarginFi>) -> Result<[u64; 6]> {
         instructions::get_value_in_marginfi::handle(ctx)
+    }
+
+    pub fn calcu_balance(ctx: Context<CalcuBalance>) -> Result<()> {
+        instructions::calcu_balance::handle(ctx)
+    }
+
+    pub fn reallocate(ctx: Context<ReAllocate>) -> Result<()> {
+        instructions::reallocate::handle(ctx)
+    }
+
+    pub fn cashingout_reedem(ctx: Context<CashingoutReedem>, amount: u64) -> Result<()> {
+        instructions::cashingout_reedem::handle(ctx, amount)
     }
     
 }

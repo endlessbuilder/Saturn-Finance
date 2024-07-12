@@ -2,9 +2,9 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::accessor::amount;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 
-use crate::account::Treasury;
+use crate::account::{Treasury, SequenceFlag};
 use crate::account::meteora_account::Partner;
-use crate::constants::{TOKEN_VAULT_PREFIX, TREASURY_AUTHORITY_SEED, VAULT_PREFIX, TREASURY_SEED};
+use crate::constants::{TOKEN_VAULT_PREFIX, TREASURY_AUTHORITY_SEED, VAULT_PREFIX, TREASURY_SEED, SEQUENCE_FLAG_SEED};
 // use crate::meteora_context::DepositWithdrawLiquidity;
 use crate::meteora_utils::{MeteoraProgram, MeteoraUtils, update_liquidity_wrapper};
 use meteora::state::Vault;
@@ -34,6 +34,16 @@ pub struct MeteoraDeposit<'info> {
         bump,
     )]
     pub treasury: Account<'info, Treasury>,
+    /// CHECK: this is pda
+    #[account(
+        mut,
+        seeds = [SEQUENCE_FLAG_SEED.as_ref()],
+        bump,
+        constraint = sequence_flag.flag_calcu_balance == true,
+        constraint = sequence_flag.flag_reallocate == true,
+        constraint = sequence_flag.flag_kamino && sequence_flag.flag_marginfi && sequence_flag.flag_meteora  == true,
+    )]
+    pub sequence_flag: Account<'info, SequenceFlag>,
     /// CHECK:
     pub meteora_vault_program: Program<'info, MeteoraProgram>,
     /// CHECK:
@@ -47,7 +57,7 @@ pub struct MeteoraDeposit<'info> {
     pub vault_lp_mint: Box<Account<'info, Mint>>,
     /// treasury token CHECK:
     #[account(mut)]
-    pub treasury_token: UncheckedAccount<'info>,
+    pub treasury_token: Account<'info, TokenAccount>,
     /// treasury lp CHECK:
     #[account(mut, constraint = treasury_lp.owner == treasury_authority.key())] //mint to account of treasury PDA
     pub treasury_lp: Box<Account<'info, TokenAccount>>,

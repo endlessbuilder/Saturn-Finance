@@ -1,5 +1,5 @@
 use crate::{
-    account::{Escrow, Treasury},
+    account::{Treasury, SequenceFlag},
     constants::*,
 };
 use anchor_lang::prelude::*;
@@ -37,6 +37,17 @@ pub struct MarginfiWithdraw<'info> {
     pub system_program: Program<'info, System>,
     pub rent: Sysvar<'info, Rent>,
     pub token_program: Program<'info, Token>,
+
+    /// CHECK: this is pda
+    #[account(
+        mut,
+        seeds = [SEQUENCE_FLAG_SEED.as_ref()],
+        bump,
+        constraint = sequence_flag.flag_calcu_balance == true,
+        constraint = sequence_flag.flag_reallocate == true,
+        constraint = sequence_flag.flag_marginfi  == false,
+    )]
+    pub sequence_flag: Account<'info, SequenceFlag>,
 
     /*
      * marginfi accounts
@@ -97,6 +108,8 @@ pub fn handle(ctx: Context<MarginfiWithdraw>, amount: u64) -> Result<()> {
 
     let treasury = &mut ctx.accounts.treasury;
     treasury.treasury_value += amount as u64;
+
+    ctx.accounts.sequence_flag.flag_marginfi = true;
 
     Ok(())
 }

@@ -2,8 +2,8 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 
 use crate::account::meteora_account::Partner;
-use crate::account::Treasury;
-use crate::constants::{TOKEN_VAULT_PREFIX, TREASURY_AUTHORITY_SEED, VAULT_PREFIX, TREASURY_SEED};
+use crate::account::{Treasury, SequenceFlag};
+use crate::constants::{TOKEN_VAULT_PREFIX, TREASURY_AUTHORITY_SEED, VAULT_PREFIX, TREASURY_SEED, SEQUENCE_FLAG_SEED};
 // use crate::meteora_context::DepositWithdrawLiquidity;
 use crate::meteora_utils::{update_liquidity_wrapper, MeteoraProgram, MeteoraUtils};
 use meteora::state::Vault;
@@ -34,6 +34,18 @@ pub struct MeteoraWithdraw<'info> {
         bump,
         )]
     pub treasury: Account<'info, Treasury>,
+
+    /// CHECK: this is pda
+    #[account(
+        mut,
+        seeds = [SEQUENCE_FLAG_SEED.as_ref()],
+        bump,
+        constraint = sequence_flag.flag_calcu_balance == true,
+        constraint = sequence_flag.flag_reallocate == true,
+        constraint = sequence_flag.flag_meteora  == false,
+    )]
+    pub sequence_flag: Account<'info, SequenceFlag>,
+
     /// CHECK:
     pub vault_program: Program<'info, MeteoraProgram>,
     /// CHECK:
@@ -110,6 +122,8 @@ pub fn handle<'a, 'b, 'c, 'info>(
 
     let treasury = &mut ctx.accounts.treasury;
     treasury.treasury_value += unmint_amount;
+
+    ctx.accounts.sequence_flag.flag_meteora = true;
 
     Ok(())
 }
