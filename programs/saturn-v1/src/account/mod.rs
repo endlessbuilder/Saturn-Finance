@@ -9,3 +9,6 @@ pub use userstakeaccount::*;
 
 pub mod meteora_account;
 pub use meteora_account::*;
+
+pub mod sequence_flag;
+pub use sequence_flag::*;
