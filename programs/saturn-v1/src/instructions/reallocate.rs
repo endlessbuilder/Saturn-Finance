@@ -1,19 +1,11 @@
-use crate::account::meteora_account::Partner;
-use crate::meteora_utils::{MeteoraProgram, MeteoraUtils};
+use std::alloc::realloc;
+
 use anchor_lang::{
     prelude::*,
     solana_program::sysvar::{instructions::Instructions as SysInstructions, SysvarId},
 };
 use anchor_spl::token::accessor::amount;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
-use kamino_lending::program::KaminoLending;
-use kamino_lending::state::{LendingMarket, Obligation, Reserve};
-use marginfi::program::Marginfi;
-use marginfi::state::{
-    marginfi_account::MarginfiAccount,
-    marginfi_group::{Bank, MarginfiGroup},
-};
-use meteora::state::Vault;
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint,
@@ -23,8 +15,11 @@ use solana_program::{
     pubkey::Pubkey,
 };
 
-use crate::{utils::*, GetValueInKamino};
-use crate::{account::*, constants::*};
+use crate::utils::*;
+use crate::{
+    account::*,
+    constants::{USDC_MINT, WBTC_MINT},
+};
 
 /// Need to check whether we can convert to unchecked account
 #[derive(Accounts)]
@@ -44,274 +39,82 @@ pub struct ReAllocate<'info> {
     )]
     pub treasury: Account<'info, Treasury>,
 
-    //****** kamino accounts ******
     #[account(
         mut,
-        constraint = kamino_obligation.load()?.lending_market == kamino_lending_market.key(),
-        constraint = kamino_obligation.load()?.owner == treasury_authority.key(),
+        token::mint = Pubkey::from_str(USDC_MINT),
     )]
-    pub kamino_obligation: AccountLoader<'info, Obligation>,
-    pub kamino_lending_market: AccountLoader<'info, LendingMarket>,
-    /// CHECK: just authority
-    pub kamino_lending_market_authority: AccountInfo<'info>,
-    #[account(
-        mut,
-        constraint = kamino_reserve.load()?.lending_market == kamino_lending_market.key()
-    )]
-    pub kamino_reserve: AccountLoader<'info, Reserve>,
-    #[account(mut,
-        address = kamino_reserve.load()?.liquidity.supply_vault
-    )]
-    pub kamino_reserve_liquidity_supply: Box<Account<'info, TokenAccount>>,
-    #[account(mut,
-        address = kamino_reserve.load()?.collateral.mint_pubkey
-    )]
-    pub kamino_reserve_collateral_mint: Box<Account<'info, Mint>>,
-    #[account(mut,
-        address = kamino_reserve.load()?.collateral.supply_vault
-    )]
-    pub kamino_reserve_collateral_supply: Box<Account<'info, TokenAccount>>,
-    #[account(mut,
-        token::mint = kamino_reserve.load()?.liquidity.mint_pubkey
-    )]
-    pub kamino_user_source_liquidity: Account<'info, TokenAccount>,
-    #[account(mut,
-        token::mint = kamino_reserve_collateral_mint.key()
-    )]
-    pub kamino_user_destination_collateral: Box<Account<'info, TokenAccount>>,
-
-    
-    #[account(
-        mut, 
-        constraint = kamino_obligation.load()?.lending_market == kamino_lending_market.key(),
-        constraint = sol_reserve.load()?.liquidity.mint_pubkey.to_string().as_str() == SOL_MINT,
-    )]
-    pub sol_reserve: AccountLoader<'info, Reserve>,
-
-    #[account(
-        mut, 
-        
-        constraint = usdc_reserve.load()?.liquidity.mint_pubkey.to_string().as_str() == USDC_MINT,
-    )]
-    pub usdc_reserve: AccountLoader<'info, Reserve>,
-
-    #[account(
-        mut, 
-        
-        constraint = usdt_reserve.load()?.liquidity.mint_pubkey.to_string().as_str() == USDT_MINT,
-    )]
-    pub usdt_reserve: AccountLoader<'info, Reserve>,
-
-    #[account(
-        mut, 
-        
-        constraint = wbtc_reserve.load()?.liquidity.mint_pubkey.to_string().as_str() == WBTC_MINT,
-    )]
-    pub wbtc_reserve: AccountLoader<'info, Reserve>,
-
-    #[account(
-        mut, 
-        
-        constraint = weth_reserve.load()?.liquidity.mint_pubkey.to_string().as_str() == WETH_MINT,
-    )]
-    pub weth_reserve: AccountLoader<'info, Reserve>,
-
-    #[account(
-        mut, 
-        
-        constraint = bonk_reserve.load()?.liquidity.mint_pubkey.to_string().as_str() == BONK_MINT,
-    )]
-    pub bonk_reserve: AccountLoader<'info, Reserve>,
-
-
-    #[account(address = SysInstructions::id())]
-    /// CHECK:address checked
-    pub instruction_sysvar_account: AccountInfo<'info>,
-    pub kamino_program: Program<'info, KaminoLending>,
-
-    //****** marginfi accounts *******
-    pub marginfi_group: AccountLoader<'info, MarginfiGroup>,
-    #[account(
-        mut,
-        constraint = marginfi_account.load()?.group == marginfi_group.key(),
-        constraint = marginfi_account.load()?.authority == treasury_authority.key(),
-    )]
-    pub marginfi_account: AccountLoader<'info, MarginfiAccount>,
-    #[account(
-        mut,
-        constraint = marginfi_bank.load()?.group == marginfi_group.key(),
-    )]
-    pub marginfi_bank: AccountLoader<'info, Bank>,
-    /// CHECK: marginfi account
-    #[account(mut)]
-    pub marginfi_bank_liquidity_vault: Account<'info, TokenAccount>,
-    /// CHECK: Seed constraint check
-    #[account(mut)]
-    pub marginfi_bank_liquidity_vault_authority: AccountInfo<'info>,
-    #[account(mut)]
-    pub marginfi_user_liquidity: Account<'info, TokenAccount>,
-    pub rent: Sysvar<'info, Rent>,
-    pub marginfi_program: Program<'info, Marginfi>,
-
-    #[account(
-        mut,
-        constraint = sol_bank.load()?.group == marginfi_group.key(),
-        constraint = sol_bank.load()?.mint.to_string().as_str() == SOL_MINT,
-    )]
-    pub sol_bank: AccountLoader<'info, Bank>,
-
-    #[account(
-        mut,
-        constraint = usdc_bank.load()?.group == marginfi_group.key(),
-        constraint = usdc_bank.load()?.mint.to_string().as_str() == USDC_MINT,
-    )]
-    pub usdc_bank: AccountLoader<'info, Bank>,
-
-    #[account(
-        mut,
-        constraint = usdt_bank.load()?.group == marginfi_group.key(),
-        constraint = usdt_bank.load()?.mint.to_string().as_str() == USDT_MINT,
-    )]
-    pub usdt_bank: AccountLoader<'info, Bank>,
-
-    #[account(
-        mut,
-        constraint = wbtc_bank.load()?.group == marginfi_group.key(),
-        constraint = wbtc_bank.load()?.mint.to_string().as_str() == WBTC_MINT,
-    )]
-    pub wbtc_bank: AccountLoader<'info, Bank>,
-
-    #[account(
-        mut,
-        constraint = weth_bank.load()?.group == marginfi_group.key(),
-        constraint = weth_bank.load()?.mint.to_string().as_str() == WETH_MINT,
-    )]
-    pub weth_bank: AccountLoader<'info, Bank>,
-
-    #[account(
-        mut,
-        constraint = bonk_bank.load()?.group == marginfi_group.key(),
-        constraint = bonk_bank.load()?.mint.to_string().as_str() == BONK_MINT,
-    )]
-    pub bonk_bank: AccountLoader<'info, Bank>,
-
-    //******** meteora accounts *********
-    /// partner info CHECK:
-    #[account(mut, constraint = meteora_partner.vault == meteora_vault.key())]
-    pub meteora_partner: Box<Account<'info, Partner>>,
-    /// CHECK:
-    #[account(mut)]
-    pub meteora_vault: Box<Account<'info, Vault>>,
-    /// CHECK:
-    #[account(mut)]
-    pub meteora_token_vault: UncheckedAccount<'info>,
-    /// CHECK:
-    #[account(mut)]
-    pub meteora_vault_lp_mint: Box<Account<'info, Mint>>,
-    /// treasury token CHECK:
-    #[account(mut)]
-    pub meteora_treasury_token: UncheckedAccount<'info>,
-    /// treasury lp CHECK:
-    #[account(mut, constraint = meteora_treasury_lp.owner == treasury_authority.key())]
-    //mint to account of treasury PDA
-    pub meteora_treasury_lp: Box<Account<'info, TokenAccount>>,
-    /// CHECK:
-    pub meteora_vault_program: Program<'info, MeteoraProgram>,
-
-    pub token_program: Program<'info, Token>,
-    pub system_program: Program<'info, System>,
+    pub usdc_token_account: Account<'info, TokenAccount>,
 }
 
 #[allow(unused_variables)]
 pub fn handle(ctx: Context<ReAllocate>) -> Result<()> {
-    let get_kamino_value_ix = anchor_lang::solana_program::instruction::Instruction {
-        program_id: ctx.program_id.key(),
-        accounts: vec![
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.treasury_authority.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.kamino_lending_market.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.sol_reserve.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.usdc_reserve.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.usdt_reserve.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.wbtc_reserve.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.weth_reserve.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.bonk_reserve.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.kamino_obligation.key(), true),
-        ],
-        data: Vec::new(),
+    let mut treasury = &mut ctx.accounts.treasury;
+    let kamino_balance = treasury.kamino_lend_amount;
+    let marignfi_balance = treasury.marginfi_lend_amount;
+    let meteora_balance = treasury.meteora_deposit_amount;
+    let usdc_balance: u64 = ctx.accounts.usdc_token_account.amount;
+    // let wbtc_balance: u64 = ctx.accounts.wtbc_token_account.amount;
+    // let sol_balance: u64 = ctx.accounts.treasury_authority.amount;
+
+
+    let total_value = treasury.treasury_value;
+
+    let kamino_allocation: f64 = kamino_balance as f64 / total_value as f64;
+    let marginfi_allocation: f64 = marignfi_balance as f64 / total_value as f64;
+    let meteora_allocation: f64 = meteora_balance as f64 / total_value as f64;
+
+    let marginfi = Platform {
+        id: 1,
+        return_rate: 52.0,
+        risk_rating: 5.0,
+        allocation: marginfi_allocation,
+        platform_type: 1,
+    };
+    let kamino = Platform {
+        id: 2,
+        return_rate: 32.0,
+        risk_rating: 7.0,
+        allocation: kamino_allocation,
+        platform_type: 1,
+    };
+    let meteora = Platform {
+        id: 3,
+        return_rate: 72.0,
+        risk_rating: 3.0,
+        allocation: meteora_allocation,
+        platform_type: 2,
+    };
+    let jupiterperps = Platform {
+        id: 4,
+        return_rate: 152.0,
+        risk_rating: 8.0,
+        allocation: 0.0,
+        platform_type: 3,
+    };
+    let usdcoin = Platform {
+        id: 5,
+        return_rate: 1.0,
+        risk_rating: 1.0,
+        allocation: usdc_balance,
+        platform_type: 4,
+    };
+    let btc = Platform {
+        id: 6,
+        return_rate: 1.0,
+        risk_rating: 2.0,
+        allocation: 15.0,
+        platform_type: 4,
+    };
+    let sol = Platform {
+        id: 7,
+        return_rate: 1.0,
+        risk_rating: 4.0,
+        allocation: 10.0,
+        platform_type: 4,
     };
 
-    anchor_lang::solana_program::program::invoke(
-        &get_kamino_value_ix,
-        &[
-            // ctx.accounts.program_id.clone(),
-        ctx.accounts.treasury_authority.to_account_info().clone(),
-        ctx.accounts.kamino_lending_market.to_account_info().clone(),
-        ctx.accounts.sol_reserve.to_account_info().clone(),
-        ctx.accounts.usdc_reserve.to_account_info().clone(),
-        ctx.accounts.usdt_reserve.to_account_info().clone(),
-        ctx.accounts.wbtc_reserve.to_account_info().clone(),
-        ctx.accounts.weth_reserve.to_account_info().clone(),
-        ctx.accounts.bonk_reserve.to_account_info().clone(),
-        ctx.accounts.kamino_obligation.to_account_info().clone(),
-        ],
-    )?;
-
-    let get_marginfi_value_ix = anchor_lang::solana_program::instruction::Instruction {
-        program_id: ctx.program_id.key(),
-        accounts: vec![
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.treasury_authority.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.marginfi_group.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.marginfi_account.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.sol_bank.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.usdc_bank.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.usdt_bank.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.wbtc_bank.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.weth_bank.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.bonk_bank.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.kamino_obligation.key(), true),
-        ],
-        data: Vec::new(),
-    };
-
-    anchor_lang::solana_program::program::invoke(
-        &get_marginfi_value_ix,
-        &[
-            // ctx.accounts.program_id.clone(),
-        ctx.accounts.treasury_authority.to_account_info().clone(),
-        ctx.accounts.kamino_lending_market.to_account_info().clone(),
-        ctx.accounts.sol_bank.to_account_info().clone(),
-        ctx.accounts.usdc_bank.to_account_info().clone(),
-        ctx.accounts.usdt_bank.to_account_info().clone(),
-        ctx.accounts.wbtc_bank.to_account_info().clone(),
-        ctx.accounts.weth_bank.to_account_info().clone(),
-        ctx.accounts.bonk_bank.to_account_info().clone(),
-        ctx.accounts.kamino_obligation.to_account_info().clone(),
-        ],
-    )?;
-
-    let get_meteora_value_ix = anchor_lang::solana_program::instruction::Instruction {
-        program_id: ctx.program_id.key(),
-        accounts: vec![
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.treasury_authority.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.meteora_treasury_lp.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.meteora_vault_lp_mint.key(), true),
-            anchor_lang::solana_program::instruction::AccountMeta::new(ctx.accounts.meteora_vault.key(), true),
-        ],
-        data: Vec::new(),
-    };
-
-    anchor_lang::solana_program::program::invoke(
-        &get_meteora_value_ix,
-        &[
-            // ctx.accounts.program_id.clone(),
-        ctx.accounts.treasury_authority.to_account_info().clone(),
-        ctx.accounts.meteora_treasury_lp.to_account_info().clone(),
-        ctx.accounts.meteora_vault_lp_mint.to_account_info().clone(),
-        ctx.accounts.meteora_vault.to_account_info().clone(),
-        ],
-    )?;
-
-
-
+    let treasur = vec![marginfi, kamino, meteora, jupiterperps, usdcoin, btc, sol];
+    let new_allocation = re_allocate(&treasur, PLATFORM_ALLOCATION);
+    
     Ok(())
 }

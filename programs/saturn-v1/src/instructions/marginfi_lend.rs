@@ -87,7 +87,6 @@ pub fn handle(ctx: Context<MarginfiLend>, amount: u64) -> Result<()> {
     );
 
     let treasury = &mut ctx.accounts.treasury;
-    // treasury.marginfi_lend_amount += amount.into();
     treasury.treasury_value -= amount as u64;
 
     Ok(())

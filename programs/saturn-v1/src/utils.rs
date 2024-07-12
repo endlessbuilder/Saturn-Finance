@@ -5,11 +5,11 @@ pub const PLATFORM_ALLOCATION: [f64; 4] = [35.0, 25.0, 10.0, 30.0];
 #[allow(unused_variables)]
 #[derive(Debug, Clone)]
 pub struct Platform {
-    id: u8,
-    return_rate: f64,
-    risk_rating: f64,
-    allocation: f64,
-    platform_type: u8,
+    pub id: u8,
+    pub return_rate: f64,
+    pub risk_rating: f64,
+    pub allocation: f64,
+    pub platform_type: u8,
 }
 
 pub fn re_allocate(treasur: &Vec<Platform>, platform_allocation: [f64; 4]) -> Vec<Platform> {

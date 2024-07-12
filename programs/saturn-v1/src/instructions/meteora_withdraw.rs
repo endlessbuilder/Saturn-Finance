@@ -104,7 +104,6 @@ pub fn handle<'a, 'b, 'c, 'info>(
     )?;
 
     let treasury = &mut ctx.accounts.treasury;
-    treasury.meteora_deposit_amount -= unmint_amount;
     treasury.treasury_value += unmint_amount;
 
     Ok(())

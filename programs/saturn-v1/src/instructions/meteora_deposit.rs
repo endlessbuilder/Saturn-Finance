@@ -93,7 +93,6 @@ pub fn handle(
     )?;
 
     let treasury = &mut ctx.accounts.treasury;
-    treasury.meteora_deposit_amount += token_amount;
     treasury.treasury_value -= token_amount;
 
     Ok(())
