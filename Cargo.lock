@@ -1702,6 +1702,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0d6ef0072f8a535281e4876be788938b528e9a1d43900b82c2569af7da799125"
 
 [[package]]
+name = "dynamic-amm"
+version = "0.1.1"
+dependencies = [
+ "anchor-lang 0.29.0",
+ "anchor-spl 0.29.0",
+]
+
+[[package]]
 name = "eager"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2833,16 +2841,6 @@ dependencies = [
  "keccak",
  "rand_core 0.6.4",
  "zeroize",
-]
-
-[[package]]
-name = "meteora"
-version = "0.5.0"
-dependencies = [
- "anchor-lang 0.29.0",
- "anchor-spl 0.29.0",
- "serde",
- "solana-program",
 ]
 
 [[package]]
@@ -4146,11 +4144,11 @@ dependencies = [
  "blake3",
  "bytemuck",
  "constant_time_eq",
+ "dynamic-amm",
  "fixed",
  "fixed-macro",
  "kamino_lending",
  "marginfi",
- "meteora",
  "pyth-solana-receiver-sdk",
  "serde",
  "solana-program",

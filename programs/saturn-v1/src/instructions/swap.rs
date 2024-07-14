@@ -16,8 +16,11 @@ use anchor_spl::token::{self, Token, TokenAccount, Transfer, Mint};
 
 #[derive(Accounts)]
 pub struct Swap<'info> {
-    #[account(mut)]
-    pub payer: Signer<'info>,
+    #[account(
+        mut,
+        constraint = signer.key() == treasury_authority.key()
+    )]
+    signer: Signer<'info>,
     /// CHECK: this is pda
     #[account(
         mut,

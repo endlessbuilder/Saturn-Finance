@@ -2,12 +2,11 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::accessor::amount;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 
-use crate::account::{Treasury, SequenceFlag};
 use crate::account::meteora_account::Partner;
-use crate::constants::{TOKEN_VAULT_PREFIX, TREASURY_AUTHORITY_SEED, VAULT_PREFIX, TREASURY_SEED, SEQUENCE_FLAG_SEED};
-// use crate::meteora_context::DepositWithdrawLiquidity;
-use crate::meteora_utils::{MeteoraProgram, MeteoraUtils, update_liquidity_wrapper};
-use meteora::state::Vault;
+use crate::account::{SequenceFlag, Treasury};
+use crate::constants::{
+    SEQUENCE_FLAG_SEED, TOKEN_VAULT_PREFIX, TREASURY_AUTHORITY_SEED, TREASURY_SEED, VAULT_PREFIX,
+};
 
 /// Need to check whether we can convert to unchecked account
 #[derive(Accounts)]
@@ -44,27 +43,59 @@ pub struct MeteoraDeposit<'info> {
         constraint = sequence_flag.flag_kamino && sequence_flag.flag_marginfi && sequence_flag.flag_meteora  == true,
     )]
     pub sequence_flag: Account<'info, SequenceFlag>,
-    /// CHECK:
-    pub meteora_vault_program: Program<'info, MeteoraProgram>,
-    /// CHECK:
     #[account(mut)]
-    pub vault: Box<Account<'info, Vault>>,
-    /// CHECK:
+    /// CHECK: Pool account (PDA)
+    pub pool: UncheckedAccount<'info>,
     #[account(mut)]
-    pub token_vault: UncheckedAccount<'info>,
-    /// CHECK:
+    /// CHECK: LP token mint of the pool
+    pub lp_mint: UncheckedAccount<'info>,
     #[account(mut)]
-    pub vault_lp_mint: Box<Account<'info, Mint>>,
-    /// treasury token CHECK:
+    /// CHECK: user pool lp token account. lp will be burned from this account upon success liquidity removal.
+    pub user_pool_lp: UncheckedAccount<'info>,
+
     #[account(mut)]
-    pub treasury_token: Account<'info, TokenAccount>,
-    /// treasury lp CHECK:
-    #[account(mut, constraint = treasury_lp.owner == treasury_authority.key())] //mint to account of treasury PDA
-    pub treasury_lp: Box<Account<'info, TokenAccount>>,
-    /// CHECK:
-    // pub owner: Signer<'info>,
-    /// CHECK:
-    pub token_program: Program<'info, Token>,
+    /// CHECK: LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
+    pub a_vault_lp: UncheckedAccount<'info>,
+    #[account(mut)]
+    /// CHECK: LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
+    pub b_vault_lp: UncheckedAccount<'info>,
+
+    #[account(mut)]
+    /// CHECK: Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.
+    pub a_vault: UncheckedAccount<'info>,
+    #[account(mut)]
+    /// CHECK: Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.
+    pub b_vault: UncheckedAccount<'info>,
+
+    #[account(mut)]
+    /// CHECK: LP token mint of vault a
+    pub a_vault_lp_mint: UncheckedAccount<'info>,
+    #[account(mut)]
+    /// CHECK: LP token mint of vault b
+    pub b_vault_lp_mint: UncheckedAccount<'info>,
+
+    #[account(mut)]
+    /// CHECK: Token vault account of vault A
+    pub a_token_vault: UncheckedAccount<'info>,
+    #[account(mut)]
+    /// CHECK: Token vault account of vault B
+    pub b_token_vault: UncheckedAccount<'info>,
+    #[account(mut)]
+    /// CHECK: User token A account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.
+    pub user_a_token: UncheckedAccount<'info>,
+    #[account(mut)]
+    /// CHECK: User token B account. Token will be transfer from this account if it is add liquidity operation. Else, token will be transfer into this account.
+    pub user_b_token: UncheckedAccount<'info>,
+    /// CHECK: User account. Must be owner of user_a_token, and user_b_token.
+    pub user: Signer<'info>,
+
+    /// CHECK: Vault program. the pool will deposit/withdraw liquidity from the vault.
+    pub vault_program: UncheckedAccount<'info>,
+    /// CHECK: Token program.
+    pub token_program: UncheckedAccount<'info>,
+    #[account(address = dynamic_amm::ID)]
+    /// CHECK: Dynamic AMM program account
+    pub dynamic_amm_program: UncheckedAccount<'info>,
 }
 
 #[allow(unused_variables)]
@@ -73,42 +104,26 @@ pub fn handle(
     token_amount: u64,
     minimum_lp_token_amount: u64,
 ) -> Result<()> {
-    let vault = &ctx.accounts.vault.to_account_info();
-    let vault_lp_mint = &ctx.accounts.vault_lp_mint.to_account_info();
-    let treasury_lp = &ctx.accounts.treasury_lp.to_account_info();
+    let accounts = dynamic_amm::cpi::accounts::AddOrRemoveBalanceLiquidity{
+        pool: ctx.accounts.pool.to_account_info(),
+        lp_mint: ctx.accounts.lp_mint.to_account_info(),
+        user_pool_lp: ctx.accounts.user_pool_lp.to_account_info(),
+        a_vault_lp: ctx.accounts.a_vault_lp.to_account_info(),
+        b_vault_lp: ctx.accounts.b_vault_lp.to_account_info(),
+        a_vault: ctx.accounts.a_vault.to_account_info(),
+        b_vault: ctx.accounts.b_vault.to_account_info(),
+        a_vault_lp_mint: ctx.accounts.to_account_infos(),
+        b_vault_lp_mint: ctx.accounts.to_account_infos(),
+        a_token_vault: ctx.accounts.to_account_infos(),
+        b_token_vault: ctx.accounts.to_account_infos(),
+        user_a_token: ctx.accounts.to_account_infos(),
+        user_b_token: ctx.accounts.to_account_infos(),
+        user: ctx.accounts.to_account_infos(),
+        vault_program: ctx.accounts.to_account_infos(),
+        token_program: ctx.accounts.to_account_infos(),
+    };
 
-    let treasury_token = &ctx.accounts.treasury_token.to_account_info();
-    let token_vault = &ctx.accounts.token_vault.to_account_info();
-    let token_program = &ctx.accounts.token_program.to_account_info();
-    let meteora_vault_program = &ctx.accounts.meteora_vault_program.to_account_info();
-    let user = &&ctx.accounts.treasury_authority.to_account_info();
-
-    update_liquidity_wrapper(
-        move || {
-            MeteoraUtils::deposit(
-                vault,
-                vault_lp_mint,
-                treasury_token,
-                treasury_lp, // mint vault lp token to pool lp token account
-                user,
-                token_vault,
-                token_program,
-                meteora_vault_program,
-                token_amount,
-                minimum_lp_token_amount,
-            )?;
-
-            Ok(())
-        },
-        &mut ctx.accounts.vault,
-        &mut ctx.accounts.vault_lp_mint,
-        &mut ctx.accounts.treasury_lp,
-        &mut ctx.accounts.partner,
-        // &mut ctx.accounts.user,
-    )?;
-
-    let treasury = &mut ctx.accounts.treasury;
-    treasury.treasury_value -= token_amount;
-
-    Ok(())
+    let cpi_context = CpiContext::new(ctx.accounts.dynamic_amm_program.to_account_info(), accounts);
+    dynamic_amm::cpi::add_balance_liquidity(cpi_context, pool_token_amount, maximum_token_a_amount, maximum_token_b_amount)
+    
 }

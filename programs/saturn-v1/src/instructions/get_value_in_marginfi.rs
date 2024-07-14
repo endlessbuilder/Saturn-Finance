@@ -129,8 +129,6 @@ pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<[u64; 6]> {
         .ok_or_else(|| error!(MarginfiError::BankAccoutNotFound))
         .unwrap();
 
-    ctx.accounts.treasury.marginfi_lend_assets = I80F48::from(usdc_asset_balance.asset_shares).to_num::<u64>();
-
     let usdc_value_in_marginfi = cal_user_total_asset_in_marginfi(
         current_timestap,
         usdc_bank.total_asset_shares,
@@ -149,6 +147,8 @@ pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<[u64; 6]> {
         .find(|balance| balance.active && balance.bank_pk.eq(&usdt_bank_pubkey))
         .ok_or_else(|| error!(MarginfiError::BankAccoutNotFound))
         .unwrap();
+
+    ctx.accounts.treasury.marginfi_lend_assets = I80F48::from(usdt_asset_balance.asset_shares).to_num::<u64>();
 
     let usdt_value_in_marginfi = cal_user_total_asset_in_marginfi(
         current_timestap,
