@@ -5,10 +5,10 @@ seeds = false
 skip-lint = false
 
 [programs.devnet]
-saturn_v_1 = "6y1CpFjLdNfs5KUh1PfkjS11FiwH5ZrxmeMtJm9yLdJF"
+saturn_v_1 = "Fby86A5qXMFMhpjmneseHYfoC5FrMrtaihxYV7jXEuFz"
 
 [programs.localnet]
-saturn_v_1 = "6y1CpFjLdNfs5KUh1PfkjS11FiwH5ZrxmeMtJm9yLdJF"
+saturn_v_1 = "Fby86A5qXMFMhpjmneseHYfoC5FrMrtaihxYV7jXEuFz"
 
 [test.validator]
 url = "https://api.mainnet-beta.solana.com" 
@@ -120,7 +120,7 @@ address = "GbNJigVGMPgn9qhfmTDtc1yxhX6ppnuD5bMpRe23nE2k"
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
+cluster = "devnet"
 wallet = "/home/tonicallum/.config/solana/id.json"
 
 [scripts]

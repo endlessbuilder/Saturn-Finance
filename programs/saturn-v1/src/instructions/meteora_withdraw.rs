@@ -2,7 +2,6 @@ use anchor_lang::prelude::*;
 use anchor_spl::token::accessor::amount;
 use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 
-use crate::account::meteora_account::Partner;
 use crate::account::{SequenceFlag, Treasury};
 use crate::constants::{
     SEQUENCE_FLAG_SEED, TOKEN_VAULT_PREFIX, TREASURY_AUTHORITY_SEED, TREASURY_SEED, VAULT_PREFIX,
@@ -16,9 +15,6 @@ pub struct MeteoraWithdraw<'info> {
         constraint = signer.key() == treasury_authority.key()
     )]
     signer: Signer<'info>,
-    /// partner info CHECK:
-    #[account(mut, has_one = vault)]
-    pub partner: Box<Account<'info, Partner>>,
     /// user CHECK: this is pda
     #[account(
         mut,
@@ -101,10 +97,11 @@ pub struct MeteoraWithdraw<'info> {
 #[allow(unused_variables)]
 pub fn handle(
     ctx: Context<MeteoraWithdraw>,
-    token_amount: u64,
-    minimum_lp_token_amount: u64,
+    pool_token_amount: u64,
+    maximum_token_a_amount: u64,
+    maximum_token_b_amount: u64,
 ) -> Result<()> {
-    let accounts = dynamic_amm::cpi::accounts::AddOrRemoveBalanceLiquidity{
+    let accounts = dynamic_amm::cpi::accounts::AddOrRemoveBalanceLiquidity {
         pool: ctx.accounts.pool.to_account_info(),
         lp_mint: ctx.accounts.lp_mint.to_account_info(),
         user_pool_lp: ctx.accounts.user_pool_lp.to_account_info(),
@@ -112,18 +109,22 @@ pub fn handle(
         b_vault_lp: ctx.accounts.b_vault_lp.to_account_info(),
         a_vault: ctx.accounts.a_vault.to_account_info(),
         b_vault: ctx.accounts.b_vault.to_account_info(),
-        a_vault_lp_mint: ctx.accounts.to_account_infos(),
-        b_vault_lp_mint: ctx.accounts.to_account_infos(),
-        a_token_vault: ctx.accounts.to_account_infos(),
-        b_token_vault: ctx.accounts.to_account_infos(),
-        user_a_token: ctx.accounts.to_account_infos(),
-        user_b_token: ctx.accounts.to_account_infos(),
-        user: ctx.accounts.to_account_infos(),
-        vault_program: ctx.accounts.to_account_infos(),
-        token_program: ctx.accounts.to_account_infos(),
+        a_vault_lp_mint: ctx.accounts.a_vault_lp_mint.to_account_info(),
+        b_vault_lp_mint: ctx.accounts.b_vault_lp_mint.to_account_info(),
+        a_token_vault: ctx.accounts.a_token_vault.to_account_info(),
+        b_token_vault: ctx.accounts.b_token_vault.to_account_info(),
+        user_a_token: ctx.accounts.user_a_token.to_account_info(),
+        user_b_token: ctx.accounts.user_b_token.to_account_info(),
+        user: ctx.accounts.user.to_account_info(),
+        vault_program: ctx.accounts.vault_program.to_account_info(),
+        token_program: ctx.accounts.token_program.to_account_info(),
     };
 
     let cpi_context = CpiContext::new(ctx.accounts.dynamic_amm_program.to_account_info(), accounts);
-    dynamic_amm::cpi::remove_balance_liquidity(cpi_context, pool_token_amount, maximum_token_a_amount, maximum_token_b_amount)
-    
+    dynamic_amm::cpi::remove_balance_liquidity(
+        cpi_context,
+        pool_token_amount,
+        maximum_token_a_amount,
+        maximum_token_b_amount,
+    )
 }

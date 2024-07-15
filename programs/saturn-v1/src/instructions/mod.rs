@@ -10,11 +10,11 @@ pub use finish_bond::*;
 pub mod stake;
 pub use stake::*;
 
-pub mod unstake;
-pub use unstake::*;
-
 pub mod swap;
 pub use swap::*;
+
+pub mod unstake;
+pub use unstake::*;
 
 pub mod meteora_deposit;
 pub use meteora_deposit::*;

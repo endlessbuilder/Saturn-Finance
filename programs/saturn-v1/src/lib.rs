@@ -15,7 +15,7 @@ mod utils;
 use account::*;
 use instructions::*;
 
-declare_id!("6y1CpFjLdNfs5KUh1PfkjS11FiwH5ZrxmeMtJm9yLdJF");
+declare_id!("Fby86A5qXMFMhpjmneseHYfoC5FrMrtaihxYV7jXEuFz");
 
 #[allow(unused_variables)]
 #[program]
@@ -53,18 +53,20 @@ pub mod saturn_v_1 {
 
     pub fn meteora_deposit(
         ctx: Context<MeteoraDeposit>,
-        token_amount: u64,
-        minimum_lp_token_amount: u64,
+        pool_token_amount: u64,
+        maximum_token_a_amount: u64,
+        maximum_token_b_amount: u64,
     ) -> Result<()> {
-        instructions::meteora_deposit::handle(ctx, token_amount, minimum_lp_token_amount)
+        instructions::meteora_deposit::handle(ctx, pool_token_amount, maximum_token_a_amount, maximum_token_b_amount)
     }
 
     pub fn meteora_withdraw(
         ctx: Context<MeteoraWithdraw>,
-        unmint_amount: u64,
-        min_out_amount: u64,
+        pool_token_amount: u64,
+        maximum_token_a_amount: u64,
+        maximum_token_b_amount: u64,
     ) -> Result<()> {
-        instructions::meteora_withdraw::handle(ctx, unmint_amount, min_out_amount)
+        instructions::meteora_withdraw::handle(ctx, pool_token_amount, maximum_token_a_amount, maximum_token_b_amount)
     }
 
     pub fn init_lending_accounts(ctx: Context<InitLendingAccount>) -> Result<()> {
