@@ -24,7 +24,7 @@ pub struct Initialize<'info> {
         seeds = [SEQUENCE_FLAG_SEED.as_ref()],
         bump,
         payer = admin,
-        space = 6
+        space = 7
     )]
     pub sequence_flag: Account<'info, SequenceFlag>,
 
@@ -46,6 +46,7 @@ pub fn handle(ctx: Context<Initialize>) -> Result<()> {
     sequence_flag.flag_kamino = false;
     sequence_flag.flag_meteora = false;
     sequence_flag.flag_jupiter = false;
+    sequence_flag.flag_swap = false;
 
     Ok(())
 }
