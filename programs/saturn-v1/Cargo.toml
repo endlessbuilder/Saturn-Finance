@@ -41,6 +41,13 @@ dynamic-amm = {path = "../dynamic-amm", features = ["cpi"]}
 kamino_lending = {path = "../klend", features=["cpi", "no-entrypoint"]}
 marginfi = {path ="../marginfi-v2", features=["cpi","devnet", "no-entrypoint"]}
 
+#  for get value in meteora amm
+spl-stake-pool = { git = "https://github.com/solana-labs/solana-program-library", rev = "cd79bba17331235ab489bae56600043ea853c70b", features = [
+    "no-entrypoint",
+] }
+meteora-marinade-sdk = { version = "0.1.0", features = ["cpi"] }
+
+
 
 
 

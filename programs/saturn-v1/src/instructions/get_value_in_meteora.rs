@@ -4,6 +4,7 @@ use anchor_spl::token::{Mint, Token, TokenAccount, Transfer};
 use crate::error::*;
 use crate::account::Treasury;
 use crate::constants::{TREASURY_AUTHORITY_SEED, TREASURY_SEED, TREASURY_METEORA_LP};
+use dynamic_amm::state::Pool;
 
 #[derive(Accounts)]
 pub struct GetValueInMeteora<'info> {
@@ -28,27 +29,20 @@ pub struct GetValueInMeteora<'info> {
     pub treasury: Account<'info, Treasury>,
 
     /// CHECK: Pool account (PDA)
-    pub pool: UncheckedAccount<'info>,
-    /// CHECK: LP token mint of the pool
-    pub lp_mint: UncheckedAccount<'info>,
-    /// CHECK: LP token account of vault A. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
-    pub a_vault_lp: UncheckedAccount<'info>,
-    /// CHECK: LP token account of vault B. Used to receive/burn the vault LP upon deposit/withdraw from the vault.
-    pub b_vault_lp: UncheckedAccount<'info>,
-    /// CHECK: Vault account for token a. token a of the pool will be deposit / withdraw from this vault account.
-    pub a_vault: UncheckedAccount<'info>,
-    /// CHECK: Vault account for token b. token b of the pool will be deposit / withdraw from this vault account.
-    pub b_vault: UncheckedAccount<'info>,
-    /// CHECK: LP token mint of vault a
-    pub a_vault_lp_mint: UncheckedAccount<'info>,
-    /// CHECK: LP token mint of vault b
-    pub b_vault_lp_mint: UncheckedAccount<'info>,
+    pub pool: Account<'info, Pool>,
+
+    #[account(
+        mut,
+        constraint = user_pool_lp.mint.key() == pool.lp_mint,
+    )]
+    pub user_pool_lp: Account<'info, TokenAccount>
 
 }
 
 pub fn handle(ctx: Context<GetValueInMeteora>) -> Result<u64> {
-
-    
+    let pool = ctx.accounts.pool;
+    let user_pool_lp = &mut ctx.accounts.user_pool_lp;
+        
 
    Ok(0)
 }
