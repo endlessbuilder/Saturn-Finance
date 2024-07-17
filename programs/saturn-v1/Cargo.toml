@@ -38,6 +38,8 @@ toml_datetime = "0.6.5"
 winnow = "0.6.5"
 
 dynamic-amm = {path = "../dynamic-amm", features = ["cpi"]}
+dynamic-vault = {path = "../dynamic-vault", features = ["cpi"]}
+mercurial-vault = { path = "../vault", features = ["cpi"] }
 kamino_lending = {path = "../klend", features=["cpi", "no-entrypoint"]}
 marginfi = {path ="../marginfi-v2", features=["cpi","devnet", "no-entrypoint"]}
 

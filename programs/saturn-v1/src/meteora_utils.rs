@@ -24,6 +24,7 @@ pub fn get_stake_pool_virtual_price(
 
 /// Marinade module consists of functions to support marinade depeg pool operation
 pub mod marinade {
+    use super::*;
     pub fn get_virtual_price(bytes: &[u8]) -> Option<u64> {
         let stake_state = State::deserialize(&mut &bytes[8..]).ok()?;
 
@@ -43,6 +44,7 @@ pub mod marinade {
 
 /// Solido module consists of functions to support solido depeg pool operation
 pub mod solido {
+    use super::*;
     pub fn get_virtual_price(bytes: &[u8]) -> Option<u64> {
         let mut stsol_supply_byte = [0u8; 8];
         let mut stol_balance_bytes = [0u8; 8];
@@ -68,6 +70,7 @@ pub mod solido {
 
 /// SPL stake pool module consists of functions to support SPL stake pool based depeg pool operation
 pub mod spl_stake {
+    use super::*;
     pub fn get_virtual_price(bytes: &[u8]) -> Option<u64> {
         let stake: StakePool = borsh0_10::try_from_slice_unchecked(bytes).ok()?;
 
