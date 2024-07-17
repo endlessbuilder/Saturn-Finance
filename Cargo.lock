@@ -1710,6 +1710,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "dynamic-vault"
+version = "0.1.0"
+dependencies = [
+ "anchor-lang 0.29.0",
+ "anchor-spl 0.29.0",
+]
+
+[[package]]
 name = "eager"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4156,6 +4164,7 @@ dependencies = [
  "bytemuck",
  "constant_time_eq",
  "dynamic-amm",
+ "dynamic-vault",
  "fixed",
  "fixed-macro",
  "kamino_lending",

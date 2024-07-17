@@ -3,7 +3,8 @@ members = [
     "programs/saturn-v1", 
     "programs/dynamic-amm", 
     "programs/klend", 
-    "programs/marginfi-v2"
+    "programs/marginfi-v2",
+    "programs/dynamic-vault",
 ]
 
 resolver = "2"
