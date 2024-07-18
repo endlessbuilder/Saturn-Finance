@@ -258,7 +258,7 @@ export type SaturnV1 = {
       "name": "swap",
       "accounts": [
         {
-          "name": "payer",
+          "name": "signer",
           "isMut": true,
           "isSigner": true
         },
@@ -268,22 +268,47 @@ export type SaturnV1 = {
           "isSigner": false
         },
         {
-          "name": "fromTreasuryTokenAccount",
+          "name": "treasury",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "fromMint",
+          "name": "wbtcTreasuryTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "wbtcMint",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "toTreasuryTokenAccount",
+          "name": "usdtTreasuryTokenAccount",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "toMint",
+          "name": "usdtMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "usdcTreasuryTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "solMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "priceUpdate",
           "isMut": false,
           "isSigner": false
         },
@@ -323,12 +348,131 @@ export type SaturnV1 = {
           "isSigner": true
         },
         {
-          "name": "partner",
+          "name": "treasuryAuthority",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "partner info CHECK:"
+            "user CHECK: this is pda"
           ]
+        },
+        {
+          "name": "treasury",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "sequenceFlag",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "pool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "lpMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userPoolLp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aVaultLp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bVaultLp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aVaultLpMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bVaultLpMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aTokenVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bTokenVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userAToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userBToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "vaultProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "dynamicAmmProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "poolTokenAmount",
+          "type": "u64"
+        },
+        {
+          "name": "maximumTokenAAmount",
+          "type": "u64"
+        },
+        {
+          "name": "maximumTokenBAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "meteoraWithdraw",
+      "accounts": [
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "treasuryAuthority",
@@ -349,88 +493,74 @@ export type SaturnV1 = {
           "isSigner": false
         },
         {
-          "name": "meteoraVaultProgram",
+          "name": "pool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "lpMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userPoolLp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aVaultLp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bVaultLp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aVaultLpMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bVaultLpMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aTokenVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bTokenVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userAToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userBToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
           "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "vaultLpMint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "treasuryToken",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "treasury token CHECK:"
-          ]
-        },
-        {
-          "name": "treasuryLp",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "treasury lp CHECK:"
-          ]
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "tokenAmount",
-          "type": "u64"
-        },
-        {
-          "name": "minimumLpTokenAmount",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "meteoraWithdraw",
-      "accounts": [
-        {
-          "name": "signer",
-          "isMut": true,
           "isSigner": true
-        },
-        {
-          "name": "partner",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "partner info CHECK:"
-          ]
-        },
-        {
-          "name": "treasuryAuthority",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "treasury",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "sequenceFlag",
-          "isMut": true,
-          "isSigner": false
         },
         {
           "name": "vaultProgram",
@@ -438,49 +568,27 @@ export type SaturnV1 = {
           "isSigner": false
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "vaultLpMint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "treasuryToken",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "treasury token CHECK:"
-          ]
-        },
-        {
-          "name": "treasuryLp",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "treasury lp CHECK:"
-          ]
-        },
-        {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "dynamicAmmProgram",
           "isMut": false,
           "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "unmintAmount",
+          "name": "poolTokenAmount",
           "type": "u64"
         },
         {
-          "name": "minOutAmount",
+          "name": "maximumTokenAAmount",
+          "type": "u64"
+        },
+        {
+          "name": "maximumTokenBAmount",
           "type": "u64"
         }
       ]
@@ -635,7 +743,7 @@ export type SaturnV1 = {
           "isSigner": false
         },
         {
-          "name": "instructionSysvarAccount",
+          "name": "instruction",
           "isMut": false,
           "isSigner": false
         },
@@ -686,7 +794,7 @@ export type SaturnV1 = {
           "isSigner": false
         },
         {
-          "name": "instructions",
+          "name": "instruction",
           "isMut": false,
           "isSigner": false
         },
@@ -919,20 +1027,22 @@ export type SaturnV1 = {
           "isSigner": false
         },
         {
-          "name": "treasuryLp",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "treasury lp CHECK:"
-          ]
+          "name": "pool",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          "name": "vaultLpMint",
+          "name": "aVault",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "meteoraVault",
+          "name": "bVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userPoolLp",
           "isMut": true,
           "isSigner": false
         }
@@ -1296,70 +1406,6 @@ export type SaturnV1 = {
       }
     },
     {
-      "name": "partner",
-      "docs": [
-        "Partner struct"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "partnerToken",
-            "docs": [
-              "partner token address, which is used to get fee later (fee is in native token)"
-            ],
-            "type": "publicKey"
-          },
-          {
-            "name": "vault",
-            "docs": [
-              "vault address that partner integrates"
-            ],
-            "type": "publicKey"
-          },
-          {
-            "name": "outstandingFee",
-            "docs": [
-              "total fee that partner get, but haven't sent yet"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "feeRatio",
-            "docs": [
-              "fee ratio partner get in performance fee"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "cumulativeFee",
-            "type": "u128"
-          },
-          {
-            "name": "currentVirtualPrice",
-            "docs": [
-              "current virtual price"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "lpToken",
-            "docs": [
-              "lp_token that user holds"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "bump",
-            "docs": [
-              "user bump"
-            ],
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
       "name": "sequenceFlag",
       "type": {
         "kind": "struct",
@@ -1386,6 +1432,10 @@ export type SaturnV1 = {
           },
           {
             "name": "flagJupiter",
+            "type": "bool"
+          },
+          {
+            "name": "flagSwap",
             "type": "bool"
           }
         ]
@@ -1451,10 +1501,6 @@ export type SaturnV1 = {
           {
             "name": "marginfiAllocation",
             "type": "f64"
-          },
-          {
-            "name": "jupiterPerpsAssets",
-            "type": "u64"
           },
           {
             "name": "jupiterPerpsValue",
@@ -1714,18 +1760,6 @@ export type SaturnV1 = {
           }
         ]
       }
-    }
-  ],
-  "events": [
-    {
-      "name": "PartnerFee",
-      "fields": [
-        {
-          "name": "fee",
-          "type": "u64",
-          "index": false
-        }
-      ]
     }
   ],
   "errors": [
@@ -2052,7 +2086,7 @@ export const IDL: SaturnV1 = {
       "name": "swap",
       "accounts": [
         {
-          "name": "payer",
+          "name": "signer",
           "isMut": true,
           "isSigner": true
         },
@@ -2062,22 +2096,47 @@ export const IDL: SaturnV1 = {
           "isSigner": false
         },
         {
-          "name": "fromTreasuryTokenAccount",
+          "name": "treasury",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "fromMint",
+          "name": "wbtcTreasuryTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "wbtcMint",
           "isMut": false,
           "isSigner": false
         },
         {
-          "name": "toTreasuryTokenAccount",
+          "name": "usdtTreasuryTokenAccount",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "toMint",
+          "name": "usdtMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "usdcTreasuryTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "usdcMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "solMint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "priceUpdate",
           "isMut": false,
           "isSigner": false
         },
@@ -2117,12 +2176,131 @@ export const IDL: SaturnV1 = {
           "isSigner": true
         },
         {
-          "name": "partner",
+          "name": "treasuryAuthority",
           "isMut": true,
           "isSigner": false,
           "docs": [
-            "partner info CHECK:"
+            "user CHECK: this is pda"
           ]
+        },
+        {
+          "name": "treasury",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "sequenceFlag",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "pool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "lpMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userPoolLp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aVaultLp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bVaultLp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aVaultLpMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bVaultLpMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aTokenVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bTokenVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userAToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userBToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "vaultProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "dynamicAmmProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "poolTokenAmount",
+          "type": "u64"
+        },
+        {
+          "name": "maximumTokenAAmount",
+          "type": "u64"
+        },
+        {
+          "name": "maximumTokenBAmount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "meteoraWithdraw",
+      "accounts": [
+        {
+          "name": "signer",
+          "isMut": true,
+          "isSigner": true
         },
         {
           "name": "treasuryAuthority",
@@ -2143,88 +2321,74 @@ export const IDL: SaturnV1 = {
           "isSigner": false
         },
         {
-          "name": "meteoraVaultProgram",
+          "name": "pool",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "lpMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userPoolLp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aVaultLp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bVaultLp",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aVaultLpMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bVaultLpMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "aTokenVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "bTokenVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userAToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userBToken",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "user",
           "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "vaultLpMint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "treasuryToken",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "treasury token CHECK:"
-          ]
-        },
-        {
-          "name": "treasuryLp",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "treasury lp CHECK:"
-          ]
-        },
-        {
-          "name": "tokenProgram",
-          "isMut": false,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "tokenAmount",
-          "type": "u64"
-        },
-        {
-          "name": "minimumLpTokenAmount",
-          "type": "u64"
-        }
-      ]
-    },
-    {
-      "name": "meteoraWithdraw",
-      "accounts": [
-        {
-          "name": "signer",
-          "isMut": true,
           "isSigner": true
-        },
-        {
-          "name": "partner",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "partner info CHECK:"
-          ]
-        },
-        {
-          "name": "treasuryAuthority",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "treasury",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "sequenceFlag",
-          "isMut": true,
-          "isSigner": false
         },
         {
           "name": "vaultProgram",
@@ -2232,49 +2396,27 @@ export const IDL: SaturnV1 = {
           "isSigner": false
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "tokenVault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "vaultLpMint",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "treasuryToken",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "treasury token CHECK:"
-          ]
-        },
-        {
-          "name": "treasuryLp",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "treasury lp CHECK:"
-          ]
-        },
-        {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "dynamicAmmProgram",
           "isMut": false,
           "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "unmintAmount",
+          "name": "poolTokenAmount",
           "type": "u64"
         },
         {
-          "name": "minOutAmount",
+          "name": "maximumTokenAAmount",
+          "type": "u64"
+        },
+        {
+          "name": "maximumTokenBAmount",
           "type": "u64"
         }
       ]
@@ -2429,7 +2571,7 @@ export const IDL: SaturnV1 = {
           "isSigner": false
         },
         {
-          "name": "instructionSysvarAccount",
+          "name": "instruction",
           "isMut": false,
           "isSigner": false
         },
@@ -2480,7 +2622,7 @@ export const IDL: SaturnV1 = {
           "isSigner": false
         },
         {
-          "name": "instructions",
+          "name": "instruction",
           "isMut": false,
           "isSigner": false
         },
@@ -2713,20 +2855,22 @@ export const IDL: SaturnV1 = {
           "isSigner": false
         },
         {
-          "name": "treasuryLp",
-          "isMut": true,
-          "isSigner": false,
-          "docs": [
-            "treasury lp CHECK:"
-          ]
+          "name": "pool",
+          "isMut": false,
+          "isSigner": false
         },
         {
-          "name": "vaultLpMint",
+          "name": "aVault",
           "isMut": true,
           "isSigner": false
         },
         {
-          "name": "meteoraVault",
+          "name": "bVault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "userPoolLp",
           "isMut": true,
           "isSigner": false
         }
@@ -3090,70 +3234,6 @@ export const IDL: SaturnV1 = {
       }
     },
     {
-      "name": "partner",
-      "docs": [
-        "Partner struct"
-      ],
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "partnerToken",
-            "docs": [
-              "partner token address, which is used to get fee later (fee is in native token)"
-            ],
-            "type": "publicKey"
-          },
-          {
-            "name": "vault",
-            "docs": [
-              "vault address that partner integrates"
-            ],
-            "type": "publicKey"
-          },
-          {
-            "name": "outstandingFee",
-            "docs": [
-              "total fee that partner get, but haven't sent yet"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "feeRatio",
-            "docs": [
-              "fee ratio partner get in performance fee"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "cumulativeFee",
-            "type": "u128"
-          },
-          {
-            "name": "currentVirtualPrice",
-            "docs": [
-              "current virtual price"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "lpToken",
-            "docs": [
-              "lp_token that user holds"
-            ],
-            "type": "u64"
-          },
-          {
-            "name": "bump",
-            "docs": [
-              "user bump"
-            ],
-            "type": "u8"
-          }
-        ]
-      }
-    },
-    {
       "name": "sequenceFlag",
       "type": {
         "kind": "struct",
@@ -3180,6 +3260,10 @@ export const IDL: SaturnV1 = {
           },
           {
             "name": "flagJupiter",
+            "type": "bool"
+          },
+          {
+            "name": "flagSwap",
             "type": "bool"
           }
         ]
@@ -3245,10 +3329,6 @@ export const IDL: SaturnV1 = {
           {
             "name": "marginfiAllocation",
             "type": "f64"
-          },
-          {
-            "name": "jupiterPerpsAssets",
-            "type": "u64"
           },
           {
             "name": "jupiterPerpsValue",
@@ -3508,18 +3588,6 @@ export const IDL: SaturnV1 = {
           }
         ]
       }
-    }
-  ],
-  "events": [
-    {
-      "name": "PartnerFee",
-      "fields": [
-        {
-          "name": "fee",
-          "type": "u64",
-          "index": false
-        }
-      ]
     }
   ],
   "errors": [

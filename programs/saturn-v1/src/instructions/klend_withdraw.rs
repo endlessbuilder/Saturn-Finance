@@ -57,7 +57,7 @@ pub struct KlendWithdraw<'info> {
 
     /// CHECK: address on account checked
     #[account(address = sysvar::instructions::ID)]
-    pub instructions: AccountInfo<'info>,
+    pub instruction: AccountInfo<'info>,
 
     /*
      * klend accounts
@@ -117,7 +117,7 @@ pub fn handle(ctx: Context<KlendWithdraw>, amount: u64) -> Result<()> {
                     .to_account_info(),
                 // placeholder_user_destination_collateral: Some(ctx.accounts.user_destination_collateral.clone().expect("REASON").to_account_info()),
                 token_program: ctx.accounts.token_program.to_account_info(),
-                instruction_sysvar_account: ctx.accounts.instructions.to_account_info(),
+                instruction_sysvar_account: ctx.accounts.instruction.to_account_info(),
                 user_destination_liquidity: ctx
                     .accounts
                     .user_destination_liquidity

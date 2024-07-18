@@ -87,11 +87,11 @@ pub struct MeteoraWithdraw<'info> {
 
     /// CHECK: Vault program. the pool will deposit/withdraw liquidity from the vault.
     pub vault_program: UncheckedAccount<'info>,
-    /// CHECK: Token program.
-    pub token_program: UncheckedAccount<'info>,
     #[account(address = dynamic_amm::ID)]
     /// CHECK: Dynamic AMM program account
     pub dynamic_amm_program: UncheckedAccount<'info>,
+    /// CHECK: Token program.
+    pub token_program: UncheckedAccount<'info>,
 }
 
 #[allow(unused_variables)]

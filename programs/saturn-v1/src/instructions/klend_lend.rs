@@ -90,7 +90,7 @@ pub struct KaminoLend<'info> {
 
     #[account(address = SysInstructions::id())]
     /// CHECK:address checked
-    pub instruction_sysvar_account: AccountInfo<'info>,
+    pub instruction: AccountInfo<'info>,
     pub klend_program: Program<'info, KaminoLending>,
 }
 
@@ -125,7 +125,7 @@ pub fn handle(ctx: Context<KaminoLend>, amount: u64) -> Result<()> {
                 token_program: ctx.accounts.token_program.to_account_info(),
                 instruction_sysvar_account: ctx
                     .accounts
-                    .instruction_sysvar_account
+                    .instruction
                     .to_account_info(),
                 // user_destination_collateral: todo!(),
             },
