@@ -93,7 +93,8 @@ pub struct KlendWithdraw<'info> {
     pub user_destination_collateral: Box<Account<'info, TokenAccount>>,
 }
 
-pub fn handle(ctx: Context<KlendWithdraw>, amount: u64) -> Result<()> {
+pub fn handle(ctx: Context<KlendWithdraw>) -> Result<()> {
+    let amount = ctx.accounts.treasury.kamino_lend_assets;
     // let owner_key = ctx.accounts.saturn_lending.treasury_admin;
     let signer_seeds: &[&[u8]] = &[
         TREASURY_AUTHORITY_SEED.as_ref(),
@@ -128,9 +129,6 @@ pub fn handle(ctx: Context<KlendWithdraw>, amount: u64) -> Result<()> {
         ),
         amount,
     )?;
-
-    let treasury = &mut ctx.accounts.treasury;
-    treasury.treasury_value += amount as u64;
 
     ctx.accounts.sequence_flag.flag_kamino = true;
 

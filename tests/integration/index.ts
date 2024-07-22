@@ -15,7 +15,8 @@ import {
     SystemProgram,
     SYSVAR_RENT_PUBKEY,
     SYSVAR_INSTRUCTIONS_PUBKEY,
-    Commitment
+    Commitment,
+    TransactionInstruction
 } from "@solana/web3.js";
 
 import {
@@ -51,11 +52,12 @@ import {
     APRICOT_USER_INFO_SIGNER_PREFIX,
     FEE_DENOMINATOR,
     DEFAULT_FEE_RATIO,
-    PRICE_PRECISION
+    PRICE_PRECISION,
+    SEQUENCE_FLAG_SEED
 } from "./constants";
 
 import { DefaultProgramAccounts, Result, SaturnV1Implementation, SaturnV1Program } from "./types"
-import { SaturnV1 as SaturnV1Idl, IDL } from "./idl/saturn_v_1";
+import { SaturnV1 as SaturnV1Idl, IDL } from "../../target/types/saturn_v_1";
 
 const defaultSystemAccounts: DefaultProgramAccounts = {
     systemProgram: SystemProgram.programId,
@@ -71,7 +73,7 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
     // SaturnV1
     private program: SaturnV1Program;
 
-    private constructor(
+    constructor(
         program: SaturnV1Program,
         opt?: {
             cluster?: Cluster;
@@ -119,6 +121,37 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         return "";
     }
 
+    public getTreasury(): PublicKey {
+        return this.getPda([Buffer.from(TREASURY_SEED)]);
+    }
+    public getTreasuryAuthority(): PublicKey {
+        return this.getPda([Buffer.from(TREASURY_AUTHORITY_SEED)]);
+    }
+    public getEscrow(): PublicKey {
+        return this.getPda([Buffer.from(ESCROW)]);
+    }
+    public getUserStakeAccount(): PublicKey {
+        return this.getPda([Buffer.from[PERSONAL_SEED]]);
+    }
+    public getSequenceFlag(): PublicKey {
+        return this.getPda([Buffer.from(SEQUENCE_FLAG_SEED)]);
+    }
+    public getKlendProgramId(): PublicKey {
+        return new PublicKey("KLend2g3cP87fffoy8q1mQqGKjrxjC8boSyAYavgmjD");
+    }
+    public getMarginfiProgramId(): PublicKey {
+        return new PublicKey("MFv2hWf31Z9kbCa1snEPYctwafyhdvnV7FZnsebVacA");
+    }
+    public getDynamicAmmProgramId(): PublicKey {
+        return new PublicKey("ammbh4CQztZ6txJ8AaQgPsWjd6o7GhmvopS2JAo5bCB");
+    }
+    public getDynamicVaultProgramId(): PublicKey {
+        return new PublicKey("24Uqj9JCLxUeoC3hGfh5W3s9FM9uCHDS2SG3LYwBpyTi");
+    }
+    public getJupiterProgramId(): PublicKey {
+        return new PublicKey("JUP6LkbZbjS1jKKwapdHNy74zcZ3tLUZoi5QNyVTaV4");
+    }
+
     public async validateATA(
         ata: PublicKey,
         mint: PublicKey,
@@ -138,33 +171,37 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
 
     public async initialize(
         admin: PublicKey,
-        treasury: PublicKey,
-        sequenceFlag: PublicKey,
+        // treasury: PublicKey,
+        // sequenceFlag: PublicKey,
     ): Promise<Result> {
+
+        let treasury = this.getTreasury();
+        let treasuryAuthority = this.getTreasuryAuthority();
+        let sequenceFlag = this.getSequenceFlag();
 
         //constraints here
         let msg = "";
 
         //pda check
-        msg = this.pdaCheck([
-            { pdaIdentifier: "treasury", pdaSeeds: [Buffer.from(TREASURY_SEED)], account: treasury }
-        ]);
+        // msg = this.pdaCheck([
+        //     { pdaIdentifier: "treasury", pdaSeeds: [Buffer.from(TREASURY_SEED)], account: treasury }
+        // ]);
 
         //treasury
-        const treasuryAccount = await this.program.account.treasury.fetchNullable(treasury);
-        if (treasuryAccount)
-            msg = "Invalid treasury account.";
+        // const treasuryAccount = await this.program.account.treasury.fetchNullable(treasury);
+        // if (treasuryAccount)
+        //     msg = "Invalid treasury account.";
 
-        if (msg !== "")
-            return {
-                success: false,
-                msg: msg,
-                tx: null
-            };
+        // if (msg !== "")
+        //     return {
+        //         success: false,
+        //         msg: msg,
+        //         ix: null
+        //     };
         //
 
-        let initializeTx: Transaction;
-        initializeTx = await this.program.methods
+        let initializeIx: TransactionInstruction;
+        initializeIx = await this.program.methods
             .initialize()
             .accounts({
                 admin,
@@ -174,12 +211,12 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: admin, ...(await this.connection.getLatestBlockhash()) }).add(initializeTx)
+            ix: initializeIx
         };
     }
 
@@ -187,16 +224,23 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         tokenAmount: BN,
         spotPrice: BN,
         creator: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
-        escrow: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // treasury: PublicKey,
+        // escrow: PublicKey,
         creatorTokenAccount,
         treasuryTokenAccount,
         treasuryStfTokenAccount,
-        priceUpdate,
+        solPriceUpdate,
+        usdcPriceUpdate,
+        wbtcPriceUpdate,
         tokenMintAddress,
         stfTokenMint,
     ): Promise<Result> {
+
+        let treasury = this.getTreasury();
+        let treasuryAuthority = this.getTreasuryAuthority();
+        let sequenceFlag = this.getSequenceFlag();
+        let escrow = this.getEscrow();
 
         //constraints here
         let msg = "";
@@ -235,13 +279,13 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             return {
                 success: false,
                 msg: msg,
-                tx: null
+                ix: null
             };
 
         //
 
-        let applyBondTx: Transaction;
-        applyBondTx = await this.program.methods
+        let applyBondIx: TransactionInstruction;
+        applyBondIx = await this.program.methods
             .applyBond({ tokenAmount, spotPrice })
             .accounts({
                 creator,
@@ -251,31 +295,36 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
                 creatorTokenAccount,
                 treasuryTokenAccount,
                 treasuryStfTokenAccount,
-                priceUpdate,
+                solPriceUpdate,
+                usdcPriceUpdate,
+                bonkPriceUpdate,
                 tokenMintAddress,
                 stfTokenMint,
                 ...defaultSystemAccounts
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: creator, ...(await this.connection.getLatestBlockhash()) }).add(applyBondTx)
+            ix: applyBondIx
         };
     }
 
     public async finishBond(
         user: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // treasury: PublicKey,
         destStfAccount: PublicKey,
-        escrow: PublicKey,
-        stfTokenMint,
-        tokenProgram
+        // escrow: PublicKey,
+        stfTokenMint: PublicKey,
     ): Promise<Result> {
+
+        let treasury = this.getTreasury();
+        let treasuryAuthority = this.getTreasuryAuthority();
+        let escrow = this.getEscrow();
 
         //constraints here
         let msg = "";
@@ -305,12 +354,12 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             return {
                 success: false,
                 msg: msg,
-                tx: null
+                ix: null
             };
         //
 
-        let finishBondTx: Transaction;
-        finishBondTx = await this.program.methods
+        let finishBondIx: TransactionInstruction;
+        finishBondIx = await this.program.methods
             .finishBond()
             .accounts({
                 user,
@@ -323,32 +372,36 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: user, ...(await this.connection.getLatestBlockhash()) }).add(finishBondTx)
+            ix: finishBondIx
         };
     }
 
     public async stakeStf(
         amountToStake: BN,
         user: PublicKey,
-        userStakeAccount: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
+        // userStakeAccount: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // treasury: PublicKey,
         userTokenAccount: PublicKey,
         treasuryTokenAccount: PublicKey,
         stfTokenMint: PublicKey,
     ): Promise<Result> {
 
+        let treasury = this.getTreasury();
+        let treasuryAuthority = this.getTreasuryAuthority();
+        let userStakeAccount = this.getUserStakeAccount();
+
         //constraints here
 
         //
 
-        let stakeStfTx: Transaction;
-        stakeStfTx = await this.program.methods
+        let stakeStfIx: TransactionInstruction;
+        stakeStfIx = await this.program.methods
             .stakeStf(amountToStake)
             .accounts({
                 user,
@@ -362,32 +415,36 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: user, ...(await this.connection.getLatestBlockhash()) }).add(stakeStfTx)
+            ix: stakeStfIx
         };
     }
 
     public async unstakeStf(
         amountToUnstake: BN,
         user: PublicKey,
-        userStakeAccount: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
+        // userStakeAccount: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // treasury: PublicKey,
         userTokenAccount: PublicKey,
         treasuryTokenAccount: PublicKey,
         stfTokenMint: PublicKey
     ): Promise<Result> {
 
+        let treasury = this.getTreasury();
+        let treasuryAuthority = this.getTreasuryAuthority();
+        let userStakeAccount = this.getUserStakeAccount();
+
         //constraints here
 
         //
 
-        let unstakeStfTx: Transaction;
-        unstakeStfTx = await this.program.methods
+        let unstakeStfIx: TransactionInstruction;
+        unstakeStfIx = await this.program.methods
             .unstakeStf(amountToUnstake)
             .accounts({
                 user,
@@ -401,12 +458,12 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: user, ...(await this.connection.getLatestBlockhash()) }).add(unstakeStfTx)
+            ix: unstakeStfIx
         };
     }
 
@@ -414,49 +471,44 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         data: any,
         fromAmount: BN,
         signer: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
-        wbtcTreasuryTokenAccount: PublicKey,
-        wbtcMint: PublicKey,
-        usdtTreasuryTokenAccount: PublicKey,
-        usdtMint: PublicKey,
-        usdcTreasuryTokenAccount: PublicKey,
-        usdcMint: PublicKey,
-        solMint: PublicKey,
-        priceUpdate: PublicKey,
-        jupiterProgram: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // treasury: PublicKey,
+        fromTreasuryTokenAccount: PublicKey,
+        fromMint: PublicKey,
+        toTreasuryTokenAccount: PublicKey,
+        toMint: PublicKey,
     ): Promise<Result> {
+
+        let treasury = this.getTreasury();
+        let treasuryAuthority = this.getTreasuryAuthority();
+        let jupiterProgram = this.getJupiterProgramId();
 
         //constraints here
 
         //
 
-        let swapTx: Transaction;
-        swapTx = await this.program.methods
+        let swapIx: TransactionInstruction;
+        swapIx = await this.program.methods
             .swap(Buffer.from(data, "base64"), fromAmount)
             .accounts({
                 signer,
                 treasuryAuthority,
                 treasury,
-                wbtcTreasuryTokenAccount,
-                wbtcMint,
-                usdtTreasuryTokenAccount,
-                usdtMint,
-                usdcTreasuryTokenAccount,
-                usdcMint,
-                solMint,
-                priceUpdate,
+                fromTreasuryTokenAccount,
+                fromMint,
+                toTreasuryTokenAccount,
+                toMint,
                 jupiterProgram,
                 ...defaultSystemAccounts
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: signer, ...(await this.connection.getLatestBlockhash()) }).add(swapTx)
+            ix: swapIx
         };
     }
 
@@ -465,8 +517,8 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         maximumTokenAAmount: BN,
         maximumTokenBAmount: BN,
         signer: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // treasury: PublicKey,
         sequenceFlag: PublicKey,
         pool: PublicKey,
         lpMint: PublicKey,
@@ -486,12 +538,15 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         dynamicAmmProgram: PublicKey,
     ): Promise<Result> {
 
+        let treasury = this.getTreasury();
+        let treasuryAuthority = this.getTreasuryAuthority();
+
         //constraints here
 
         //
 
-        let meteoraDepositTx: Transaction;
-        meteoraDepositTx = await this.program.methods
+        let meteoraDepositIx: TransactionInstruction;
+        meteoraDepositIx = await this.program.methods
             .meteoraDeposit(poolTokenAmount, maximumTokenAAmount, maximumTokenBAmount)
             .accounts({
                 signer,
@@ -518,12 +573,12 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: signer, ...(await this.connection.getLatestBlockhash()) }).add(meteoraDepositTx)
+            ix: meteoraDepositIx
         };
     }
 
@@ -532,8 +587,8 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         maximumTokenAAmount: BN,
         maximumTokenBAmount: BN,
         signer: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // treasury: PublicKey,
         sequenceFlag: PublicKey,
         pool: PublicKey,
         lpMint: PublicKey,
@@ -553,12 +608,15 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         dynamicAmmProgram: PublicKey,
     ): Promise<Result> {
 
+        let treasury = this.getTreasury();
+        let treasuryAuthority = this.getTreasuryAuthority();
+
         //constraints here
 
         //
 
-        let meteoraWithdrawTx: Transaction;
-        meteoraWithdrawTx = await this.program.methods
+        let meteoraWithdrawIx: TransactionInstruction;
+        meteoraWithdrawIx = await this.program.methods
             .meteoraWithdraw(poolTokenAmount, maximumTokenAAmount, maximumTokenBAmount) // unknown error, recommed that params may be defined at the right above to context
             .accounts({
                 signer,
@@ -585,21 +643,21 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: signer, ...(await this.connection.getLatestBlockhash()) }).add(meteoraWithdrawTx)
+            ix: meteoraWithdrawIx
         };
     }
 
     public async initLendingAccounts(
         owner: PublicKey,
-        treasuryAuthority: PublicKey,
-        marginfiProgram: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // marginfiProgram: PublicKey,
         marginfiGroup: PublicKey,
-        klendProgram: PublicKey,
+        // klendProgram: PublicKey,
         seed1Account: PublicKey,
         seed2Account: PublicKey,
         lendingMarket: PublicKey,
@@ -608,12 +666,17 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         marginfiAccount: PublicKey,
     ): Promise<Result> {
 
+
+        let treasuryAuthority = this.getPda([Buffer.from(TREASURY_AUTHORITY_SEED)]);
+        let marginfiProgram = this.getMarginfiProgramId();
+        let klendProgram = this.getKlendProgramId();
+
         //constraints here
 
         //
 
-        let initLendingAccountsTx: Transaction;
-        initLendingAccountsTx = await this.program.methods
+        let initLendingAccountsIx: TransactionInstruction;
+        initLendingAccountsIx = await this.program.methods
             .initLendingAccounts()
             .accounts({
                 owner,
@@ -631,21 +694,20 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: owner, ...(await this.connection.getLatestBlockhash()) }).add(initLendingAccountsTx)
+            ix: initLendingAccountsIx
         };
     }
 
     public async klendLend(
-        amount: BN,
         signer: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
-        sequenceFlag: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // treasury: PublicKey,
+        // sequenceFlag: PublicKey,
         obligation: PublicKey,
         lendingMarket: PublicKey,
         lendingMarketAuthority: PublicKey,
@@ -655,16 +717,21 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         reserveDestinationDepositCollateral: PublicKey,
         userSourceLiquidity: PublicKey,
         userDestinationCollateral: PublicKey,
-        klendProgram: PublicKey,
+        // klendProgram: PublicKey,
     ): Promise<Result> {
+
+        let treasury = this.getPda([Buffer.from(TREASURY_SEED)]);
+        let sequenceFlag = this.getPda([Buffer.from(SEQUENCE_FLAG_SEED)]);
+        let treasuryAuthority = this.getPda([Buffer.from(TREASURY_AUTHORITY_SEED)]);
+        let klendProgram = this.getKlendProgramId();
 
         //constraints here
 
         //
 
-        let klendLendTx: Transaction;
-        klendLendTx = await this.program.methods
-            .klendLend(amount)
+        let klendLendIx: TransactionInstruction;
+        klendLendIx = await this.program.methods
+            .klendLend()
             .accounts({
                 signer,
                 treasuryAuthority,
@@ -684,23 +751,23 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: signer, ...(await this.connection.getLatestBlockhash()) }).add(klendLendTx)
+            ix: klendLendIx
         };
     }
 
     public async klendWithdraw(
         amount: BN,
         signer: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
-        sequenceFlag: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // treasury: PublicKey,
+        // sequenceFlag: PublicKey,
         userDestinationLiquidity: PublicKey,
-        klendProgram: PublicKey,
+        // klendProgram: PublicKey,
         obligation: PublicKey,
         lendingMarket: PublicKey,
         withdrawReserve: PublicKey,
@@ -711,12 +778,17 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         userDestinationCollateral: PublicKey,
     ): Promise<Result> {
 
+        let treasury = this.getPda([Buffer.from(TREASURY_SEED)]);
+        let sequenceFlag = this.getPda([Buffer.from(SEQUENCE_FLAG_SEED)]);
+        let treasuryAuthority = this.getPda([Buffer.from(TREASURY_AUTHORITY_SEED)]);
+        let klendProgram = this.getKlendProgramId();
+
         //constraints here
 
         //
 
-        let klendWithdrawTx: Transaction;
-        klendWithdrawTx = await this.program.methods
+        let klendWithdrawIx: TransactionInstruction;
+        klendWithdrawIx = await this.program.methods
             .klendWithdraw(amount)
             .accounts({
                 signer,
@@ -737,22 +809,22 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: signer, ...(await this.connection.getLatestBlockhash()) }).add(klendWithdrawTx)
+            ix: klendWithdrawIx
         };
     }
 
     public async marginfiLend(
         amount: BN,
         signer: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
-        sequenceFlag: PublicKey,
-        marginfiProgram: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // treasury: PublicKey,
+        // sequenceFlag: PublicKey,
+        // marginfiProgram: PublicKey,
         marginfiGroup: PublicKey,
         marginfiAccount: PublicKey,
         bank: PublicKey,
@@ -760,12 +832,17 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         bankLiquidityVault: PublicKey,
     ): Promise<Result> {
 
+        let treasury = this.getPda([Buffer.from(TREASURY_SEED)]);
+        let sequenceFlag = this.getPda([Buffer.from(SEQUENCE_FLAG_SEED)]);
+        let treasuryAuthority = this.getPda([Buffer.from(TREASURY_AUTHORITY_SEED)]);
+        let marginfiProgram = this.getMarginfiProgramId();
+
         //constraints here
 
         //
 
-        let marginfiLendTx: Transaction;
-        marginfiLendTx = await this.program.methods
+        let marginfiLendIx: TransactionInstruction;
+        marginfiLendIx = await this.program.methods
             .marginfiLend(amount)
             .accounts({
                 signer,
@@ -782,22 +859,22 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: signer, ...(await this.connection.getLatestBlockhash()) }).add(marginfiLendTx)
+            ix: marginfiLendIx
         };
     }
 
     public async marginfiWithdraw(
         amount: BN,
         signer: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
-        sequenceFlag: PublicKey,
-        marginfiProgram: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // treasury: PublicKey,
+        // sequenceFlag: PublicKey,
+        // marginfiProgram: PublicKey,
         marginfiGroup: PublicKey,
         marginfiAccount: PublicKey,
         bank: PublicKey,
@@ -806,12 +883,17 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         bankLiquidityVaultAuthority: PublicKey
     ): Promise<Result> {
 
+        let treasury = this.getPda([Buffer.from(TREASURY_SEED)]);
+        let sequenceFlag = this.getPda([Buffer.from(SEQUENCE_FLAG_SEED)]);
+        let treasuryAuthority = this.getPda([Buffer.from(TREASURY_AUTHORITY_SEED)]);
+        let marginfiProgram = this.getMarginfiProgramId();
+
         //constraints here
 
         //
 
-        let marginfiWithdrawTx: Transaction;
-        marginfiWithdrawTx = await this.program.methods
+        let marginfiWithdrawIx: TransactionInstruction;
+        marginfiWithdrawIx = await this.program.methods
             .marginfiWithdraw(amount)
             .accounts({
                 signer,
@@ -829,31 +911,36 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: signer, ...(await this.connection.getLatestBlockhash()) }).add(marginfiWithdrawTx)
+            ix: marginfiWithdrawIx
         };
     }
 
     public async getValueInMeteora(
         signer: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // treasury: PublicKey,
         pool: PublicKey,
         aVault: PublicKey,
         bVault: PublicKey,
         userPoolLp: PublicKey,
     ): Promise<Result> {
 
+        let treasury = this.getPda([Buffer.from(TREASURY_SEED)]);
+        let sequenceFlag = this.getPda([Buffer.from(SEQUENCE_FLAG_SEED)]);
+        let treasuryAuthority = this.getPda([Buffer.from(TREASURY_AUTHORITY_SEED)]);
+        let marginfiProgram = this.getMarginfiProgramId();
+
         //constraints here
 
         //
 
-        let getValueInMeteoraTx: Transaction;
-        getValueInMeteoraTx = await this.program.methods
+        let getValueInMeteoraIx: TransactionInstruction;
+        getValueInMeteoraIx = await this.program.methods
             .getValueInMeteora()
             .accounts({
                 signer,
@@ -866,19 +953,19 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: signer, ...(await this.connection.getLatestBlockhash()) }).add(getValueInMeteoraTx)
+            ix: getValueInMeteoraIx
         };
     }
 
     public async getValueInKamino(
         signer: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // treasury: PublicKey,
         lendingMarket: PublicKey,
         solReserve: PublicKey,
         usdcReserve: PublicKey,
@@ -889,12 +976,15 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         obligation: PublicKey,
     ): Promise<Result> {
 
+        let treasury = this.getPda([Buffer.from(TREASURY_SEED)]);
+        let treasuryAuthority = this.getPda([Buffer.from(TREASURY_AUTHORITY_SEED)]);
+
         //constraints here
 
         //
 
-        let getValueInKaminoTx: Transaction;
-        getValueInKaminoTx = await this.program.methods
+        let getValueInKaminoIx: TransactionInstruction;
+        getValueInKaminoIx = await this.program.methods
             .getValueInKamino()
             .accounts({
                 signer,
@@ -911,19 +1001,17 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: signer, ...(await this.connection.getLatestBlockhash()) }).add(getValueInKaminoTx)
+            ix: getValueInKaminoIx
         };
     }
 
     public async getValueInMarginfi(
         signer: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
         marginfiGroup: PublicKey,
         marginfiAccount: PublicKey,
         solBank: PublicKey,
@@ -934,12 +1022,15 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         bonkBank: PublicKey,
     ): Promise<Result> {
 
+        let treasury = this.getPda([Buffer.from(TREASURY_SEED)]);
+        let treasuryAuthority = this.getPda([Buffer.from(TREASURY_AUTHORITY_SEED)]);
+
         //constraints here
 
         //
 
-        let getValueInMarginfiTx: Transaction;
-        getValueInMarginfiTx = await this.program.methods
+        let getValueInMarginfiIx: TransactionInstruction;
+        getValueInMarginfiIx = await this.program.methods
             .getValueInMarginfi()
             .accounts({
                 signer,
@@ -956,31 +1047,34 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: signer, ...(await this.connection.getLatestBlockhash()) }).add(getValueInMarginfiTx)
+            ix: getValueInMarginfiIx
         };
     }
 
     public async calcuBalance(
         signer: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
-        sequenceFlag: PublicKey,
         usdcTokenAccount: PublicKey,
         wbtcTokenAccount: PublicKey,
-        priceUpdate: PublicKey,
+        sol_priceUpdate: PublicKey,
+        usdc_priceUpdate: PublicKey,
+        wbtc_priceUpdate: PublicKey,
     ): Promise<Result> {
+
+        let treasury = this.getPda([Buffer.from(TREASURY_SEED)]);
+        let sequenceFlag = this.getPda([Buffer.from(SEQUENCE_FLAG_SEED)]);
+        let treasuryAuthority = this.getPda([Buffer.from(TREASURY_AUTHORITY_SEED)]);
 
         //constraints here
 
         //
 
-        let calcuBalanceTx: Transaction;
-        calcuBalanceTx = await this.program.methods
+        let calcuBalanceIx: TransactionInstruction;
+        calcuBalanceIx = await this.program.methods
             .calcuBalance()
             .accounts({
                 signer,
@@ -989,16 +1083,18 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
                 sequenceFlag,
                 usdcTokenAccount,
                 wbtcTokenAccount,
-                priceUpdate,
+                sol_priceUpdate,
+                usdc_priceUpdate,
+                wbtc_priceUpdate
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: signer, ...(await this.connection.getLatestBlockhash()) }).add(calcuBalanceTx)
+            ix: calcuBalanceIx
         };
     }
 
@@ -1006,38 +1102,36 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         returnRate: number[],
         riskRating: number[],
         signer: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
-        sequenceFlag: PublicKey,
-        usdcTokenAccount: PublicKey,
-        wbtcTokenAccount: PublicKey,
-        priceUpdate: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // treasury: PublicKey,
+        // sequenceFlag: PublicKey,
     ): Promise<Result> {
+
+        let treasury = this.getPda([Buffer.from(TREASURY_SEED)]);
+        let sequenceFlag = this.getPda([Buffer.from(SEQUENCE_FLAG_SEED)]);
+        let treasuryAuthority = this.getPda([Buffer.from(TREASURY_AUTHORITY_SEED)]);
 
         //constraints here
 
         //
 
-        let reallocateTx: Transaction;
-        reallocateTx = await this.program.methods
+        let reallocateIx: TransactionInstruction;
+        reallocateIx = await this.program.methods
             .reallocate(returnRate, riskRating)
             .accounts({
                 signer,
                 treasuryAuthority,
                 treasury,
                 sequenceFlag,
-                usdcTokenAccount,
-                wbtcTokenAccount,
-                priceUpdate,
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: signer, ...(await this.connection.getLatestBlockhash()) }).add(reallocateTx)
+            ix: reallocateIx
         };
     }
 
@@ -1045,9 +1139,9 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         amount: BN,
         signer: PublicKey,
         user: PublicKey,
-        treasuryAuthority: PublicKey,
-        treasury: PublicKey,
-        escrow: PublicKey,
+        // treasuryAuthority: PublicKey,
+        // treasury: PublicKey,
+        // escrow: PublicKey,
         userTokenAccount: PublicKey,
         treasuryTokenAccount: PublicKey,
         feeWalletTokenAccount: PublicKey,
@@ -1056,13 +1150,17 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
         stfTokenMint: PublicKey,
     ): Promise<Result> {
 
+        let treasury = this.getPda([Buffer.from(TREASURY_SEED)]);
+        let treasuryAuthority = this.getPda([Buffer.from(TREASURY_AUTHORITY_SEED)]);
+        let escrow = new PublicKey([Buffer.from(ESCROW)]);
+
         //constraints here
 
         //
 
         // *IMPORTANT. Can't find signer at the contract code on main branch
-        let cashinngoutReedemTx: Transaction;
-        cashinngoutReedemTx = await this.program.methods
+        let cashinngoutReedemIx: TransactionInstruction;
+        cashinngoutReedemIx = await this.program.methods
             .cashingoutReedem(amount)
             .accounts({
                 user,
@@ -1079,12 +1177,12 @@ export default class SaturnV1Impl implements SaturnV1Implementation {
             })
             // .preInstructions()  add pre instructions if needed
             // .postInstructions() add post instructions if needed
-            .transaction();
+            .instruction();
 
         return {
             success: true,
             msg: null,
-            tx: new Transaction({ feePayer: signer, ...(await this.connection.getLatestBlockhash()) }).add(cashinngoutReedemTx)
+            ix: cashinngoutReedemIx
         };
     }
 }

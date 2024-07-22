@@ -1,6 +1,6 @@
 use crate::{
-    account::{Treasury, SequenceFlag},
-    constants::*,
+    account::{SequenceFlag, Treasury},
+    constants::*, treasury,
 };
 use anchor_lang::{
     prelude::*,
@@ -17,7 +17,7 @@ use kamino_lending::{
 pub struct KaminoLend<'info> {
     #[account(
         mut,
-        constraint = signer.key() == treasury_authority.key()
+        constraint = signer.key() == treasury.treasury_admin.key()
     )]
     signer: Signer<'info>,
     /// CHECK:
@@ -94,7 +94,10 @@ pub struct KaminoLend<'info> {
     pub klend_program: Program<'info, KaminoLending>,
 }
 
-pub fn handle(ctx: Context<KaminoLend>, amount: u64) -> Result<()> {
+pub fn handle(ctx: Context<KaminoLend>) -> Result<()> {
+    let treasury = &mut ctx.accounts.treasury;
+    let amount = (treasury.kamino_allocation * treasury.treasury_value) * (1_000_000) as f64;
+    
     // let owner_key = ctx.accounts.saturn_lending.treasury_admin;
     let signer_seeds: &[&[u8]] = &[
         TREASURY_AUTHORITY_SEED.as_ref(),
@@ -131,11 +134,8 @@ pub fn handle(ctx: Context<KaminoLend>, amount: u64) -> Result<()> {
             },
             &[signer_seeds],
         ),
-        amount,
+        amount as u64,
     )?;
-
-    let treasury = &mut ctx.accounts.treasury;
-    treasury.treasury_value -= amount as u64;
 
     Ok(())
 }

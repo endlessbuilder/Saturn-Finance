@@ -82,7 +82,7 @@ pub struct GetValueInMarginFi<'info> {
     pub bonk_bank: AccountLoader<'info, Bank>,
 }
 
-pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<[u64; 6]> {
+pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<[f64; 6]> {
 
     // # get marginfi value
     let marginfi_account = &mut ctx.accounts.marginfi_account.load_mut().unwrap();
@@ -218,13 +218,13 @@ pub fn handle(ctx: Context<GetValueInMarginFi>) -> Result<[u64; 6]> {
     )
     .unwrap();
 
-    let mut values: [u64; 6] = [0, 0, 0, 0, 0, 0];
-    values[0] = sol_value_in_marginfi.to_num::<u64>(); // sol
-    values[1] = usdc_value_in_marginfi.to_num::<u64>(); // usdc
-    values[2] = usdt_value_in_marginfi.to_num::<u64>(); // usdt
-    values[3] = wbtc_value_in_marginfi.to_num::<u64>(); // wbtc
-    values[4] = weth_value_in_marginfi.to_num::<u64>(); // weth
-    values[5] = bonk_value_in_marginfi.to_num::<u64>(); // bonk
+    let mut values: [f64; 6] = [0.0; 6];
+    values[0] = sol_value_in_marginfi.to_num::<f64>(); // sol
+    values[1] = usdc_value_in_marginfi.to_num::<f64>(); // usdc
+    values[2] = usdt_value_in_marginfi.to_num::<f64>(); // usdt
+    values[3] = wbtc_value_in_marginfi.to_num::<f64>(); // wbtc
+    values[4] = weth_value_in_marginfi.to_num::<f64>(); // weth
+    values[5] = bonk_value_in_marginfi.to_num::<f64>(); // bonk
 
     ctx.accounts.treasury.marginfi_lend_value = values.iter().sum();
 

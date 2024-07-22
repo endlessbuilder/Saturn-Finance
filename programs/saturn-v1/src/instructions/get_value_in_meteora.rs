@@ -55,7 +55,7 @@ pub struct GetValueInMeteora<'info> {
 
 }
 
-pub fn handle(ctx: Context<GetValueInMeteora>) -> Result<u64> {
+pub fn handle(ctx: Context<GetValueInMeteora>) -> Result<f64> {
     let pool = &mut ctx.accounts.pool;
     let user_pool_lp = &mut ctx.accounts.user_pool_lp;
     let a_vault = &mut ctx.accounts.a_vault;
@@ -66,5 +66,6 @@ pub fn handle(ctx: Context<GetValueInMeteora>) -> Result<u64> {
     let b_lp_amount = u128::from(a_vault.get_unlocked_amount(current_time).unwrap()).checked_mul(PRICE_PRECISION).unwrap();
     let virtual_price = (a_lp_amount + b_lp_amount).checked_div(u128::from(pool.total_locked_lp)).unwrap();
 
-    Ok(user_pool_lp.amount * u64::try_from(virtual_price).unwrap())
+    let value = (user_pool_lp.amount * u64::try_from(virtual_price).unwrap()) as f64;
+    Ok(value)
 }

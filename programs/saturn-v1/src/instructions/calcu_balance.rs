@@ -5,8 +5,8 @@ use solana_program::pubkey::Pubkey;
 use std::str::FromStr;
 
 use crate::constants::{
-    SEQUENCE_FLAG_SEED, SOL_PRICE_ID, TREASURY_AUTHORITY_SEED, TREASURY_SEED, USDC_MINT, WBTC_MINT,
-    WBTC_PRICE_ID,
+    SEQUENCE_FLAG_SEED, SOL_PRICE_ID, TREASURY_AUTHORITY_SEED, TREASURY_SEED, USDC_MINT,
+    USDC_PRICE_ID, WBTC_MINT, WBTC_PRICE_ID,
 };
 use crate::{
     account::{SequenceFlag, Treasury},
@@ -55,37 +55,55 @@ pub struct CalcuBalance<'info> {
     )]
     pub wbtc_token_account: Account<'info, TokenAccount>,
 
-    pub price_update: Account<'info, PriceUpdateV2>,
+    pub sol_price_update: Account<'info, PriceUpdateV2>,
+    pub usdc_price_update: Account<'info, PriceUpdateV2>,
+    pub wbtc_price_update: Account<'info, PriceUpdateV2>,
 }
 
 pub fn handle(ctx: Context<CalcuBalance>) -> Result<()> {
     let treasury = &mut ctx.accounts.treasury;
 
-    let price_update = &mut ctx.accounts.price_update;
+    let sol_price_update = &mut ctx.accounts.sol_price_update;
     // get_price_no_older_than will fail if the price update is more than 30 seconds old
     let maximum_age: u64 = 30;
     // get_price_no_older_than will fail if the price update is for a different price feed.
     // This string is the id of the BTC/USD feed. See https://pyth.network/developers/price-feed-ids for all available IDs.
     let sol_feed_id: [u8; 32] = get_feed_id_from_hex(SOL_PRICE_ID)?;
     let sol_price =
-        price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &sol_feed_id)?;
+        sol_price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &sol_feed_id)?;
+
+    let usdc_price_update = &mut ctx.accounts.usdc_price_update;
+    let usdc_feed_id: [u8; 32] = get_feed_id_from_hex(USDC_PRICE_ID)?;
+    let usdc_price =
+        usdc_price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &usdc_feed_id)?;
+
+    let wbtc_price_update = &mut ctx.accounts.wbtc_price_update;
     let wbtc_feed_id: [u8; 32] = get_feed_id_from_hex(WBTC_PRICE_ID)?;
     let wbtc_price =
-        price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &wbtc_feed_id)?;
+        wbtc_price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &wbtc_feed_id)?;
 
     let marginfi_val = treasury.marginfi_lend_value;
     let kamino_val = treasury.kamino_lend_value;
     let meteora_val = treasury.meteora_deposit_value;
     let jupiter_val = treasury.jupiter_perps_value;
-    let usdc_val = ctx.accounts.usdc_token_account.amount;
+
     let sol_val = (ctx.accounts.treasury_authority.get_lamports() / 1_000_000_000)
         * u64::try_from(sol_price.price).unwrap()
-        / 10u64.pow(u32::try_from(-sol_price.exponent).unwrap());
-    let wbtc_val = ctx.accounts.wbtc_token_account.amount
+        * 10u64.pow(u32::try_from(sol_price.exponent).unwrap());
+
+    let usdc_val = (ctx.accounts.usdc_token_account.amount / 1_000_000)
+        * u64::try_from(usdc_price.price).unwrap()
+        * 10u64.pow(u32::try_from(sol_price.exponent).unwrap());
+
+    let wbtc_val = (ctx.accounts.wbtc_token_account.amount / 100_000_000)
         * u64::try_from(wbtc_price.price).unwrap()
-        / 10u64.pow(u32::try_from(-wbtc_price.exponent).unwrap());
+        * 10u64.pow(u32::try_from(wbtc_price.exponent).unwrap());
+
+    treasury.sol_value = sol_val as f64;
+    treasury.usdc_value = usdc_val as f64;
+    treasury.wbtc_value = wbtc_val as f64;
     treasury.treasury_value =
-        marginfi_val + kamino_val + meteora_val + jupiter_val + usdc_val + sol_val + wbtc_val;
+        marginfi_val + kamino_val + meteora_val + jupiter_val + sol_val as f64 + usdc_val as f64 + wbtc_val as f64;
 
     let sequence_flag = &mut ctx.accounts.sequence_flag;
     sequence_flag.flag_calcu_balance = true;

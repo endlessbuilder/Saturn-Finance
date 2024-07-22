@@ -84,7 +84,7 @@ pub struct GetValueInKamino<'info> {
 
 }
 
-pub fn handle(ctx: Context<GetValueInKamino>) -> Result<[u64; 6]> {
+pub fn handle(ctx: Context<GetValueInKamino>) -> Result<[f64; 6]> {
     // # get kamino value
     let clock = Clock::get().unwrap();
     let obligation = &mut ctx.accounts.obligation.load_mut().unwrap();
@@ -175,13 +175,13 @@ pub fn handle(ctx: Context<GetValueInKamino>) -> Result<[u64; 6]> {
         &clock,
     )?;
 
-    let mut values: [u64; 6] = [0, 0, 0, 0, 0, 0];
-    values[0] = liquidity_amount1.into(); // sol
-    values[1] = liquidity_amount2.into(); // usdc
-    values[2] = liquidity_amount3.into(); // usdt
-    values[3] = liquidity_amount4.into(); // wbtc
-    values[4] = liquidity_amount5.into(); // weth
-    values[5] = liquidity_amount6.into(); // bonk
+    let mut values: [f64; 6] = [0.0; 6];
+    values[0] = liquidity_amount1 as f64; // sol
+    values[1] = liquidity_amount2 as f64; // usdc
+    values[2] = liquidity_amount3 as f64; // usdt
+    values[3] = liquidity_amount4 as f64; // wbtc
+    values[4] = liquidity_amount5 as f64; // weth
+    values[5] = liquidity_amount6 as f64; // bonk
 
     ctx.accounts.treasury.kamino_lend_value = values.iter().sum();
 

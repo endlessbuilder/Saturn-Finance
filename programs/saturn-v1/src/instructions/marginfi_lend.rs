@@ -78,7 +78,9 @@ pub struct MarginfiLend<'info> {
     pub bank_liquidity_vault: AccountInfo<'info>,
 }
 
-pub fn handle(ctx: Context<MarginfiLend>, amount: u64) -> Result<()> {
+pub fn handle(ctx: Context<MarginfiLend>) -> Result<()> {
+    let treasury = &ctx.accounts.treasury;
+    let amount = (treasury.marginfi_allocation * treasury.treasury_value) * (1_000_000) as f64;
     // let owner_key = ctx.accounts.treasury_authority.to_account_info();
     let signer_seeds: &[&[u8]] = &[
         TREASURY_AUTHORITY_SEED.as_ref(),
@@ -99,11 +101,8 @@ pub fn handle(ctx: Context<MarginfiLend>, amount: u64) -> Result<()> {
             },
             &[signer_seeds],
         ),
-        amount,
+        amount as u64,
     );
-
-    let treasury = &mut ctx.accounts.treasury;
-    treasury.treasury_value -= amount as u64;
 
     Ok(())
 }

@@ -92,11 +92,11 @@ pub fn handle(
         return Err(BondError::InsufficientFundsError.into());
     }
 
-    let backing_price = treasury.treasury_value / treasury.token_minted * 100;
-    let cashingout_value = amount * backing_price;
+    let backing_price = treasury.treasury_value / (treasury.token_minted * 100) as f64;
+    let cashingout_value = amount as f64 * backing_price;
 
-    let reedem = ( cashingout_value as f64 * 0.99 ) as u64;
-    let fee = ( cashingout_value as f64 * 0.05 ) as u64;
+    let reedem = ( cashingout_value * 0.99 ) as u64;
+    let fee = ( cashingout_value * 0.05 ) as u64;
 
     let cpi_accounts = Transfer {
         from: treasury_token_account.to_account_info().clone(),
@@ -119,7 +119,7 @@ pub fn handle(
     )?;
 
     treasury.token_minted -= amount;
-    treasury.treasury_value = treasury.treasury_value - reedem - fee;
+    treasury.treasury_value = treasury.treasury_value - reedem as f64 - fee as f64;
     
 
     Ok(())

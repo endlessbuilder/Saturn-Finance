@@ -67,7 +67,10 @@ pub struct ApplyBond<'info> {
     )]
     pub treasury_stf_token_account: Account<'info, TokenAccount>,
 
-    pub price_update: Account<'info, PriceUpdateV2>,
+    // Add this account to any instruction Context that needs price data.
+    pub sol_price_update: Account<'info, PriceUpdateV2>,
+    pub usdc_price_update: Account<'info, PriceUpdateV2>,
+    pub bonk_price_update: Account<'info, PriceUpdateV2>,
 
     /// CHECK: This is not dangerous because we don't read or write from this account
     pub token_mint_address: AccountInfo<'info>,
@@ -97,7 +100,9 @@ pub fn handle(
     let stf_token_mint = &mut &ctx.accounts.stf_token_mint;
     let mint_pubkey = &mut &ctx.accounts.token_mint_address.key().to_string();
 
-    let price_update = &mut ctx.accounts.price_update;
+    let sol_price_update = &mut ctx.accounts.sol_price_update;
+    let usdc_price_update = &mut ctx.accounts.usdc_price_update;
+    let bonk_price_update = &mut ctx.accounts.bonk_price_update;
 
     assert!(
         stf_token_mint.key().to_string().as_str() == STF_MINT,
@@ -107,14 +112,16 @@ pub fn handle(
     let maximum_age: u64 = 30;
     let feed_id: [u8; 32];
     //     get_feed_id_from_hex("0xe62df6c8b4a85fe1a67db44dc12de5db330f7ac66b72dc658afedf0f4a415b43")?;
+    let price;
     if mint_pubkey.as_str() == SOL_MINT {
         feed_id = get_feed_id_from_hex(SOL_PRICE_ID)?;
         sol_transfer_user(
             creator.to_account_info(),
             treasury_authority.to_account_info(),
             ctx.accounts.system_program.to_account_info(),
-            token_amount,
+            token_amount * 1_000_000_000,
         )?;
+        price = sol_price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &feed_id)?;
     } else if mint_pubkey.as_str() == USDC_MINT {
         feed_id = get_feed_id_from_hex(USDC_PRICE_ID)?;
         let cpi_accounts = Transfer {
@@ -124,8 +131,9 @@ pub fn handle(
         };
         token::transfer(
             CpiContext::new(token_program.clone().to_account_info(), cpi_accounts),
-            token_amount,
+            token_amount * 1_000_000,
         )?;
+        price = usdc_price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &feed_id)?;
     } else if mint_pubkey.as_str() == BONK_MINT {
         feed_id = get_feed_id_from_hex(BONK_PRICE_ID)?;
         let cpi_accounts = Transfer {
@@ -135,13 +143,12 @@ pub fn handle(
         };
         token::transfer(
             CpiContext::new(token_program.clone().to_account_info(), cpi_accounts),
-            token_amount,
+            token_amount * 1_000,
         )?;
+        price = bonk_price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &feed_id)?;
     } else {
         return Err(BondError::TokenMintError.into());
     }
-
-    let price = price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &feed_id)?;
 
     msg!(
         "The price is ({} ± {}) * 10^{}",
@@ -151,7 +158,7 @@ pub fn handle(
     );
 
     let total_price = price.price * token_amount as i64; // 10 ** token_decimal 
-    let backing_price = treasury.treasury_value / treasury.token_minted; // this is per lamport stf
+    let backing_price = (treasury.treasury_value / treasury.token_minted as f64) as u64;  // this is per lamport stf
     let spot_price = spot_price;
 
     let diff: u64 = (spot_price - backing_price) * 100 / backing_price;
@@ -174,7 +181,7 @@ pub fn handle(
     treasury.token_minted += num_token_to_mint;
     treasury.staking_index += num_token_to_mint / treasury.token_staked;
     //
-    treasury.treasury_value += total_price as u64;
+    treasury.treasury_value += total_price as f64;
 
     let cpi_accounts = MintTo {
         mint: stf_token_mint.to_account_info().clone(),
@@ -190,7 +197,7 @@ pub fn handle(
             cpi_accounts,
             signer,
         ),
-        num_token_to_mint,
+        num_token_to_mint * 100,
     )?;
 
     let timestamp = Clock::get()?.unix_timestamp;

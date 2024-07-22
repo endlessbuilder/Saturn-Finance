@@ -80,7 +80,8 @@ pub struct MarginfiWithdraw<'info> {
     pub bank_liquidity_vault_authority: AccountInfo<'info>,
 }
 
-pub fn handle(ctx: Context<MarginfiWithdraw>, amount: u64) -> Result<()> {
+pub fn handle(ctx: Context<MarginfiWithdraw>) -> Result<()> {
+    let amount = ctx.accounts.treasury.marginfi_lend_assets;
     // let owner_key = ctx.accounts.treasury_authority;
     let signer_seeds: &[&[u8]] = &[
         TREASURY_AUTHORITY_SEED.as_ref(),
@@ -105,9 +106,6 @@ pub fn handle(ctx: Context<MarginfiWithdraw>, amount: u64) -> Result<()> {
         amount,
         None,
     );
-
-    let treasury = &mut ctx.accounts.treasury;
-    treasury.treasury_value += amount as u64;
 
     ctx.accounts.sequence_flag.flag_marginfi = true;
 

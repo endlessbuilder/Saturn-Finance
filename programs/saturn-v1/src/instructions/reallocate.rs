@@ -29,7 +29,7 @@ use crate::{
 pub struct ReAllocate<'info> {
     #[account(
         mut,
-        constraint = signer.key() == treasury_authority.key()
+        constraint = signer.key() == treasury.treasury_admin.key()
     )]
     signer: Signer<'info>,
     /// user CHECK: this is pda
@@ -58,42 +58,19 @@ pub struct ReAllocate<'info> {
     )]
     pub sequence_flag: Account<'info, SequenceFlag>,
 
-    #[account(
-        mut,
-        token::mint = Pubkey::from_str(USDC_MINT).unwrap(),
-    )]
-    pub usdc_token_account: Account<'info, TokenAccount>,
-
-    #[account(
-        mut,
-        token::mint = Pubkey::from_str(WBTC_MINT).unwrap(),
-    )]
-    pub wbtc_token_account: Account<'info, TokenAccount>,
-
-    pub price_update: Account<'info, PriceUpdateV2>,
 }
 
 #[allow(unused_variables)]
 pub fn handle(ctx: Context<ReAllocate>, return_rate: [f64; 7], risk_rating: [f64; 7]) -> Result<()> {
     let treasury = &mut ctx.accounts.treasury;
+    
     let kamino_balance = treasury.kamino_lend_value;
     let marignfi_balance = treasury.marginfi_lend_value;
     let meteora_balance = treasury.meteora_deposit_value;
-    let usdc_balance: u64 = ctx.accounts.usdc_token_account.amount;
-    let wbtc_balance: u64 = ctx.accounts.wbtc_token_account.amount;
-    let sol_balance: u64 = ctx.accounts.treasury_authority.get_lamports();
 
-    let price_update = &mut ctx.accounts.price_update;
-    // get_price_no_older_than will fail if the price update is more than 30 seconds old
-    let maximum_age: u64 = 30;
-    // get_price_no_older_than will fail if the price update is for a different price feed.
-    // This string is the id of the BTC/USD feed. See https://pyth.network/developers/price-feed-ids for all available IDs.
-    let sol_feed_id: [u8; 32] = get_feed_id_from_hex(SOL_PRICE_ID)?;
-    let sol_price =
-        price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &sol_feed_id)?;
-    let wbtc_feed_id: [u8; 32] = get_feed_id_from_hex(WBTC_PRICE_ID)?;
-    let wbtc_price =
-        price_update.get_price_no_older_than(&Clock::get()?, maximum_age, &wbtc_feed_id)?;
+    let usdc_balance: f64 = treasury.usdc_value;
+    let wbtc_balance: f64 = treasury.wbtc_value;
+    let sol_balance: f64 = treasury.sol_value;
 
     let total_value = treasury.treasury_value;
 

@@ -1,7 +1,7 @@
 
-import { Program, BN } from "@coral-xyz/anchor";
-import { PublicKey, Transaction } from "@solana/web3.js";
-import { SaturnV1 } from "../idl/saturn_v_1";
+import { Program, BN, Instruction } from "@coral-xyz/anchor";
+import { PublicKey, Transaction, TransactionInstruction } from "@solana/web3.js";
+import { SaturnV1 } from "../../../target/types/saturn_v_1";
 
 export type SaturnV1Program = Program<SaturnV1>;
 
@@ -15,7 +15,7 @@ export type DefaultProgramAccounts = {
 export interface Result {
     success: boolean;
     msg: null | string;
-    tx: null | Transaction;
+    ix: null | TransactionInstruction;
 }
 
 export type SaturnV1Implementation = {
@@ -37,7 +37,9 @@ export type SaturnV1Implementation = {
         creatorTokenAccount,
         treasuryTokenAccount,
         treasuryStfTokenAccount,
-        priceUpdate,
+        solPriceUpdate,
+        usdcPriceUpdate,
+        bonkPriceUpdate,
         tokenMintAddress,
         stfTokenMint,
         tokenProgram
@@ -81,14 +83,10 @@ export type SaturnV1Implementation = {
         signer: PublicKey,
         treasuryAuthority: PublicKey,
         treasury: PublicKey,
-        wbtcTreasuryTokenAccount: PublicKey,
-        wbtcMint: PublicKey,
-        usdtTreasuryTokenAccount: PublicKey,
-        usdtMint: PublicKey,
-        usdcTreasuryTokenAccount: PublicKey,
-        usdcMint: PublicKey,
-        solMint: PublicKey,
-        priceUpdate: PublicKey,
+        fromTreasuryTokenAccount: PublicKey,
+        fromMint: PublicKey,
+        toTreasuryTokenAccount: PublicKey,
+        toMint: PublicKey,
         jupiterProgram: PublicKey,
         tokenProgram: PublicKey,
         systemProgram: PublicKey,

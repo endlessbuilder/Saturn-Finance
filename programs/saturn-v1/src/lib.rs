@@ -73,31 +73,31 @@ pub mod saturn_v_1 {
         instructions::init_lending_account::handle(ctx)
     }
 
-    pub fn klend_lend(ctx: Context<KaminoLend>, amount: u64) -> Result<()> {
-        instructions::klend_lend::handle(ctx, amount)
+    pub fn klend_lend(ctx: Context<KaminoLend>) -> Result<()> {
+        instructions::klend_lend::handle(ctx)
     }
 
-    pub fn klend_withdraw(ctx: Context<KlendWithdraw>, amount: u64) -> Result<()> {
-        instructions::klend_withdraw::handle(ctx, amount)
+    pub fn klend_withdraw(ctx: Context<KlendWithdraw>) -> Result<()> {
+        instructions::klend_withdraw::handle(ctx)
     }
 
-    pub fn marginfi_lend(ctx: Context<MarginfiLend>, amount: u64) -> Result<()> {
-        instructions::marginfi_lend::handle(ctx, amount)
+    pub fn marginfi_lend(ctx: Context<MarginfiLend>) -> Result<()> {
+        instructions::marginfi_lend::handle(ctx)
     }
 
-    pub fn marginfi_withdraw(ctx: Context<MarginfiWithdraw>, amount: u64) -> Result<()> {
-        instructions::marginfi_withdraw::handle(ctx, amount)
+    pub fn marginfi_withdraw(ctx: Context<MarginfiWithdraw>) -> Result<()> {
+        instructions::marginfi_withdraw::handle(ctx)
     }
 
-    pub fn get_value_in_meteora(ctx: Context<GetValueInMeteora>) -> Result<u64> {
+    pub fn get_value_in_meteora(ctx: Context<GetValueInMeteora>) -> Result<f64> {
         instructions::get_value_in_meteora::handle(ctx)
     }
 
-    pub fn get_value_in_kamino(ctx: Context<GetValueInKamino>) -> Result<[u64; 6]> {
+    pub fn get_value_in_kamino(ctx: Context<GetValueInKamino>) -> Result<[f64; 6]> {
         instructions::get_value_in_kamino::handle(ctx)
     }
 
-    pub fn get_value_in_marginfi(ctx: Context<GetValueInMarginFi>) -> Result<[u64; 6]> {
+    pub fn get_value_in_marginfi(ctx: Context<GetValueInMarginFi>) -> Result<[f64; 6]> {
         instructions::get_value_in_marginfi::handle(ctx)
     }
 

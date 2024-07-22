@@ -87,20 +87,16 @@ pub struct InitLendingAccount<'info> {
     )]
     pub treasury_authority: UncheckedAccount<'info>,
 
-    pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
-    pub token_program: Program<'info, Token>,
-
+    
     /*
-     * marginfi accounts
-     */
+    * marginfi accounts
+    */
     pub marginfi_program: Program<'info, Marginfi>,
     pub marginfi_group: AccountLoader<'info, MarginfiGroup>,
-   
-
+        
     /*
-     * klend accounts
-     */
+    * klend accounts
+    */
     /// CHECK: devnet demo
     pub klend_program: Program<'info, KaminoLending>,
     /// CHECK: devnet demo
@@ -115,10 +111,14 @@ pub struct InitLendingAccount<'info> {
     /// CHECK: devnet demo
     #[account(mut)]
     pub user_metadata: AccountInfo<'info>,
-
+    
     #[account(
         mut,
     )]
     /// CHECK: passed to marginfi
     pub marginfi_account: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+    pub rent: Sysvar<'info, Rent>,
+    pub token_program: Program<'info, Token>,
 }
